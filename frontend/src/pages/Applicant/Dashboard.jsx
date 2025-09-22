@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { useApplicationStore } from "../../store/applicationStore";
-import { DashboardCard } from "../../components/DashboardCard";
-import { Button } from "../../components/Button";
-import { Modal } from "../../components/Modal";
+import DashboardCard from "../../components/DashboardCard";
+import Button from "../../components/Button";
+import Modal from "../../components/Modal";
 import { formatDate } from "../../utils/formatDate";
 
 const ApplicantDashboard = () => {

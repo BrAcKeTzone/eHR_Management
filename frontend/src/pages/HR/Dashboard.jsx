@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useApplicationStore } from "../../store/applicationStore";
 import { useAuthStore } from "../../store/authStore";
-import { DashboardCard } from "../../components/DashboardCard";
-import { Button } from "../../components/Button";
-import { Table } from "../../components/Table";
+import DashboardCard from "../../components/DashboardCard";
+import Button from "../../components/Button";
+import Table from "../../components/Table";
 import { formatDate } from "../../utils/formatDate";
 
 const HRDashboard = () => {

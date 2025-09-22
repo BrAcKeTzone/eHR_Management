@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers, deleteUser } from "./dashboardSlice";
-import { Button } from "../../components/Button";
+import Button from "../../components/Button";
 
 const UserManagement = () => {
   const dispatch = useDispatch();

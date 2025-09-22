@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 
-export const Modal = ({
+const Modal = ({
   isOpen,
   onClose,
   children,
@@ -9,6 +9,24 @@ export const Modal = ({
   showCloseButton = true,
   closeOnOverlayClick = true,
 }) => {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const sizeClasses = {
@@ -75,3 +93,5 @@ export const Modal = ({
     </div>
   );
 };
+
+export default Modal;

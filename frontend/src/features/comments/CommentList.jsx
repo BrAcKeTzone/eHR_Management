@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchComments, deleteComment } from "./commentsSlice";
-import { Button } from "../../components/Button";
+import Button from "../../components/Button";
 
 const CommentList = ({ postId }) => {
   const dispatch = useDispatch();

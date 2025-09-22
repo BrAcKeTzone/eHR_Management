@@ -49,10 +49,14 @@ const LoadingSpinner = ({
           ${sizeStyles}
           ${colorStyles}
         `}
-      ></div>
+        role="status"
+        aria-label="Loading"
+      >
+        <span className="sr-only">Loading...</span>
+      </div>
       {text && <p className="mt-2 text-sm text-gray-600">{text}</p>}
     </div>
   );
 };
 
-export { LoadingSpinner };
+export default LoadingSpinner;

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useApplicationStore } from "../../store/applicationStore";
 import { useScheduleStore } from "../../store/scheduleStore";
-import { DashboardCard } from "../../components/DashboardCard";
-import { Button } from "../../components/Button";
-import { Table } from "../../components/Table";
-import { Modal } from "../../components/Modal";
-import { Input } from "../../components/Input";
+import DashboardCard from "../../components/DashboardCard";
+import Button from "../../components/Button";
+import Table from "../../components/Table";
+import Modal from "../../components/Modal";
+import Input from "../../components/Input";
 import { formatDate } from "../../utils/formatDate";
 
 const Scheduling = () => {

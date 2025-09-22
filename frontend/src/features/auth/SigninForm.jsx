@@ -1,58 +1,158 @@
-import React from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { useDispatch } from "react-redux";
-import { signin } from "./authSlice";
-import { Input } from "../../components/Input";
-import { Button } from "../../components/Button";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const SigninForm = () => {
-  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { login, loading, error, clearError } = useAuthStore();
 
-  const formik = useFormik({
-    initialValues: {
-      email: "",
-      password: "",
-    },
-    validationSchema: Yup.object({
-      email: Yup.string().email("Invalid email").required("Email is required"),
-      password: Yup.string()
-        .min(6, "Minimum 6 characters")
-        .required("Password is required"),
-    }),
-    onSubmit: (values) => {
-      dispatch(signin(values));
-    },
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
   });
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (error) clearError();
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.email || !formData.password) {
+      return;
+    }
+
+    try {
+      await login(formData);
+      navigate("/dashboard");
+    } catch (err) {
+      // Error is handled by the store
+      console.error("Login failed:", err);
+    }
+  };
+
+  // Demo credentials helper
+  const fillDemoCredentials = (role) => {
+    const credentials = {
+      applicant: { email: "applicant1@example.com", password: "password123" },
+      hr: { email: "hr@bcfi.com", password: "hr123456" },
+      admin: { email: "admin@bcfi.com", password: "admin123" },
+    };
+
+    setFormData(credentials[role]);
+  };
+
   return (
-    <form
-      onSubmit={formik.handleSubmit}
-      className="p-4 border rounded-lg shadow-md"
-    >
-      <h2 className="text-xl font-bold mb-4">Sign In</h2>
-      <Input
-        type="email"
-        placeholder="Email"
-        {...formik.getFieldProps("email")}
-      />
-      {formik.touched.email && formik.errors.email ? (
-        <p className="text-red-500">{formik.errors.email}</p>
-      ) : null}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            BCFI HR Application System
+          </p>
+        </div>
 
-      <Input
-        type="password"
-        placeholder="Password"
-        {...formik.getFieldProps("password")}
-      />
-      {formik.touched.password && formik.errors.password ? (
-        <p className="text-red-500">{formik.errors.password}</p>
-      ) : null}
+        {/* Demo Credentials */}
+        <div className="bg-blue-50 p-4 rounded-md">
+          <h3 className="text-sm font-medium text-blue-800 mb-2">
+            Demo Credentials:
+          </h3>
+          <div className="space-y-1 text-xs">
+            <button
+              type="button"
+              onClick={() => fillDemoCredentials("applicant")}
+              className="block text-blue-600 hover:text-blue-800 underline"
+            >
+              Applicant: applicant1@example.com / password123
+            </button>
+            <button
+              type="button"
+              onClick={() => fillDemoCredentials("hr")}
+              className="block text-blue-600 hover:text-blue-800 underline"
+            >
+              HR: hr@bcfi.com / hr123456
+            </button>
+            <button
+              type="button"
+              onClick={() => fillDemoCredentials("admin")}
+              className="block text-blue-600 hover:text-blue-800 underline"
+            >
+              Admin: admin@bcfi.com / admin123
+            </button>
+          </div>
+        </div>
 
-      <Button type="submit" className="w-full mt-4">
-        Sign In
-      </Button>
-    </form>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <Input
+              label="Email address"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              placeholder="Enter your email"
+            />
+
+            <Input
+              label="Password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full"
+            disabled={loading || !formData.email || !formData.password}
+          >
+            {loading ? <LoadingSpinner size="sm" /> : "Sign in"}
+          </Button>
+
+          <div className="text-center">
+            <span className="text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link
+                to="/signup"
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
+                Sign up here
+              </Link>
+            </span>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 

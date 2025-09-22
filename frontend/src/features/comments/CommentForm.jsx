@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { addComment } from "./commentsSlice";
-import { Input } from "../../components/Input";
-import { Button } from "../../components/Button";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
 
 const CommentForm = ({ postId }) => {
   const dispatch = useDispatch();

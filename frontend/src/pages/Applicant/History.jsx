@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useApplicationStore } from "../../store/applicationStore";
-import { DashboardCard } from "../../components/DashboardCard";
-import { Button } from "../../components/Button";
+import DashboardCard from "../../components/DashboardCard";
+import Button from "../../components/Button";
 import { formatDate } from "../../utils/formatDate";
 
 const ApplicationHistory = () => {

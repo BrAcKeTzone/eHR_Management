@@ -1,6 +1,6 @@
 import React from "react";
 
-export const Input = ({
+const Input = ({
   type = "text",
   placeholder,
   value,
@@ -12,6 +12,7 @@ export const Input = ({
   disabled = false,
   name,
   id,
+  ...props
 }) => {
   return (
     <div className="w-full">
@@ -37,8 +38,11 @@ export const Input = ({
         disabled={disabled}
         name={name}
         id={id || name}
+        {...props}
       />
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );
 };
+
+export default Input;

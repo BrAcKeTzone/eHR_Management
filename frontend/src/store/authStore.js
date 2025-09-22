@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { authApi } from "../api/authApi";
+import usersData from "../data/users.json";
 
 export const useAuthStore = create(
   persist(
@@ -16,26 +16,45 @@ export const useAuthStore = create(
       login: async (credentials) => {
         try {
           set({ loading: true, error: null });
-          const response = await authApi.login(credentials);
 
-          const { user, token } = response;
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Find user in dummy data
+          const user = usersData.find(
+            (u) =>
+              u.email === credentials.email &&
+              u.password === credentials.password
+          );
+
+          if (!user) {
+            throw new Error("Invalid email or password");
+          }
+
+          if (!user.isVerified) {
+            throw new Error("Please verify your email before logging in");
+          }
+
+          // Remove password from user object
+          const { password: _, ...userWithoutPassword } = user;
+          const mockToken = `mock-jwt-token-${user.id}`;
 
           set({
-            user,
-            token,
+            user: userWithoutPassword,
+            token: mockToken,
             isAuthenticated: true,
             loading: false,
             error: null,
           });
 
-          // Store token in localStorage for API requests
-          localStorage.setItem("authToken", token);
+          // Store token in localStorage for consistency
+          localStorage.setItem("authToken", mockToken);
 
-          return response;
+          return { user: userWithoutPassword, token: mockToken };
         } catch (error) {
           set({
             loading: false,
-            error: error.response?.data?.message || "Login failed",
+            error: error.message || "Login failed",
           });
           throw error;
         }
@@ -44,18 +63,43 @@ export const useAuthStore = create(
       register: async (userData) => {
         try {
           set({ loading: true, error: null });
-          const response = await authApi.register(userData);
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Check if email already exists
+          const existingUser = usersData.find(
+            (u) => u.email === userData.email
+          );
+          if (existingUser) {
+            throw new Error("Email already registered");
+          }
+
+          // Create new user (in real app, this would be sent to backend)
+          const newUser = {
+            id: Date.now().toString(),
+            email: userData.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            role: "APPLICANT",
+            isVerified: true, // Auto-verify for demo
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          // Add to users array (in memory only for demo)
+          usersData.push({ ...newUser, password: userData.password });
 
           set({
             loading: false,
             error: null,
           });
 
-          return response;
+          return { message: "Registration successful! Please login." };
         } catch (error) {
           set({
             loading: false,
-            error: error.response?.data?.message || "Registration failed",
+            error: error.message || "Registration failed",
           });
           throw error;
         }
@@ -63,7 +107,8 @@ export const useAuthStore = create(
 
       logout: async () => {
         try {
-          await authApi.logout();
+          // Simulate logout API call
+          await new Promise((resolve) => setTimeout(resolve, 500));
         } catch (error) {
           console.error("Logout error:", error);
         } finally {
@@ -81,19 +126,25 @@ export const useAuthStore = create(
       getProfile: async () => {
         try {
           set({ loading: true, error: null });
-          const response = await authApi.getProfile();
+
+          const { user } = get();
+          if (!user) {
+            throw new Error("No user logged in");
+          }
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 500));
 
           set({
-            user: response.user,
             loading: false,
             error: null,
           });
 
-          return response;
+          return { user };
         } catch (error) {
           set({
             loading: false,
-            error: error.response?.data?.message || "Failed to fetch profile",
+            error: error.message || "Failed to fetch profile",
           });
           throw error;
         }
@@ -102,19 +153,28 @@ export const useAuthStore = create(
       updateProfile: async (profileData) => {
         try {
           set({ loading: true, error: null });
-          const response = await authApi.updateProfile(profileData);
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          const { user } = get();
+          const updatedUser = {
+            ...user,
+            ...profileData,
+            updatedAt: new Date().toISOString(),
+          };
 
           set({
-            user: response.user,
+            user: updatedUser,
             loading: false,
             error: null,
           });
 
-          return response;
+          return { user: updatedUser };
         } catch (error) {
           set({
             loading: false,
-            error: error.response?.data?.message || "Failed to update profile",
+            error: error.message || "Failed to update profile",
           });
           throw error;
         }
@@ -123,18 +183,21 @@ export const useAuthStore = create(
       changePassword: async (passwordData) => {
         try {
           set({ loading: true, error: null });
-          const response = await authApi.changePassword(passwordData);
 
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // In real app, this would validate old password and update
           set({
             loading: false,
             error: null,
           });
 
-          return response;
+          return { message: "Password changed successfully" };
         } catch (error) {
           set({
             loading: false,
-            error: error.response?.data?.message || "Failed to change password",
+            error: error.message || "Failed to change password",
           });
           throw error;
         }
@@ -148,17 +211,29 @@ export const useAuthStore = create(
           }
 
           set({ loading: true, error: null });
-          const response = await authApi.verifyToken();
+
+          // Simulate token verification
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // Extract user ID from mock token
+          const userId = token.split("-").pop();
+          const user = usersData.find((u) => u.id === userId);
+
+          if (!user) {
+            throw new Error("Invalid token");
+          }
+
+          const { password: _, ...userWithoutPassword } = user;
 
           set({
-            user: response.user,
+            user: userWithoutPassword,
             token,
             isAuthenticated: true,
             loading: false,
             error: null,
           });
 
-          return response;
+          return { user: userWithoutPassword };
         } catch (error) {
           set({
             user: null,
@@ -188,6 +263,17 @@ export const useAuthStore = create(
               localStorage.removeItem("authToken");
             });
         }
+      },
+
+      // Helper methods
+      hasRole: (role) => {
+        const { user } = get();
+        return user?.role === role;
+      },
+
+      isHROrAdmin: () => {
+        const { user } = get();
+        return user?.role === "HR" || user?.role === "ADMIN";
       },
     }),
     {

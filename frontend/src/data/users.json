@@ -1,0 +1,46 @@
+[
+  {
+    "id": "1",
+    "email": "applicant1@example.com",
+    "password": "password123",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "APPLICANT",
+    "isVerified": true,
+    "createdAt": "2024-01-15T08:00:00Z",
+    "updatedAt": "2024-01-15T08:00:00Z"
+  },
+  {
+    "id": "2",
+    "email": "applicant2@example.com",
+    "password": "password123",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "role": "APPLICANT",
+    "isVerified": true,
+    "createdAt": "2024-02-01T09:00:00Z",
+    "updatedAt": "2024-02-01T09:00:00Z"
+  },
+  {
+    "id": "3",
+    "email": "hr@bcfi.com",
+    "password": "hr123456",
+    "firstName": "HR",
+    "lastName": "Manager",
+    "role": "HR",
+    "isVerified": true,
+    "createdAt": "2024-01-01T10:00:00Z",
+    "updatedAt": "2024-01-01T10:00:00Z"
+  },
+  {
+    "id": "4",
+    "email": "admin@bcfi.com",
+    "password": "admin123",
+    "firstName": "System",
+    "lastName": "Admin",
+    "role": "ADMIN",
+    "isVerified": true,
+    "createdAt": "2024-01-01T10:00:00Z",
+    "updatedAt": "2024-01-01T10:00:00Z"
+  }
+]

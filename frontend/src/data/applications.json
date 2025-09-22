@@ -1,0 +1,59 @@
+[
+  {
+    "id": "app-1",
+    "userId": "1",
+    "program": "Computer Science",
+    "status": "APPROVED",
+    "documents": {
+      "resume": "john_doe_resume.pdf",
+      "coverLetter": "john_doe_cover.pdf",
+      "transcript": "john_doe_transcript.pdf"
+    },
+    "demoSchedule": {
+      "date": "2024-03-15",
+      "time": "10:00",
+      "location": "Room 101"
+    },
+    "scores": {
+      "communication": 8,
+      "technicalSkills": 9,
+      "presentation": 7,
+      "totalScore": 24,
+      "maxScore": 30,
+      "result": "PASS"
+    },
+    "createdAt": "2024-01-15T08:30:00Z",
+    "updatedAt": "2024-03-01T14:00:00Z"
+  },
+  {
+    "id": "app-2",
+    "userId": "2",
+    "program": "Information Technology",
+    "status": "PENDING",
+    "documents": {
+      "resume": "jane_smith_resume.pdf",
+      "coverLetter": "jane_smith_cover.pdf",
+      "transcript": "jane_smith_transcript.pdf"
+    },
+    "demoSchedule": null,
+    "scores": null,
+    "createdAt": "2024-02-01T09:15:00Z",
+    "updatedAt": "2024-02-01T09:15:00Z"
+  },
+  {
+    "id": "app-3",
+    "userId": "1",
+    "program": "Mathematics",
+    "status": "REJECTED",
+    "documents": {
+      "resume": "john_doe_math_resume.pdf",
+      "coverLetter": "john_doe_math_cover.pdf",
+      "transcript": "john_doe_math_transcript.pdf"
+    },
+    "demoSchedule": null,
+    "scores": null,
+    "rejectionReason": "Insufficient experience in mathematics education",
+    "createdAt": "2023-11-01T10:00:00Z",
+    "updatedAt": "2023-11-15T16:30:00Z"
+  }
+]

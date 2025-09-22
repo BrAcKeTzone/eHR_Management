@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useApplicationStore } from "../../store/applicationStore";
 import { useReportStore } from "../../store/reportStore";
-import { DashboardCard } from "../../components/DashboardCard";
-import { Button } from "../../components/Button";
-import { Input } from "../../components/Input";
+import DashboardCard from "../../components/DashboardCard";
+import Button from "../../components/Button";
+import Input from "../../components/Input";
 import { formatDate } from "../../utils/formatDate";
 
 const Reports = () => {

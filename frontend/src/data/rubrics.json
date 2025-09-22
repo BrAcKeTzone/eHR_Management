@@ -1,0 +1,28 @@
+[
+  {
+    "id": "rubric-1",
+    "name": "Teaching Demo Evaluation",
+    "criteria": [
+      {
+        "name": "Communication Skills",
+        "description": "Clarity of explanation and student engagement",
+        "maxScore": 10,
+        "weight": 0.3
+      },
+      {
+        "name": "Technical Knowledge",
+        "description": "Depth of subject matter expertise",
+        "maxScore": 10,
+        "weight": 0.4
+      },
+      {
+        "name": "Presentation Skills",
+        "description": "Organization and delivery of lesson",
+        "maxScore": 10,
+        "weight": 0.3
+      }
+    ],
+    "passingScore": 21,
+    "totalMaxScore": 30
+  }
+]

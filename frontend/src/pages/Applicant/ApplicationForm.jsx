@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApplicationStore } from "../../store/applicationStore";
-import { Button } from "../../components/Button";
-import { Input } from "../../components/Input";
+import Button from "../../components/Button";
+import Input from "../../components/Input";
 
 const ApplicationForm = () => {
   const navigate = useNavigate();
