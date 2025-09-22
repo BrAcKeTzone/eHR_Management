@@ -2,58 +2,84 @@
   {
     "id": "app-1",
     "userId": "1",
-    "program": "Computer Science",
-    "status": "APPROVED",
-    "documents": {
-      "resume": "john_doe_resume.pdf",
-      "coverLetter": "john_doe_cover.pdf",
-      "transcript": "john_doe_transcript.pdf"
-    },
-    "demoSchedule": {
-      "date": "2024-03-15",
-      "time": "10:00",
+    "applicantName": "John Doe",
+    "applicantEmail": "applicant1@example.com",
+    "program": "Secondary Education - Mathematics",
+    "subjectSpecialization": "Mathematics",
+    "teachingExperience": "3 years of experience teaching mathematics at ABC High School. Developed innovative teaching methods for algebra and geometry. Led student math competitions and achieved 95% pass rate in final exams.",
+    "educationalBackground": "Bachelor of Science in Mathematics Education, XYZ University (2019). Magna Cum Laude graduate. Certified Professional Teacher (CPT) License.",
+    "status": "COMPLETED",
+    "submission_date": "2024-01-15T08:30:00Z",
+    "created_at": "2024-01-15T08:30:00Z",
+    "updated_at": "2024-03-01T14:00:00Z",
+    "attempt_number": 2,
+    "documents": [
+      "resume.pdf",
+      "transcript.pdf",
+      "teaching_license.pdf",
+      "government_id.pdf"
+    ],
+    "demo_schedule": {
+      "date": "2024-03-15T10:00:00Z",
+      "time": "10:00 AM",
       "location": "Room 101"
     },
-    "scores": {
-      "communication": 8,
-      "technicalSkills": 9,
-      "presentation": 7,
-      "totalScore": 24,
-      "maxScore": 30,
-      "result": "PASS"
+    "score": {
+      "total": 85,
+      "breakdown": {
+        "communication": 9,
+        "technicalSkills": 8,
+        "presentation": 8,
+        "classroom_management": 9
+      }
     },
-    "createdAt": "2024-01-15T08:30:00Z",
-    "updatedAt": "2024-03-01T14:00:00Z"
+    "result": "pass",
+    "rejection_reason": null
   },
   {
     "id": "app-2",
     "userId": "2",
-    "program": "Information Technology",
+    "applicantName": "Jane Smith",
+    "applicantEmail": "applicant2@example.com",
+    "program": "Elementary Education",
+    "subjectSpecialization": "English Language Arts",
+    "teachingExperience": "Fresh graduate with practice teaching experience at DEF Elementary School. Tutored students in reading comprehension and creative writing. Passionate about early childhood education.",
+    "educationalBackground": "Bachelor of Elementary Education, ABC University (2024). Dean's Lister for 4 consecutive semesters. Completed 400 hours of practice teaching.",
     "status": "PENDING",
-    "documents": {
-      "resume": "jane_smith_resume.pdf",
-      "coverLetter": "jane_smith_cover.pdf",
-      "transcript": "jane_smith_transcript.pdf"
-    },
-    "demoSchedule": null,
-    "scores": null,
-    "createdAt": "2024-02-01T09:15:00Z",
-    "updatedAt": "2024-02-01T09:15:00Z"
+    "submission_date": "2024-02-01T09:15:00Z",
+    "created_at": "2024-02-01T09:15:00Z",
+    "updated_at": "2024-02-01T09:15:00Z",
+    "attempt_number": 1,
+    "documents": [
+      "resume.pdf",
+      "transcript.pdf",
+      "teaching_license.pdf",
+      "government_id.pdf",
+      "medical_certificate.pdf"
+    ],
+    "demo_schedule": null,
+    "score": null,
+    "result": null,
+    "rejection_reason": null
   },
   {
     "id": "app-3",
     "userId": "1",
-    "program": "Mathematics",
+    "applicantName": "John Doe",
+    "applicantEmail": "applicant1@example.com",
+    "program": "Secondary Education - Science",
+    "subjectSpecialization": "Science (Biology/Chemistry/Physics)",
+    "teachingExperience": "1 year experience as substitute teacher in various science subjects. Strong background in laboratory instruction and science fair coordination.",
+    "educationalBackground": "Bachelor of Science in Biology, XYZ University (2020). Currently pursuing Master's in Science Education.",
     "status": "REJECTED",
-    "documents": {
-      "resume": "john_doe_math_resume.pdf",
-      "coverLetter": "john_doe_math_cover.pdf",
-      "transcript": "john_doe_math_transcript.pdf"
-    },
-    "demoSchedule": null,
-    "scores": null,
-    "rejectionReason": "Insufficient experience in mathematics education",
-    "createdAt": "2023-11-01T10:00:00Z",
-    "updatedAt": "2023-11-15T16:30:00Z"
+    "submission_date": "2023-11-01T10:00:00Z",
+    "created_at": "2023-11-01T10:00:00Z",
+    "updated_at": "2023-11-15T16:30:00Z",
+    "attempt_number": 1,
+    "documents": ["resume.pdf", "transcript.pdf", "government_id.pdf"],
+    "demo_schedule": null,
+    "score": null,
+    "result": "fail",
+    "rejection_reason": "Insufficient teaching experience in science education. Please gain more classroom experience and reapply."
   }
 ]

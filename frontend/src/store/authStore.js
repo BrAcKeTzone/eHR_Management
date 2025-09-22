@@ -24,6 +24,16 @@ export const useAuthStore = create(
       },
       generatedOtp: null,
 
+      // Forgot password phase state
+      forgotPasswordPhase: 1, // 1: Email, 2: OTP, 3: New Password, 4: Success
+      forgotPasswordData: {
+        email: "",
+        otp: "",
+        newPassword: "",
+        confirmPassword: "",
+      },
+      forgotPasswordOtp: null,
+
       // Actions
       login: async (credentials) => {
         try {
@@ -244,6 +254,133 @@ export const useAuthStore = create(
             confirmPassword: "",
           },
           generatedOtp: null,
+          error: null,
+        });
+      },
+
+      // Forgot Password Functions
+      // Phase 1: Send OTP for password reset
+      sendPasswordResetOtp: async (email) => {
+        try {
+          set({ loading: true, error: null });
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Check if email exists
+          const existingUser = usersData.find((u) => u.email === email);
+          if (!existingUser) {
+            throw new Error("Email address not found in our system");
+          }
+
+          // Generate random 6-digit OTP
+          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+          // In real app, send OTP via email service
+          console.log(`Password reset OTP sent to ${email}: ${otp}`);
+
+          set({
+            loading: false,
+            error: null,
+            forgotPasswordPhase: 2,
+            forgotPasswordData: { ...get().forgotPasswordData, email },
+            forgotPasswordOtp: otp,
+          });
+
+          return { message: `Password reset OTP sent to ${email}`, otp }; // In real app, don't return OTP
+        } catch (error) {
+          set({
+            loading: false,
+            error: error.message || "Failed to send password reset OTP",
+          });
+          throw error;
+        }
+      },
+
+      // Phase 2: Verify OTP for password reset
+      verifyPasswordResetOtp: async (otp) => {
+        try {
+          set({ loading: true, error: null });
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const { forgotPasswordOtp } = get();
+
+          if (otp !== forgotPasswordOtp) {
+            throw new Error("Invalid OTP. Please try again.");
+          }
+
+          set({
+            loading: false,
+            error: null,
+            forgotPasswordPhase: 3,
+            forgotPasswordData: { ...get().forgotPasswordData, otp },
+          });
+
+          return { message: "OTP verified successfully" };
+        } catch (error) {
+          set({
+            loading: false,
+            error: error.message || "OTP verification failed",
+          });
+          throw error;
+        }
+      },
+
+      // Phase 3: Reset password
+      resetPassword: async (passwordData) => {
+        try {
+          set({ loading: true, error: null });
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          const { forgotPasswordData } = get();
+
+          // Find user and update password
+          const userIndex = usersData.findIndex(
+            (u) => u.email === forgotPasswordData.email
+          );
+          if (userIndex === -1) {
+            throw new Error("User not found");
+          }
+
+          // Update password in dummy data (in real app, this would be sent to backend)
+          usersData[userIndex] = {
+            ...usersData[userIndex],
+            password: passwordData.newPassword,
+            updatedAt: new Date().toISOString(),
+          };
+
+          set({
+            loading: false,
+            error: null,
+            forgotPasswordPhase: 4,
+            forgotPasswordData: { ...forgotPasswordData, ...passwordData },
+          });
+
+          return { message: "Password reset successfully!" };
+        } catch (error) {
+          set({
+            loading: false,
+            error: error.message || "Password reset failed",
+          });
+          throw error;
+        }
+      },
+
+      // Reset forgot password process
+      resetForgotPassword: () => {
+        set({
+          forgotPasswordPhase: 1,
+          forgotPasswordData: {
+            email: "",
+            otp: "",
+            newPassword: "",
+            confirmPassword: "",
+          },
+          forgotPasswordOtp: null,
           error: null,
         });
       },

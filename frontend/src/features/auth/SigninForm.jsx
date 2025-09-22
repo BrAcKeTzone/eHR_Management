@@ -82,13 +82,6 @@ const SigninForm = () => {
             >
               HR: hr@bcfi.com / hr123456
             </button>
-            <button
-              type="button"
-              onClick={() => fillDemoCredentials("admin")}
-              className="block text-blue-600 hover:text-blue-800 underline"
-            >
-              HR Admin: admin@bcfi.com / admin123
-            </button>
           </div>
         </div>
 
@@ -138,6 +131,15 @@ const SigninForm = () => {
           >
             {loading ? <LoadingSpinner size="sm" /> : "Sign in"}
           </Button>
+
+          <div className="text-center">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+            >
+              Forgot your password?
+            </Link>
+          </div>
 
           <div className="text-center">
             <span className="text-sm text-gray-600">

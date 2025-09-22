@@ -5,6 +5,7 @@ import { useAuthStore } from "../store/authStore";
 // Auth pages
 import SignupPage from "../pages/SignupPage";
 import SigninPage from "../pages/SigninPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 
 // Applicant pages
 import ApplicantDashboard from "../pages/Applicant/Dashboard";
@@ -85,6 +86,15 @@ const AppRoutes = () => {
         element={
           <PublicRoute>
             <SigninPage />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPasswordPage />
           </PublicRoute>
         }
       />

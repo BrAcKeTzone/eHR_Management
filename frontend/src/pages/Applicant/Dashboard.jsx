@@ -49,7 +49,7 @@ const ApplicantDashboard = () => {
       {/* Welcome Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome, {user?.name}!
+          Welcome, {user?.firstName} {user?.lastName}!
         </h1>
         <p className="text-gray-600">
           Track your teaching application progress and manage your submissions.

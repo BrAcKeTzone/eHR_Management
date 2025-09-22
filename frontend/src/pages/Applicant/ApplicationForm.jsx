@@ -1,25 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApplicationStore } from "../../store/applicationStore";
+import { useAuthStore } from "../../store/authStore";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 
 const ApplicationForm = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const { createApplication, loading, error } = useApplicationStore();
 
   const [formData, setFormData] = useState({
     program: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    address: "",
-    education: "",
-    experience: "",
-    motivation: "",
+    teachingExperience: "",
+    subjectSpecialization: "",
+    educationalBackground: "",
     documents: [],
   });
+
+  // Pre-fill user information
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+      }));
+    }
+  }, [user]);
 
   const [documentPreviews, setDocumentPreviews] = useState([]);
 
@@ -31,6 +40,19 @@ const ApplicationForm = () => {
     "Secondary Education - Social Studies",
     "Special Education",
     "Physical Education",
+  ];
+
+  const specializations = [
+    "Mathematics",
+    "Science (Biology/Chemistry/Physics)",
+    "English Language Arts",
+    "Social Studies/History",
+    "Physical Education",
+    "Music",
+    "Arts",
+    "Computer Science/ICT",
+    "Filipino/Literature",
+    "Special Education",
   ];
 
   const requiredDocuments = [
@@ -52,9 +74,13 @@ const ApplicationForm = () => {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
+
+    // For demo purposes, we'll just store file names instead of actual files
+    const fileNames = files.map((file) => file.name);
+
     setFormData((prev) => ({
       ...prev,
-      documents: [...prev.documents, ...files],
+      documents: [...prev.documents, ...fileNames],
     }));
 
     // Create previews for new files
@@ -79,8 +105,14 @@ const ApplicationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!isFormValid()) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
     try {
       await createApplication(formData);
+      alert("Application submitted successfully!");
       navigate("/applicant/dashboard");
     } catch (error) {
       console.error("Failed to submit application:", error);
@@ -90,11 +122,9 @@ const ApplicationForm = () => {
   const isFormValid = () => {
     return (
       formData.program &&
-      formData.firstName &&
-      formData.lastName &&
-      formData.email &&
-      formData.phone &&
-      formData.education &&
+      formData.teachingExperience &&
+      formData.subjectSpecialization &&
+      formData.educationalBackground &&
       formData.documents.length > 0
     );
   };
@@ -141,54 +171,52 @@ const ApplicationForm = () => {
             </select>
           </div>
 
-          {/* Personal Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="First Name"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleInputChange}
-              required
-            />
-            <Input
-              label="Last Name"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Email Address"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-            />
-            <Input
-              label="Phone Number"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
+          {/* Subject Specialization */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Address
+              Subject Specialization <span className="text-red-500">*</span>
             </label>
-            <textarea
-              name="address"
-              value={formData.address}
+            <select
+              name="subjectSpecialization"
+              value={formData.subjectSpecialization}
               onChange={handleInputChange}
-              rows="3"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Complete address"
-            />
+              required
+            >
+              <option value="">Select your specialization</option>
+              {specializations.map((spec) => (
+                <option key={spec} value={spec}>
+                  {spec}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Applicant Information (Read-only) */}
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h3 className="text-lg font-medium text-gray-900 mb-3">
+              Applicant Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  First Name
+                </label>
+                <p className="text-gray-900">{user?.firstName}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Last Name
+                </label>
+                <p className="text-gray-900">{user?.lastName}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <p className="text-gray-900">{user?.email}</p>
+              </div>
+            </div>
           </div>
 
           {/* Educational Background */}
@@ -197,12 +225,12 @@ const ApplicationForm = () => {
               Educational Background <span className="text-red-500">*</span>
             </label>
             <textarea
-              name="education"
-              value={formData.education}
+              name="educationalBackground"
+              value={formData.educationalBackground}
               onChange={handleInputChange}
               rows="4"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="List your educational qualifications, degrees, and relevant certifications"
+              placeholder="List your educational qualifications, degrees, and relevant certifications. Include institution names, graduation years, and any honors received."
               required
             />
           </div>
@@ -210,30 +238,16 @@ const ApplicationForm = () => {
           {/* Teaching Experience */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Teaching Experience
+              Teaching Experience <span className="text-red-500">*</span>
             </label>
             <textarea
-              name="experience"
-              value={formData.experience}
+              name="teachingExperience"
+              value={formData.teachingExperience}
               onChange={handleInputChange}
               rows="4"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Describe your teaching experience, positions held, and relevant achievements"
-            />
-          </div>
-
-          {/* Motivation */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Why do you want to teach at Blancia College Foundation Inc.?
-            </label>
-            <textarea
-              name="motivation"
-              value={formData.motivation}
-              onChange={handleInputChange}
-              rows="4"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Share your motivation and what you can contribute to our institution"
+              placeholder="Describe your teaching experience, positions held, institutions, years of service, and relevant achievements. If you're a fresh graduate, describe any practice teaching, tutoring, or related experience."
+              required
             />
           </div>
 
