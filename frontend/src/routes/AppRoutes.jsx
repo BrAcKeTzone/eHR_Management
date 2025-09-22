@@ -32,7 +32,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
     // Redirect to appropriate dashboard based on role
-    if (user?.role === "hr" || user?.role === "admin") {
+    if (user?.role === "HR") {
       return <Navigate to="/hr/dashboard" replace />;
     } else {
       return <Navigate to="/applicant/dashboard" replace />;
@@ -48,7 +48,7 @@ const PublicRoute = ({ children }) => {
 
   if (isAuthenticated) {
     // Redirect to appropriate dashboard based on role
-    if (user?.role === "hr" || user?.role === "admin") {
+    if (user?.role === "HR") {
       return <Navigate to="/hr/dashboard" replace />;
     } else {
       return <Navigate to="/applicant/dashboard" replace />;
@@ -103,11 +103,11 @@ const AppRoutes = () => {
         <Route path="history" element={<ApplicationHistory />} />
       </Route>
 
-      {/* HR/Admin Routes */}
+      {/* HR Routes */}
       <Route
         path="/hr"
         element={
-          <ProtectedRoute allowedRoles={["hr", "admin"]}>
+          <ProtectedRoute allowedRoles={["HR"]}>
             <AdminLayout />
           </ProtectedRoute>
         }

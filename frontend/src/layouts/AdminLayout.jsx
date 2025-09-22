@@ -1,13 +1,13 @@
 import React from "react";
-import { useSelector } from "react-redux";
+import { useAuthStore } from "../store/authStore";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 
 const AdminLayout = ({ children }) => {
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuthStore();
 
-  if (!user || user.role !== "admin") {
-    return <p className="text-red-500">Access Denied: Admins Only</p>;
+  if (!user || user.role !== "HR") {
+    return <p className="text-red-500">Access Denied: HR Access Only</p>;
   }
 
   return (

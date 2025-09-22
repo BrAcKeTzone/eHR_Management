@@ -17,8 +17,6 @@ const Navbar = () => {
     switch (role) {
       case "HR":
         return "HR Manager";
-      case "ADMIN":
-        return "Administrator";
       case "APPLICANT":
         return "Applicant";
       default:

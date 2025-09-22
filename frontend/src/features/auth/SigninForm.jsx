@@ -87,7 +87,7 @@ const SigninForm = () => {
               onClick={() => fillDemoCredentials("admin")}
               className="block text-blue-600 hover:text-blue-800 underline"
             >
-              Admin: admin@bcfi.com / admin123
+              HR Admin: admin@bcfi.com / admin123
             </button>
           </div>
         </div>

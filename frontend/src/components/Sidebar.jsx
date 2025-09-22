@@ -73,7 +73,7 @@ const Sidebar = () => {
           ),
         },
       ];
-    } else if (role === "HR" || role === "ADMIN") {
+    } else if (role === "HR") {
       return [
         {
           name: "Dashboard",

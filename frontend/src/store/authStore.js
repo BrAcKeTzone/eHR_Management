@@ -12,6 +12,18 @@ export const useAuthStore = create(
       loading: false,
       error: null,
 
+      // Signup phase state
+      signupPhase: 1, // 1: Email, 2: OTP, 3: Personal Details, 4: Success
+      signupData: {
+        email: "",
+        otp: "",
+        firstName: "",
+        lastName: "",
+        password: "",
+        confirmPassword: "",
+      },
+      generatedOtp: null,
+
       // Actions
       login: async (credentials) => {
         try {
@@ -103,6 +115,137 @@ export const useAuthStore = create(
           });
           throw error;
         }
+      },
+
+      // Phase 1: Send OTP to email
+      sendOtp: async (email) => {
+        try {
+          set({ loading: true, error: null });
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Check if email already exists
+          const existingUser = usersData.find((u) => u.email === email);
+          if (existingUser) {
+            throw new Error("Email already registered");
+          }
+
+          // Generate random 6-digit OTP
+          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+          // In real app, send OTP via email service
+          console.log(`OTP sent to ${email}: ${otp}`);
+
+          set({
+            loading: false,
+            error: null,
+            signupPhase: 2,
+            signupData: { ...get().signupData, email },
+            generatedOtp: otp,
+          });
+
+          return { message: `OTP sent to ${email}`, otp }; // In real app, don't return OTP
+        } catch (error) {
+          set({
+            loading: false,
+            error: error.message || "Failed to send OTP",
+          });
+          throw error;
+        }
+      },
+
+      // Phase 2: Verify OTP
+      verifyOtp: async (otp) => {
+        try {
+          set({ loading: true, error: null });
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const { generatedOtp } = get();
+
+          if (otp !== generatedOtp) {
+            throw new Error("Invalid OTP. Please try again.");
+          }
+
+          set({
+            loading: false,
+            error: null,
+            signupPhase: 3,
+            signupData: { ...get().signupData, otp },
+          });
+
+          return { message: "OTP verified successfully" };
+        } catch (error) {
+          set({
+            loading: false,
+            error: error.message || "OTP verification failed",
+          });
+          throw error;
+        }
+      },
+
+      // Phase 3: Complete registration
+      completeRegistration: async (personalData) => {
+        try {
+          set({ loading: true, error: null });
+
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          const { signupData } = get();
+
+          // Create new user
+          const newUser = {
+            id: Date.now().toString(),
+            email: signupData.email,
+            firstName: personalData.firstName,
+            lastName: personalData.lastName,
+            role: "APPLICANT",
+            isVerified: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          // Add to users array (in memory only for demo)
+          usersData.push({ ...newUser, password: personalData.password });
+
+          set({
+            loading: false,
+            error: null,
+            signupPhase: 4,
+            signupData: { ...signupData, ...personalData },
+          });
+
+          return {
+            message: "Registration completed successfully!",
+            user: newUser,
+          };
+        } catch (error) {
+          set({
+            loading: false,
+            error: error.message || "Registration failed",
+          });
+          throw error;
+        }
+      },
+
+      // Reset signup process
+      resetSignup: () => {
+        set({
+          signupPhase: 1,
+          signupData: {
+            email: "",
+            otp: "",
+            firstName: "",
+            lastName: "",
+            password: "",
+            confirmPassword: "",
+          },
+          generatedOtp: null,
+          error: null,
+        });
       },
 
       logout: async () => {
@@ -273,7 +416,7 @@ export const useAuthStore = create(
 
       isHROrAdmin: () => {
         const { user } = get();
-        return user?.role === "HR" || user?.role === "ADMIN";
+        return user?.role === "HR";
       },
     }),
     {
