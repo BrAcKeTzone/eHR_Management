@@ -12,15 +12,29 @@ const ApplicationHistory = () => {
   const [viewMode, setViewMode] = useState("grid"); // grid or list
 
   useEffect(() => {
-    if (user) {
-      fetchApplications();
-    }
-  }, [user, fetchApplications]);
+    console.log("ApplicationHistory: useEffect running", {
+      user,
+      applications,
+    });
+    fetchApplications()
+      .then((result) => {
+        console.log("fetchApplications result:", result);
+      })
+      .catch((error) => {
+        console.error("fetchApplications error:", error);
+      });
+  }, [fetchApplications]);
 
-  // Filter applications for current user
-  const userApplications = applications.filter(
-    (app) => app.applicantEmail === user?.email
-  );
+  // Show all applications for now (for testing/demo purposes)
+  // Later this can be filtered by user: apps.filter(app => app.applicant_email === user?.email)
+  const userApplications = applications;
+
+  console.log("ApplicationHistory render:", {
+    applications,
+    userApplications,
+    loading,
+    applicationsLength: applications?.length,
+  });
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -81,7 +95,11 @@ const ApplicationHistory = () => {
           <h3 className="text-lg font-semibold text-gray-900">
             {application.program}
           </h3>
-          <p className="text-sm text-gray-600">{application.position}</p>
+          <p className="text-sm text-gray-600">
+            {application.subject_specialization ||
+              application.subjectSpecialization ||
+              "Teaching Position"}
+          </p>
         </div>
         <StatusBadge
           status={application.status}
@@ -98,13 +116,13 @@ const ApplicationHistory = () => {
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Submitted:</span>
           <span className="text-gray-900">
-            {formatDate(application.submittedAt)}
+            {formatDate(application.created_at || application.submittedAt)}
           </span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Last Updated:</span>
           <span className="text-gray-900">
-            {formatDate(application.updatedAt)}
+            {formatDate(application.updated_at || application.updatedAt)}
           </span>
         </div>
       </div>
@@ -139,7 +157,10 @@ const ApplicationHistory = () => {
       {/* Quick Info */}
       <div className="flex justify-between items-center text-sm">
         <span className="text-gray-600">
-          {application.documents?.length || 0} documents uploaded
+          {Array.isArray(application.documents)
+            ? application.documents.length
+            : 0}{" "}
+          documents uploaded
         </span>
         <span className="text-blue-600 font-medium">View Details →</span>
       </div>
@@ -158,7 +179,7 @@ const ApplicationHistory = () => {
             #{application.id}
           </div>
           <div className="text-sm text-gray-500">
-            {formatDate(application.submittedAt)}
+            {formatDate(application.created_at || application.submittedAt)}
           </div>
         </div>
       </td>
@@ -167,7 +188,11 @@ const ApplicationHistory = () => {
           <div className="text-sm font-medium text-gray-900">
             {application.program}
           </div>
-          <div className="text-sm text-gray-500">{application.position}</div>
+          <div className="text-sm text-gray-500">
+            {application.subject_specialization ||
+              application.subjectSpecialization ||
+              "Teaching Position"}
+          </div>
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
@@ -177,7 +202,7 @@ const ApplicationHistory = () => {
         />
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {formatDate(application.updatedAt)}
+        {formatDate(application.updated_at || application.updatedAt)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
         <div className="flex items-center">
@@ -325,18 +350,12 @@ const ApplicationHistory = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Position
-                      </label>
-                      <p className="text-sm text-gray-900">
-                        {selectedApplication.position}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
                         Subject Specialization
                       </label>
                       <p className="text-sm text-gray-900">
-                        {selectedApplication.subjectSpecialization}
+                        {selectedApplication.subject_specialization ||
+                          selectedApplication.subjectSpecialization ||
+                          "Teaching Position"}
                       </p>
                     </div>
                     <div>
@@ -361,7 +380,10 @@ const ApplicationHistory = () => {
                         Submitted
                       </label>
                       <p className="text-sm text-gray-900">
-                        {formatDateTime(selectedApplication.submittedAt)}
+                        {formatDateTime(
+                          selectedApplication.created_at ||
+                            selectedApplication.submittedAt
+                        )}
                       </p>
                     </div>
                     <div>
@@ -369,25 +391,40 @@ const ApplicationHistory = () => {
                         Last Updated
                       </label>
                       <p className="text-sm text-gray-900">
-                        {formatDateTime(selectedApplication.updatedAt)}
+                        {formatDateTime(
+                          selectedApplication.updated_at ||
+                            selectedApplication.updatedAt
+                        )}
                       </p>
                     </div>
-                    {selectedApplication.demoSchedule && (
+                    {(selectedApplication.demo_schedule ||
+                      selectedApplication.demoSchedule) && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
                           Demo Schedule
                         </label>
-                        <p className="text-sm text-gray-900">
-                          {formatDateTime(
-                            selectedApplication.demoSchedule.date
-                          )}{" "}
-                          - {selectedApplication.demoSchedule.time}
-                        </p>
-                        {selectedApplication.demoSchedule.location && (
-                          <p className="text-xs text-gray-600">
-                            {selectedApplication.demoSchedule.location}
-                          </p>
-                        )}
+                        {(() => {
+                          const schedule =
+                            selectedApplication.demo_schedule ||
+                            selectedApplication.demoSchedule;
+                          return (
+                            <>
+                              <p className="text-sm text-gray-900">
+                                {formatDate(schedule.date)} at {schedule.time}
+                              </p>
+                              {schedule.location && (
+                                <p className="text-xs text-gray-600">
+                                  {schedule.location}
+                                </p>
+                              )}
+                              {schedule.notes && (
+                                <p className="text-xs text-gray-600 mt-1">
+                                  Note: {schedule.notes}
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
@@ -395,31 +432,48 @@ const ApplicationHistory = () => {
               </div>
 
               {/* Educational Background */}
-              {selectedApplication.educationalBackground && (
+              {(selectedApplication.education ||
+                selectedApplication.educationalBackground) && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Educational Background
                   </h3>
                   <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-md">
-                    {selectedApplication.educationalBackground}
+                    {selectedApplication.education ||
+                      selectedApplication.educationalBackground}
                   </p>
                 </div>
               )}
 
               {/* Teaching Experience */}
-              {selectedApplication.teachingExperience && (
+              {(selectedApplication.experience ||
+                selectedApplication.teachingExperience) && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Teaching Experience
                   </h3>
                   <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-md">
-                    {selectedApplication.teachingExperience}
+                    {selectedApplication.experience ||
+                      selectedApplication.teachingExperience}
+                  </p>
+                </div>
+              )}
+
+              {/* Motivation */}
+              {selectedApplication.motivation && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Motivation
+                  </h3>
+                  <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-md">
+                    {selectedApplication.motivation}
                   </p>
                 </div>
               )}
 
               {/* Documents */}
               {selectedApplication.documents &&
+                Array.isArray(selectedApplication.documents) &&
                 selectedApplication.documents.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -446,10 +500,14 @@ const ApplicationHistory = () => {
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">
-                              {doc}
+                              {typeof doc === "object" ? doc.name : doc}
                             </p>
                             <p className="text-xs text-gray-500">
-                              Uploaded document
+                              {typeof doc === "object"
+                                ? `${doc.type} - ${(doc.size / 1024).toFixed(
+                                    1
+                                  )} KB`
+                                : "Uploaded document"}
                             </p>
                           </div>
                         </div>
@@ -459,43 +517,53 @@ const ApplicationHistory = () => {
                 )}
 
               {/* Scores */}
-              {selectedApplication.scores && (
+              {(selectedApplication.scores ||
+                selectedApplication.total_score) && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Evaluation Scores
                   </h3>
                   <div className="bg-gray-50 p-4 rounded-md">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {selectedApplication.scores.overall}
+                    {selectedApplication.total_score && (
+                      <div className="text-center mb-4">
+                        <div className="text-3xl font-bold text-blue-600">
+                          {selectedApplication.total_score}
                         </div>
-                        <div className="text-sm text-gray-600">
-                          Overall Score
-                        </div>
+                        <div className="text-sm text-gray-600">Total Score</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
-                          {selectedApplication.scores.technical}
+                    )}
+                    {selectedApplication.scores &&
+                      Array.isArray(selectedApplication.scores) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {selectedApplication.scores.map((score, index) => (
+                            <div key={index} className="text-center">
+                              <div className="text-2xl font-bold text-green-600">
+                                {score.score}
+                              </div>
+                              <div className="text-sm text-gray-600 capitalize">
+                                {score.criteria_id.replace(/_/g, " ")}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div className="text-sm text-gray-600">Technical</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">
-                          {selectedApplication.scores.teaching}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          Teaching Skills
-                        </div>
-                      </div>
-                    </div>
-                    {selectedApplication.scores.comments && (
+                      )}
+                    {selectedApplication.feedback && (
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Evaluator Comments
+                          Evaluator Feedback
                         </label>
                         <p className="text-sm text-gray-700">
-                          {selectedApplication.scores.comments}
+                          {selectedApplication.feedback}
+                        </p>
+                      </div>
+                    )}
+                    {selectedApplication.rejection_reason && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Rejection Reason
+                        </label>
+                        <p className="text-sm text-red-700">
+                          {selectedApplication.rejection_reason}
                         </p>
                       </div>
                     )}

@@ -274,6 +274,15 @@ export const sleep = (ms) => {
 };
 
 /**
+ * Delay execution for a given number of milliseconds (alias for sleep)
+ * @param {number} ms - Milliseconds to delay
+ * @returns {Promise} Promise that resolves after the given time
+ */
+export const delay = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+/**
  * Download a file from blob data
  * @param {Blob} blob - Blob data
  * @param {string} filename - File name

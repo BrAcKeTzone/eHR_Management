@@ -7,6 +7,21 @@ export interface CreateApplicationData {
   program: string;
   documents?: string;
   applicantId: number;
+  // Additional application fields from frontend
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  civilStatus?: string;
+  nationality?: string;
+  position?: string;
+  subjectSpecialization?: string;
+  educationalBackground?: string;
+  teachingExperience?: string;
+  motivation?: string;
 }
 
 export interface UpdateApplicationData {
@@ -23,10 +38,20 @@ export interface ApplicationWithApplicant extends Application {
 
 class ApplicationService {
   async createApplication(data: CreateApplicationData): Promise<Application> {
+    // Ensure applicantId is a number
+    const applicantId =
+      typeof data.applicantId === "string"
+        ? parseInt(data.applicantId)
+        : data.applicantId;
+
+    if (!applicantId || isNaN(applicantId)) {
+      throw new ApiError(400, "Invalid applicant ID");
+    }
+
     // Check if user has an active application
     const existingApplication = await prisma.application.findFirst({
       where: {
-        applicantId: data.applicantId,
+        applicantId: applicantId,
         status: {
           in: [ApplicationStatus.PENDING, ApplicationStatus.APPROVED],
         },
@@ -42,7 +67,7 @@ class ApplicationService {
 
     // Get the next attempt number for this applicant
     const lastApplication = await prisma.application.findFirst({
-      where: { applicantId: data.applicantId },
+      where: { applicantId: applicantId },
       orderBy: { attemptNumber: "desc" },
     });
 
@@ -53,6 +78,7 @@ class ApplicationService {
     const application = await prisma.application.create({
       data: {
         ...data,
+        applicantId: applicantId,
         attemptNumber,
         status: ApplicationStatus.PENDING,
       },
@@ -60,7 +86,7 @@ class ApplicationService {
 
     // Get applicant details for notifications
     const applicant = await prisma.user.findUnique({
-      where: { id: data.applicantId },
+      where: { id: applicantId },
     });
 
     if (applicant) {
@@ -100,8 +126,12 @@ class ApplicationService {
   async getApplicationsByApplicant(
     applicantId: number
   ): Promise<Application[]> {
+    // Ensure applicantId is a number
+    const id =
+      typeof applicantId === "string" ? parseInt(applicantId) : applicantId;
+
     return await prisma.application.findMany({
-      where: { applicantId },
+      where: { applicantId: id },
       orderBy: { attemptNumber: "desc" },
     });
   }
@@ -109,9 +139,13 @@ class ApplicationService {
   async getActiveApplicationByApplicant(
     applicantId: number
   ): Promise<Application | null> {
+    // Ensure applicantId is a number
+    const id =
+      typeof applicantId === "string" ? parseInt(applicantId) : applicantId;
+
     return await prisma.application.findFirst({
       where: {
-        applicantId,
+        applicantId: id,
         status: {
           in: [ApplicationStatus.PENDING, ApplicationStatus.APPROVED],
         },

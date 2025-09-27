@@ -12,6 +12,10 @@ import {
   deleteApplication,
 } from "./applications.controller";
 import authMiddleware from "../../middlewares/auth.middleware";
+import {
+  uploadDocuments,
+  handleUploadError,
+} from "../../middlewares/upload.middleware";
 
 const router = Router();
 
@@ -19,7 +23,7 @@ const router = Router();
 router.use(authMiddleware);
 
 // Applicant routes
-router.post("/", createApplication);
+router.post("/", uploadDocuments, handleUploadError, createApplication);
 router.get("/my-applications", getMyApplications);
 router.get("/my-active-application", getMyActiveApplication);
 

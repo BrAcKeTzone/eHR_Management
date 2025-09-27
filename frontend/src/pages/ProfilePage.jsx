@@ -11,6 +11,7 @@ const ProfilePage = () => {
   const {
     user,
     updateProfile,
+    getProfile,
     changePasswordWithOtp,
     sendOtpForPasswordChange,
     loading,
@@ -36,6 +37,22 @@ const ProfilePage = () => {
   const [passwordStep, setPasswordStep] = useState(1); // 1: Send OTP, 2: Verify OTP & Change Password
   const [otpSent, setOtpSent] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+
+  useEffect(() => {
+    // Fetch latest profile data when component mounts
+    const refreshProfile = async () => {
+      try {
+        await getProfile();
+      } catch (error) {
+        console.error("Failed to refresh profile:", error);
+      }
+    };
+
+    if (user) {
+      refreshProfile();
+    }
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -60,9 +77,31 @@ const ProfilePage = () => {
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
+    setProfileSuccess("");
+
+    // Basic validation
+    if (!profileData.name.trim()) {
+      alert("Name is required");
+      return;
+    }
+
+    if (!profileData.email.trim()) {
+      alert("Email is required");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(profileData.email)) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
     try {
       await updateProfile(profileData);
       setIsEditing(false);
+      setProfileSuccess("Profile updated successfully!");
+      setTimeout(() => setProfileSuccess(""), 3000);
     } catch (error) {
       console.error("Failed to update profile:", error);
     }
@@ -158,6 +197,13 @@ const ProfilePage = () => {
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
           {error}
+        </div>
+      )}
+
+      {/* Success Display */}
+      {profileSuccess && (
+        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+          {profileSuccess}
         </div>
       )}
 

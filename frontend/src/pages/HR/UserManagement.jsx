@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useUserManagementStore } from "../../store/userManagementStore";
 import { useAuthStore } from "../../store/authStore";
 import DashboardCard from "../../components/DashboardCard";
@@ -7,24 +7,47 @@ import Table from "../../components/Table";
 import Modal from "../../components/Modal";
 import Input from "../../components/Input";
 import PasswordInput from "../../components/PasswordInput";
+import Pagination from "../../components/Pagination";
 import { formatDate } from "../../utils/formatDate";
 
 const UserManagement = () => {
   const { user: currentUser } = useAuthStore();
-  const { users, getAllUsers, deleteUser, addUser, loading, error } =
-    useUserManagementStore();
+  const {
+    users,
+    usersData,
+    totalPages,
+    currentPage,
+    totalCount,
+    getAllUsers,
+    deleteUser,
+    addUser,
+    getUserStats,
+    loading,
+    error,
+  } = useUserManagementStore();
 
-  const [filteredUsers, setFilteredUsers] = useState([]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userStats, setUserStats] = useState({
+    total: 0,
+    hr: 0,
+    applicants: 0,
+    recent: 0,
+  });
 
   const [filters, setFilters] = useState({
     role: "",
     search: "",
-    startDate: "",
-    endDate: "",
+    page: 1,
+    limit: 10,
+    sortBy: "createdAt",
+    sortOrder: "desc",
   });
+
+  // Separate state for search input to avoid triggering API calls on every keystroke
+  const [searchInput, setSearchInput] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   const [newUserData, setNewUserData] = useState({
     firstName: "",
@@ -39,46 +62,76 @@ const UserManagement = () => {
 
   const [addUserError, setAddUserError] = useState("");
 
+  // Load initial data
   useEffect(() => {
-    getAllUsers();
-  }, [getAllUsers]);
+    loadUsers();
+    loadStats();
+  }, []);
 
+  // Debounced search effect
   useEffect(() => {
-    if (users) {
-      let filtered = [...users];
-
-      // Filter by role
-      if (filters.role) {
-        filtered = filtered.filter((user) => user.role === filters.role);
-      }
-
-      // Filter by search (name or email)
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filtered = filtered.filter(
-          (user) =>
-            user.firstName.toLowerCase().includes(searchLower) ||
-            user.lastName.toLowerCase().includes(searchLower) ||
-            user.email.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Filter by date range
-      if (filters.startDate) {
-        filtered = filtered.filter(
-          (user) => new Date(user.createdAt) >= new Date(filters.startDate)
-        );
-      }
-
-      if (filters.endDate) {
-        filtered = filtered.filter(
-          (user) => new Date(user.createdAt) <= new Date(filters.endDate)
-        );
-      }
-
-      setFilteredUsers(filtered);
+    if (searchInput !== filters.search) {
+      setIsSearching(true);
     }
-  }, [users, filters]);
+
+    const timeoutId = setTimeout(() => {
+      setFilters((prev) => ({ ...prev, search: searchInput, page: 1 }));
+      setIsSearching(false);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
+
+  // Reload users when filters change (except search since it's handled by debounce)
+  useEffect(() => {
+    loadUsers();
+  }, [
+    filters.role,
+    filters.page,
+    filters.limit,
+    filters.sortBy,
+    filters.sortOrder,
+    filters.search,
+  ]);
+
+  const loadUsers = async () => {
+    try {
+      const queryParams = {
+        page: filters.page,
+        limit: filters.limit,
+        ...(filters.role && { role: filters.role }),
+        ...(filters.search &&
+          filters.search.trim() && { search: filters.search.trim() }),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder,
+      };
+      await getAllUsers(queryParams);
+    } catch (error) {
+      console.error("Failed to load users:", error);
+      // Don't throw the error to prevent UI crashes
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const statsData = await getUserStats();
+      setUserStats(statsData);
+    } catch (error) {
+      console.error("Failed to load user stats:", error);
+    }
+  };
+
+  const handlePageChange = (page) => {
+    setFilters((prev) => ({ ...prev, page }));
+  };
+
+  const handleFilterChange = (newFilters) => {
+    setFilters((prev) => ({ ...prev, ...newFilters, page: 1 })); // Reset to page 1 when filters change
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchInput(value);
+  };
 
   const handleDeleteUser = (user) => {
     if (user.id === currentUser?.id) {
@@ -95,8 +148,9 @@ const UserManagement = () => {
         await deleteUser(selectedUser.id);
         setShowDeleteModal(false);
         setSelectedUser(null);
-        // Refresh users list
-        getAllUsers();
+        // Refresh users list and stats
+        await loadUsers();
+        await loadStats();
       } catch (error) {
         console.error("Failed to delete user:", error);
       }
@@ -141,8 +195,9 @@ const UserManagement = () => {
         confirmPassword: "",
       });
 
-      // Refresh users list
-      getAllUsers();
+      // Refresh users list and stats
+      await loadUsers();
+      await loadStats();
     } catch (error) {
       setAddUserError(error.message || "Failed to add user");
     }
@@ -176,9 +231,7 @@ const UserManagement = () => {
       accessor: "name",
       cell: (row) => (
         <div>
-          <p className="font-medium text-gray-900">
-            {row.firstName} {row.lastName}
-          </p>
+          <p className="font-medium text-gray-900">{row.name}</p>
           <p className="text-sm text-gray-500">{row.email}</p>
         </div>
       ),
@@ -198,10 +251,10 @@ const UserManagement = () => {
     },
     {
       header: "Phone",
-      accessor: "phoneNumber",
+      accessor: "phone",
       cell: (row) => (
         <div className="text-sm text-gray-600">
-          {row.phoneNumber || "Not provided"}
+          {row.phone || "Not provided"}
         </div>
       ),
     },
@@ -235,21 +288,20 @@ const UserManagement = () => {
     },
   ];
 
-  const stats = {
-    total: filteredUsers.length,
-    hr: filteredUsers.filter((user) => user.role === "HR").length,
-    applicants: filteredUsers.filter((user) => user.role === "APPLICANT")
-      .length,
+  // Display stats from API
+  const displayStats = {
+    total: userStats.total || 0,
+    hr: userStats.hr || 0,
+    applicants: userStats.applicants || 0,
   };
 
-  if (loading && !users) {
+  if (loading && (!users || users.length === 0)) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -273,19 +325,19 @@ const UserManagement = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <DashboardCard title="Total Users" className="text-center">
           <div className="text-2xl sm:text-3xl font-bold text-blue-600">
-            {stats.total}
+            {displayStats.total}
           </div>
         </DashboardCard>
 
         <DashboardCard title="HR Managers" className="text-center">
           <div className="text-2xl sm:text-3xl font-bold text-purple-600">
-            {stats.hr}
+            {displayStats.hr}
           </div>
         </DashboardCard>
 
         <DashboardCard title="Applicants" className="text-center">
           <div className="text-2xl sm:text-3xl font-bold text-blue-600">
-            {stats.applicants}
+            {displayStats.applicants}
           </div>
         </DashboardCard>
       </div>
@@ -312,7 +364,7 @@ const UserManagement = () => {
             </label>
             <select
               value={filters.role}
-              onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+              onChange={(e) => handleFilterChange({ role: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Roles</option>
@@ -321,42 +373,66 @@ const UserManagement = () => {
             </select>
           </div>
 
-          <Input
-            label="Search"
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            placeholder="Name or email"
-          />
+          <div className="relative">
+            <Input
+              label="Search"
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Name or email"
+            />
+            {isSearching && (
+              <div className="absolute right-2 top-8 transform">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+          </div>
 
-          <Input
-            label="From Date"
-            type="date"
-            value={filters.startDate}
-            onChange={(e) =>
-              setFilters({ ...filters, startDate: e.target.value })
-            }
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Sort By
+            </label>
+            <select
+              value={filters.sortBy}
+              onChange={(e) => handleFilterChange({ sortBy: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="createdAt">Created Date</option>
+              <option value="name">Name</option>
+              <option value="email">Email</option>
+              <option value="role">Role</option>
+            </select>
+          </div>
 
-          <Input
-            label="To Date"
-            type="date"
-            value={filters.endDate}
-            onChange={(e) =>
-              setFilters({ ...filters, endDate: e.target.value })
-            }
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Sort Order
+            </label>
+            <select
+              value={filters.sortOrder}
+              onChange={(e) =>
+                handleFilterChange({ sortOrder: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </div>
         </div>
 
         <div className="mt-4 flex justify-end">
           <Button
-            onClick={() =>
+            onClick={() => {
               setFilters({
                 role: "",
                 search: "",
-                startDate: "",
-                endDate: "",
-              })
-            }
+                page: 1,
+                limit: 10,
+                sortBy: "createdAt",
+                sortOrder: "desc",
+              });
+              setSearchInput(""); // Also clear the search input
+            }}
             variant="outline"
           >
             Clear Filters
@@ -365,17 +441,21 @@ const UserManagement = () => {
       </DashboardCard>
 
       {/* Users Table */}
-      <DashboardCard title={`Users (${filteredUsers.length})`}>
-        {filteredUsers.length > 0 ? (
+      <DashboardCard
+        title={`Users (${totalCount || 0})${
+          filters.search || filters.role ? " - Filtered" : ""
+        }`}
+      >
+        {users && users.length > 0 ? (
           <div className="mt-4">
             {/* Desktop Table View */}
             <div className="hidden lg:block">
-              <Table columns={usersColumns} data={filteredUsers} />
+              <Table columns={usersColumns} data={users} />
             </div>
 
             {/* Mobile Card View */}
             <div className="lg:hidden space-y-4">
-              {filteredUsers.map((user, index) => (
+              {users.map((user, index) => (
                 <div
                   key={index}
                   className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
@@ -383,13 +463,13 @@ const UserManagement = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 break-words">
-                        {user.firstName} {user.lastName}
+                        {user.name}
                       </h3>
                       <p className="text-sm text-gray-500 break-all">
                         {user.email}
                       </p>
                       <p className="text-sm text-gray-600 mt-1">
-                        {user.phoneNumber || "No phone provided"}
+                        {user.phone || "No phone provided"}
                       </p>
                     </div>
                     <div className="flex flex-col items-end space-y-1">
@@ -429,12 +509,48 @@ const UserManagement = () => {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalCount={totalCount}
+                  itemsPerPage={filters.limit}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500">
-              No users found matching your criteria.
+              {loading || isSearching
+                ? "Loading users..."
+                : filters.search
+                ? `No users found matching "${filters.search}"`
+                : "No users found matching your criteria."}
             </p>
+            {!loading && !isSearching && (filters.search || filters.role) && (
+              <Button
+                onClick={() => {
+                  setFilters({
+                    role: "",
+                    search: "",
+                    page: 1,
+                    limit: 10,
+                    sortBy: "createdAt",
+                    sortOrder: "desc",
+                  });
+                  setSearchInput("");
+                }}
+                variant="outline"
+                className="mt-3"
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
         )}
       </DashboardCard>
@@ -610,10 +726,7 @@ const UserManagement = () => {
         <div className="space-y-4">
           <p className="text-gray-600">
             Are you sure you want to delete the user{" "}
-            <strong>
-              {selectedUser?.firstName} {selectedUser?.lastName}
-            </strong>
-            ? This action cannot be undone.
+            <strong>{selectedUser?.name}</strong>? This action cannot be undone.
           </p>
 
           <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">

@@ -1,31 +1,47 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import usersData from "../data/users.json";
-
-// Create a working copy of the users data that can be modified
-// This will be synchronized with the auth store
-let workingUsersData = [...usersData];
-
-// Simulate API delay
-const apiDelay = () =>
-  new Promise((resolve) => setTimeout(resolve, Math.random() * 1000 + 500));
+import userApi from "../api/userApi";
 
 export const useUserManagementStore = create(
   persist(
     (set, get) => ({
-      users: workingUsersData,
+      users: [],
+      usersData: null,
       loading: false,
       error: null,
+      totalPages: 0,
+      currentPage: 1,
+      totalCount: 0,
 
-      // Get all users
-      getAllUsers: async () => {
+      // Get all users with pagination and filtering
+      getAllUsers: async (options = {}) => {
         set({ loading: true, error: null });
         try {
-          await apiDelay();
-          // Use the current working data
-          set({ users: workingUsersData, loading: false });
+          const response = await userApi.getAllUsers(options);
+          set({
+            users: response.data.users || [],
+            usersData: response.data,
+            totalPages: response.data.totalPages || 0,
+            currentPage: response.data.currentPage || 1,
+            totalCount: response.data.totalCount || 0,
+            loading: false,
+          });
+          return response.data;
         } catch (error) {
-          set({ error: error.message, loading: false });
+          console.error("Error fetching users:", error);
+          set({
+            error:
+              error.response?.data?.message ||
+              error.message ||
+              "Failed to fetch users",
+            loading: false,
+            users: [], // Clear users on error
+            totalPages: 0,
+            currentPage: 1,
+            totalCount: 0,
+          });
+          // Don't throw error to prevent UI crashes during search
+          return { users: [], totalCount: 0, totalPages: 0, currentPage: 1 };
         }
       },
 
@@ -33,50 +49,28 @@ export const useUserManagementStore = create(
       addUser: async (userData) => {
         set({ loading: true, error: null });
         try {
-          await apiDelay();
-
-          const users = get().users;
-
-          // Check if email already exists
-          const existingUser = users.find(
-            (user) => user.email === userData.email
-          );
-          if (existingUser) {
-            throw new Error("A user with this email already exists");
-          }
-
-          // Generate new user ID
-          const newId = (
-            Math.max(...users.map((u) => parseInt(u.id))) + 1
-          ).toString();
-
-          const newUser = {
-            id: newId,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
+          // Map frontend field names to backend field names
+          const mappedUserData = {
             email: userData.email,
-            role: userData.role,
-            phoneNumber: userData.phoneNumber || "",
-            address: userData.address || "",
-            emailVerified: userData.role === "HR" ? true : false, // Auto-verify HR accounts
-            isVerified: userData.role === "HR" ? true : false,
             password: userData.password,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            passwordChangedAt: new Date().toISOString(),
-            lastLoginAt: null,
+            name: `${userData.firstName} ${userData.lastName}`,
+            phone: userData.phoneNumber || "",
+            role: userData.role,
           };
 
-          const updatedUsers = [...users, newUser];
-          set({ users: updatedUsers, loading: false });
+          const response = await userApi.createUser(mappedUserData);
 
-          // Sync with the working data and auth store
-          workingUsersData.push(newUser);
-          usersData.push(newUser);
+          // Refresh the users list
+          const { getAllUsers } = get();
+          await getAllUsers();
 
-          return newUser;
+          set({ loading: false });
+          return response.data;
         } catch (error) {
-          set({ error: error.message, loading: false });
+          set({
+            error: error.response?.data?.message || error.message,
+            loading: false,
+          });
           throw error;
         }
       },
@@ -85,52 +79,34 @@ export const useUserManagementStore = create(
       updateUser: async (userId, userData) => {
         set({ loading: true, error: null });
         try {
-          await apiDelay();
-
-          const users = get().users;
-          const userIndex = users.findIndex((user) => user.id === userId);
-
-          if (userIndex === -1) {
-            throw new Error("User not found");
-          }
-
-          // Check if email already exists for other users
-          if (userData.email) {
-            const existingUser = users.find(
-              (user) => user.email === userData.email && user.id !== userId
-            );
-            if (existingUser) {
-              throw new Error("A user with this email already exists");
-            }
-          }
-
-          const updatedUser = {
-            ...users[userIndex],
+          // Map frontend field names to backend field names if needed
+          const mappedUserData = {
             ...userData,
-            updatedAt: new Date().toISOString(),
+            ...(userData.firstName &&
+              userData.lastName && {
+                name: `${userData.firstName} ${userData.lastName}`,
+              }),
+            ...(userData.phoneNumber && { phone: userData.phoneNumber }),
           };
 
-          const updatedUsers = [...users];
-          updatedUsers[userIndex] = updatedUser;
+          // Remove frontend-specific fields
+          delete mappedUserData.firstName;
+          delete mappedUserData.lastName;
+          delete mappedUserData.phoneNumber;
 
-          set({ users: updatedUsers, loading: false });
+          const response = await userApi.updateUser(userId, mappedUserData);
 
-          // Sync with working data and auth store
-          const workingIndex = workingUsersData.findIndex(
-            (user) => user.id === userId
-          );
-          if (workingIndex !== -1) {
-            workingUsersData[workingIndex] = updatedUser;
-          }
+          // Refresh the users list
+          const { getAllUsers } = get();
+          await getAllUsers();
 
-          const authIndex = usersData.findIndex((user) => user.id === userId);
-          if (authIndex !== -1) {
-            usersData[authIndex] = updatedUser;
-          }
-
-          return updatedUser;
+          set({ loading: false });
+          return response.data;
         } catch (error) {
-          set({ error: error.message, loading: false });
+          set({
+            error: error.response?.data?.message || error.message,
+            loading: false,
+          });
           throw error;
         }
       },
@@ -139,39 +115,19 @@ export const useUserManagementStore = create(
       deleteUser: async (userId) => {
         set({ loading: true, error: null });
         try {
-          await apiDelay();
+          const response = await userApi.deleteUser(userId);
 
-          const users = get().users;
-          const userToDelete = users.find((user) => user.id === userId);
+          // Refresh the users list
+          const { getAllUsers } = get();
+          await getAllUsers();
 
-          if (!userToDelete) {
-            throw new Error("User not found");
-          }
-
-          // Prevent deletion of HR users
-          if (userToDelete.role === "HR") {
-            throw new Error("Cannot delete HR users");
-          }
-
-          const updatedUsers = users.filter((user) => user.id !== userId);
-          set({ users: updatedUsers, loading: false });
-
-          // Sync with working data and auth store
-          const workingIndex = workingUsersData.findIndex(
-            (user) => user.id === userId
-          );
-          if (workingIndex !== -1) {
-            workingUsersData.splice(workingIndex, 1);
-          }
-
-          const authIndex = usersData.findIndex((user) => user.id === userId);
-          if (authIndex !== -1) {
-            usersData.splice(authIndex, 1);
-          }
-
-          return true;
+          set({ loading: false });
+          return response.data;
         } catch (error) {
-          set({ error: error.message, loading: false });
+          set({
+            error: error.response?.data?.message || error.message,
+            loading: false,
+          });
           throw error;
         }
       },
@@ -180,31 +136,51 @@ export const useUserManagementStore = create(
       getUserById: async (userId) => {
         set({ loading: true, error: null });
         try {
-          await apiDelay();
-
-          const users = get().users;
-          const user = users.find((user) => user.id === userId);
-
-          if (!user) {
-            throw new Error("User not found");
-          }
-
+          const response = await userApi.getUserById(userId);
           set({ loading: false });
-          return user;
+          return response.data;
         } catch (error) {
-          set({ error: error.message, loading: false });
+          set({
+            error: error.response?.data?.message || error.message,
+            loading: false,
+          });
           throw error;
         }
       },
 
       // Get user statistics
-      getUserStats: () => {
-        const users = get().users;
-        return {
-          total: users.length,
-          hr: users.filter((user) => user.role === "HR").length,
-          applicants: users.filter((user) => user.role === "APPLICANT").length,
-        };
+      getUserStats: async () => {
+        set({ loading: true, error: null });
+        try {
+          const response = await userApi.getUserStats();
+          set({ loading: false });
+          return response.data;
+        } catch (error) {
+          set({
+            error: error.response?.data?.message || error.message,
+            loading: false,
+          });
+          throw error;
+        }
+      },
+
+      // Update user password
+      updateUserPassword: async (userId, passwordData) => {
+        set({ loading: true, error: null });
+        try {
+          const response = await userApi.updateUserPassword(
+            userId,
+            passwordData
+          );
+          set({ loading: false });
+          return response.data;
+        } catch (error) {
+          set({
+            error: error.response?.data?.message || error.message,
+            loading: false,
+          });
+          throw error;
+        }
       },
 
       // Clear errors
@@ -212,23 +188,25 @@ export const useUserManagementStore = create(
 
       // Reset store
       resetStore: () => {
-        workingUsersData = [...usersData];
         set({
-          users: workingUsersData,
+          users: [],
+          usersData: null,
           loading: false,
           error: null,
+          totalPages: 0,
+          currentPage: 1,
+          totalCount: 0,
         });
-      },
-
-      // Sync with external changes (when auth store modifies users)
-      syncUsers: () => {
-        workingUsersData = [...usersData];
-        set({ users: workingUsersData });
       },
     }),
     {
       name: "userManagement-storage",
-      partialize: (state) => ({ users: state.users }),
+      partialize: (state) => ({
+        users: state.users,
+        totalPages: state.totalPages,
+        currentPage: state.currentPage,
+        totalCount: state.totalCount,
+      }),
     }
   )
 );

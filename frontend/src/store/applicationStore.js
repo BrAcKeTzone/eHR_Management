@@ -1,13 +1,95 @@
 import { create } from "zustand";
-// Import sample data
-import applicationsData from "../data/applications.json";
+import { applicationApi } from "../api/applicationApi";
+import { delay } from "../utils/helpers";
 
-// Simulate API delay
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+// Hardcoded sample data as fallback
+const sampleApplicationsData = [
+  {
+    id: "app-1",
+    user_id: "user-1",
+    applicant_name: "John Doe",
+    applicant_email: "john.doe@example.com",
+    program: "Secondary Education - Mathematics",
+    subject_specialization: "Mathematics",
+    status: "completed",
+    created_at: "2024-01-15T08:30:00Z",
+    updated_at: "2024-03-01T14:00:00Z",
+    documents: [
+      { name: "resume.pdf", type: "application/pdf", size: 1024000 },
+      { name: "transcript.pdf", type: "application/pdf", size: 2048000 },
+    ],
+    education: "Bachelor of Science in Mathematics Education",
+    experience: "3 years teaching experience",
+    motivation: "Passionate about mathematics education",
+  },
+  {
+    id: "app-2",
+    user_id: "user-2",
+    applicant_name: "Jane Smith",
+    applicant_email: "jane.smith@example.com",
+    program: "Elementary Education",
+    subject_specialization: "English Language Arts",
+    status: "pending",
+    created_at: "2024-02-01T09:15:00Z",
+    updated_at: "2024-02-01T09:15:00Z",
+    documents: [
+      { name: "resume.pdf", type: "application/pdf", size: 890000 },
+      { name: "transcript.pdf", type: "application/pdf", size: 1560000 },
+    ],
+    education: "Bachelor of Elementary Education",
+    experience: "Fresh graduate with practice teaching experience",
+    motivation:
+      "I believe every child deserves a strong foundation in literacy",
+  },
+  {
+    id: "app-3",
+    user_id: "user-3",
+    applicant_name: "Maria Santos",
+    applicant_email: "maria.santos@example.com",
+    program: "Secondary Education - English",
+    subject_specialization: "English Literature",
+    status: "approved",
+    created_at: "2024-02-10T14:20:00Z",
+    updated_at: "2024-02-15T11:30:00Z",
+    documents: [
+      { name: "resume.pdf", type: "application/pdf", size: 967000 },
+      {
+        name: "teaching_portfolio.pdf",
+        type: "application/pdf",
+        size: 2100000,
+      },
+    ],
+    education: "Bachelor of Arts in English Literature",
+    experience: "2 years teaching experience at tutorial center",
+    motivation: "Literature has the power to transform lives",
+  },
+];
+
+// Try to import JSON data, fallback to sample data
+let applicationsData;
+try {
+  applicationsData =
+    require("../data/applications.json") || sampleApplicationsData;
+  console.log(
+    "applicationStore: JSON import success:",
+    applicationsData?.length
+  );
+} catch (error) {
+  console.error(
+    "applicationStore: JSON import failed, using sample data:",
+    error
+  );
+  applicationsData = sampleApplicationsData;
+}
+
+console.log(
+  "applicationStore: applicationsData final:",
+  applicationsData?.length
+);
 
 export const useApplicationStore = create((set, get) => ({
   // State
-  applications: [],
+  applications: applicationsData || sampleApplicationsData, // Initialize with data
   currentApplication: null,
   applicationHistory: null,
   loading: false,
@@ -34,17 +116,25 @@ export const useApplicationStore = create((set, get) => ({
   // Fetch all applications
   fetchApplications: async () => {
     try {
+      console.log(
+        "fetchApplications: starting, applicationsData:",
+        applicationsData?.length
+      );
       set({ loading: true, error: null });
       await delay(500);
 
+      const apps = applicationsData || sampleApplicationsData;
+      console.log("fetchApplications: setting applications to:", apps.length);
+
       set({
-        applications: applicationsData,
+        applications: apps,
         loading: false,
         error: null,
       });
 
-      return { applications: applicationsData };
+      return { applications: apps };
     } catch (error) {
+      console.error("fetchApplications error:", error);
       set({
         loading: false,
         error: "Failed to fetch applications",
@@ -60,37 +150,24 @@ export const useApplicationStore = create((set, get) => ({
   },
 
   // Get current (most recent) application for a user
-  getCurrentApplication: async (userEmail = null) => {
+  getCurrentApplication: async () => {
     try {
       set({ loading: true, error: null });
-      await delay(500);
 
-      // Use provided email or fallback to sample user
-      const targetEmail = userEmail || "john.doe@example.com";
-      const userApps = applicationsData.filter(
-        (app) => app.applicantEmail === targetEmail
-      );
-
-      let currentApp = null;
-      if (userApps.length > 0) {
-        // Get the most recent application
-        currentApp = userApps.sort(
-          (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
-        )[0];
-      }
+      const result = await applicationApi.getCurrentApplication();
 
       set({
-        currentApplication: currentApp,
+        currentApplication: result.application,
         loading: false,
         error: null,
       });
 
-      return { application: currentApp };
+      return result;
     } catch (error) {
       set({
         currentApplication: null,
         loading: false,
-        error: null,
+        error: error.message || "Failed to fetch current application",
       });
       return { application: null };
     }
@@ -100,36 +177,25 @@ export const useApplicationStore = create((set, get) => ({
   createApplication: async (applicationData) => {
     try {
       set({ loading: true, error: null });
-      await delay(1000);
 
-      const newApplication = {
-        id: `app-${Date.now()}`,
-        ...applicationData,
-        applicantEmail: applicationData.email,
-        status: "pending",
-        submittedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        documents: applicationData.documents || [],
-        demoSchedule: null,
-        scores: null,
-      };
+      const result = await applicationApi.create(applicationData);
 
       // Add to applications array
       const { applications } = get();
-      const updatedApplications = [...applications, newApplication];
+      const updatedApplications = [...applications, result.application];
 
       set({
         applications: updatedApplications,
-        currentApplication: newApplication,
+        currentApplication: result.application,
         loading: false,
         error: null,
       });
 
-      return { application: newApplication };
+      return result;
     } catch (error) {
       set({
         loading: false,
-        error: "Failed to create application",
+        error: error.message || "Failed to create application",
       });
       throw error;
     }

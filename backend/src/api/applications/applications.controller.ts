@@ -15,17 +15,37 @@ interface AuthenticatedRequest extends Request {
 
 export const createApplication = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { program, documents } = req.body;
+    const {
+      program,
+      documents: frontendDocuments,
+      ...applicationData
+    } = req.body;
     const applicantId = req.user!.id;
 
     if (req.user!.role !== "APPLICANT") {
       throw new ApiError(403, "Only applicants can create applications");
     }
 
+    // Handle uploaded files
+    let documents: string[] = [];
+    if (req.files && Array.isArray(req.files)) {
+      documents = req.files.map((file: any) =>
+        JSON.stringify({
+          originalName: file.originalname,
+          fileName: file.filename,
+          url: file.path,
+          size: file.size,
+          mimetype: file.mimetype,
+          uploadedAt: new Date().toISOString(),
+        })
+      );
+    }
+
     const application = await applicationService.createApplication({
-      program,
-      documents,
+      program: program || "Teaching Application",
+      documents: JSON.stringify(documents),
       applicantId,
+      ...applicationData,
     });
 
     res

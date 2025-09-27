@@ -24,9 +24,6 @@ import UserManagement from "../pages/HR/UserManagement";
 // Shared pages
 import ProfilePage from "../pages/ProfilePage";
 
-// Test pages
-import ResumeParserTest from "../pages/ResumeParserTest";
-
 // Layout components
 import MainLayout from "../layouts/MainLayout";
 import AdminLayout from "../layouts/AdminLayout";
@@ -121,16 +118,6 @@ const AppRoutes = () => {
         <Route path="history" element={<ApplicationHistory />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
-
-      {/* Test Route (accessible to all authenticated users) */}
-      <Route
-        path="/test/resume-parser"
-        element={
-          <ProtectedRoute>
-            <ResumeParserTest />
-          </ProtectedRoute>
-        }
-      />
 
       {/* HR Routes */}
       <Route

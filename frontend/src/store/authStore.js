@@ -368,15 +368,23 @@ export const useAuthStore = create(
             throw new Error("No user logged in");
           }
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          // Get latest user data from the backend
+          const { userApi } = await import("../api/userApi");
+          const response = await userApi.getUserById(user.id);
+
+          // Update local user state with fresh data from backend
+          const updatedUser = {
+            ...user,
+            ...response.data,
+          };
 
           set({
+            user: updatedUser,
             loading: false,
             error: null,
           });
 
-          return { user };
+          return { user: updatedUser };
         } catch (error) {
           set({
             loading: false,
@@ -390,32 +398,25 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
           const { user } = get();
           if (!user) {
             throw new Error("No user logged in");
           }
 
-          // Find and update user in usersData
-          const userIndex = usersData.findIndex((u) => u.id === user.id);
-          if (userIndex !== -1) {
-            usersData[userIndex] = {
-              ...usersData[userIndex],
-              name: profileData.name,
-              email: profileData.email,
-              phone: profileData.phone,
-              updatedAt: new Date().toISOString(),
-            };
-          }
+          // Import userApi dynamically to avoid circular imports
+          const { userApi } = await import("../api/userApi");
 
-          const updatedUser = {
-            ...user,
+          // Call the backend API to update the user
+          const response = await userApi.updateUser(user.id, {
             name: profileData.name,
             email: profileData.email,
             phone: profileData.phone,
-            updatedAt: new Date().toISOString(),
+          });
+
+          // Update the local user state with the response from backend
+          const updatedUser = {
+            ...user,
+            ...response.data,
           };
 
           set({

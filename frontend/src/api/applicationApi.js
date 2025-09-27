@@ -1,211 +1,208 @@
-import applicationsData from "../data/applications.json";
-import { useAuthStore } from "../store/authStore";
+import { fetchClient } from "../utils/fetchClient";
 
-// Simulate API delay
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const API_BASE_URL = "/api"; // Use relative path since fetchClient already has baseURL
 
 export const applicationApi = {
   // Create new application
   create: async (applicationData) => {
-    await delay(1000);
+    try {
+      // Create FormData to handle file uploads
+      const formData = new FormData();
 
-    const { user } = useAuthStore.getState();
-    if (!user) {
-      throw new Error("User not authenticated");
+      // Add text fields
+      Object.keys(applicationData).forEach((key) => {
+        if (
+          key !== "documents" &&
+          applicationData[key] !== null &&
+          applicationData[key] !== undefined
+        ) {
+          formData.append(key, applicationData[key]);
+        }
+      });
+
+      // Add document files
+      if (applicationData.documents && applicationData.documents.length > 0) {
+        applicationData.documents.forEach((doc, index) => {
+          if (doc.file) {
+            formData.append("documents", doc.file);
+          }
+        });
+      }
+
+      const response = await fetchClient.post(
+        `${API_BASE_URL}/applications`,
+        formData,
+        {
+          headers: {
+            // Don't set Content-Type - let browser set it for FormData with boundary
+          },
+        }
+      );
+
+      return { application: response.data.data };
+    } catch (error) {
+      console.error("Error creating application:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create application";
+      throw new Error(message);
     }
-
-    // Generate new application
-    const newApplication = {
-      id: Date.now().toString(),
-      userId: user.id,
-      applicantName: `${user.firstName} ${user.lastName}`,
-      applicantEmail: user.email,
-      program: applicationData.program,
-      teachingExperience: applicationData.teachingExperience,
-      subjectSpecialization: applicationData.subjectSpecialization,
-      educationalBackground: applicationData.educationalBackground,
-      status: "PENDING",
-      submission_date: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      attempt_number: 1,
-      documents: applicationData.documents || [],
-      demo_schedule: null,
-      score: null,
-      result: null,
-      rejection_reason: null,
-    };
-
-    // Add to applications array (in memory only for demo)
-    applicationsData.push(newApplication);
-
-    return { application: newApplication };
   },
 
   // Get current active application
   getCurrentApplication: async () => {
-    await delay(500);
-
-    const { user } = useAuthStore.getState();
-    if (!user) {
-      throw new Error("User not authenticated");
+    try {
+      const response = await fetchClient.get(
+        `${API_BASE_URL}/applications/my-active-application`
+      );
+      return { application: response.data.data };
+    } catch (error) {
+      console.error("Error fetching current application:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch current application";
+      throw new Error(message);
     }
-
-    // Find the most recent application for the current user
-    const userApplications = applicationsData
-      .filter((app) => app.userId === user.id)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    const currentApplication =
-      userApplications.find(
-        (app) =>
-          app.status === "PENDING" ||
-          app.status === "APPROVED" ||
-          app.status === "IN_REVIEW"
-      ) || userApplications[0];
-
-    return { application: currentApplication || null };
   },
 
   // Get application history for current user
   getHistory: async () => {
-    await delay(500);
-
-    const { user } = useAuthStore.getState();
-    if (!user) {
-      throw new Error("User not authenticated");
+    try {
+      const response = await fetchClient.get(
+        `${API_BASE_URL}/applications/my-applications`
+      );
+      return { applications: response.data.data };
+    } catch (error) {
+      console.error("Error fetching application history:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch application history";
+      throw new Error(message);
     }
-
-    const userApplications = applicationsData
-      .filter((app) => app.userId === user.id)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    return { applications: userApplications };
   },
 
   // Get application by ID
   getById: async (applicationId) => {
-    await delay(500);
-
-    const application = applicationsData.find(
-      (app) => app.id === applicationId
-    );
-    if (!application) {
-      throw new Error("Application not found");
+    try {
+      const response = await fetchClient.get(
+        `${API_BASE_URL}/applications/${applicationId}`
+      );
+      return { application: response.data.data };
+    } catch (error) {
+      console.error("Error fetching application:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Application not found";
+      throw new Error(message);
     }
-
-    return { application };
   },
 
   // Update application status (HR only)
   updateStatus: async (applicationId, status, reason = "") => {
-    await delay(500);
+    try {
+      let endpoint = `${API_BASE_URL}/applications/${applicationId}`;
+      let body = { status };
 
-    const { user } = useAuthStore.getState();
-    if (!user || user.role !== "HR") {
-      throw new Error("Unauthorized: HR access required");
+      // Use specific endpoints for approve/reject
+      if (status === "APPROVED") {
+        endpoint = `${API_BASE_URL}/applications/${applicationId}/approve`;
+        body = { hrNotes: reason };
+      } else if (status === "REJECTED") {
+        endpoint = `${API_BASE_URL}/applications/${applicationId}/reject`;
+        body = { hrNotes: reason };
+      }
+
+      const response = await fetchClient.put(endpoint, body);
+      return { application: response.data.data };
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update application status";
+      throw new Error(message);
     }
-
-    const applicationIndex = applicationsData.findIndex(
-      (app) => app.id === applicationId
-    );
-    if (applicationIndex === -1) {
-      throw new Error("Application not found");
-    }
-
-    applicationsData[applicationIndex] = {
-      ...applicationsData[applicationIndex],
-      status,
-      rejection_reason: reason,
-      updated_at: new Date().toISOString(),
-    };
-
-    return { application: applicationsData[applicationIndex] };
   },
 
   // Get all applications (HR only) with filters
   getAll: async (filters = {}) => {
-    await delay(500);
+    try {
+      const response = await fetchClient.get(`${API_BASE_URL}/applications`, {
+        params: filters, // axios automatically converts to query params
+      });
 
-    const { user } = useAuthStore.getState();
-    if (!user || user.role !== "HR") {
-      throw new Error("Unauthorized: HR access required");
+      return {
+        applications: response.data.data.applications,
+        total: response.data.data.total,
+      };
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch applications";
+      throw new Error(message);
     }
-
-    let filteredApplications = [...applicationsData];
-
-    // Apply filters
-    if (filters.status) {
-      filteredApplications = filteredApplications.filter(
-        (app) => app.status.toLowerCase() === filters.status.toLowerCase()
-      );
-    }
-
-    if (filters.program) {
-      filteredApplications = filteredApplications.filter((app) =>
-        app.program.toLowerCase().includes(filters.program.toLowerCase())
-      );
-    }
-
-    // Sort by most recent
-    filteredApplications.sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-
-    return { applications: filteredApplications };
   },
 
   // Get applications for specific user (HR only)
   getByUserId: async (userId) => {
-    await delay(500);
-
-    const { user } = useAuthStore.getState();
-    if (!user || user.role !== "HR") {
-      throw new Error("Unauthorized: HR access required");
+    try {
+      const response = await fetchClient.get(`${API_BASE_URL}/applications`, {
+        params: { userId },
+      });
+      return { applications: response.data.data.applications };
+    } catch (error) {
+      console.error("Error fetching user applications:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch user applications";
+      throw new Error(message);
     }
-
-    const userApplications = applicationsData
-      .filter((app) => app.userId === userId)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    return { applications: userApplications };
   },
 
-  // Download application document (simulated)
+  // Download application document
   downloadDocument: async (applicationId, documentName) => {
-    await delay(500);
-
-    // Simulate document download
-    const dummyContent = `This is a dummy document: ${documentName} for application ${applicationId}`;
-    const blob = new Blob([dummyContent], { type: "text/plain" });
-
-    return blob;
+    try {
+      const response = await fetchClient.get(
+        `${API_BASE_URL}/applications/${applicationId}/documents/${encodeURIComponent(
+          documentName
+        )}`,
+        { responseType: "blob" }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to download document";
+      throw new Error(message);
+    }
   },
 
   // Submit for review (change status from draft to pending)
   submit: async (applicationId) => {
-    await delay(500);
-
-    const { user } = useAuthStore.getState();
-    if (!user) {
-      throw new Error("User not authenticated");
+    try {
+      const response = await fetchClient.put(
+        `${API_BASE_URL}/applications/${applicationId}`,
+        {
+          status: "PENDING",
+        }
+      );
+      return { application: response.data.data };
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to submit application";
+      throw new Error(message);
     }
-
-    const applicationIndex = applicationsData.findIndex(
-      (app) => app.id === applicationId && app.userId === user.id
-    );
-
-    if (applicationIndex === -1) {
-      throw new Error("Application not found or access denied");
-    }
-
-    applicationsData[applicationIndex] = {
-      ...applicationsData[applicationIndex],
-      status: "PENDING",
-      submission_date: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    return { application: applicationsData[applicationIndex] };
   },
 };
