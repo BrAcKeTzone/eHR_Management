@@ -29,11 +29,16 @@ fetchClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized - but not for login/auth endpoints
     if (error.response?.status === 401) {
-      // Clear token and redirect to login
-      localStorage.removeItem("authToken");
-      window.location.href = "/signin";
+      const isAuthEndpoint = error.config?.url?.includes("/auth/");
+
+      // Only redirect on 401 for non-auth endpoints (protected routes)
+      if (!isAuthEndpoint) {
+        localStorage.removeItem("authToken");
+        window.location.href = "/signin";
+      }
+      // For auth endpoints (like login), let the error bubble up to be handled by the form
     }
 
     // Handle network errors
