@@ -219,12 +219,12 @@ interface RegisterData {
   password: string;
   name: string;
   phone?: string;
-  role?: "APPLICANT" | "HR" | "ADMIN";
+  role?: "APPLICANT" | "HR";
 }
 
 export const register = async (
   userData: RegisterData
-): Promise<{ user: User; token: string }> => {
+): Promise<{ user: User; token: string; message: string }> => {
   const { email, password, name, phone, role = "APPLICANT" } = userData;
 
   // Check if OTP has been verified for this email
@@ -245,6 +245,16 @@ export const register = async (
     );
   }
 
+  // Check if this is the first user - if so, make them HR
+  const userCount = await prisma.user.count();
+  const assignedRole = userCount === 0 ? "HR" : role;
+
+  if (userCount === 0) {
+    console.log(
+      `First user registration detected. Assigning HR role to: ${email}`
+    );
+  }
+
   const hashedPassword = await bcrypt.hash(password, 12);
 
   let user: User;
@@ -255,7 +265,7 @@ export const register = async (
         password: hashedPassword,
         name,
         phone,
-        role,
+        role: assignedRole,
       },
     });
 
@@ -272,7 +282,14 @@ export const register = async (
 
   const token = generateToken(user.id);
 
-  return { user, token };
+  return {
+    user,
+    token,
+    message:
+      userCount === 0
+        ? "Registration successful! As the first user, you have been assigned HR privileges."
+        : "Registration successful!",
+  };
 };
 
 export const login = async (
