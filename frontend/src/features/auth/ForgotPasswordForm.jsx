@@ -98,8 +98,8 @@ const ForgotPasswordForm = () => {
 
     try {
       const result = await sendPasswordResetOtp(formData.email);
-      // Show OTP in alert for demo purposes (remove in production)
-      alert(`Password reset OTP sent! Demo OTP: ${result.otp}`);
+      // OTP will be sent to the user's email
+      console.log("Password reset OTP sent successfully");
     } catch (err) {
       console.error("Failed to send password reset OTP:", err);
     }

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { authApi } from "../api/authApi";
 import usersData from "../data/users.json";
 
 export const useAuthStore = create(
@@ -39,44 +40,32 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          // Call backend API
+          const response = await authApi.login(credentials);
 
-          // Find user in dummy data
-          const user = usersData.find(
-            (u) =>
-              u.email === credentials.email &&
-              u.password === credentials.password
-          );
-
-          if (!user) {
-            throw new Error("Invalid email or password");
-          }
-
-          if (!user.isVerified) {
-            throw new Error("Please verify your email before logging in");
-          }
-
-          // Remove password from user object
-          const { password: _, ...userWithoutPassword } = user;
-          const mockToken = `mock-jwt-token-${user.id}`;
+          // Extract user and token from response
+          const { user, token } = response.data;
 
           set({
-            user: userWithoutPassword,
-            token: mockToken,
+            user,
+            token,
             isAuthenticated: true,
             loading: false,
             error: null,
           });
 
-          // Store token in localStorage for consistency
-          localStorage.setItem("authToken", mockToken);
+          // Store token in localStorage
+          localStorage.setItem("authToken", token);
 
-          return { user: userWithoutPassword, token: mockToken };
+          return { user, token };
         } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message || error.message || "Login failed";
+
           set({
             loading: false,
-            error: error.message || "Login failed",
+            error: errorMessage,
           });
           throw error;
         }
@@ -86,42 +75,25 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          // Check if email already exists
-          const existingUser = usersData.find(
-            (u) => u.email === userData.email
-          );
-          if (existingUser) {
-            throw new Error("Email already registered");
-          }
-
-          // Create new user (in real app, this would be sent to backend)
-          const newUser = {
-            id: Date.now().toString(),
-            email: userData.email,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            role: "APPLICANT",
-            isVerified: true, // Auto-verify for demo
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-
-          // Add to users array (in memory only for demo)
-          usersData.push({ ...newUser, password: userData.password });
+          // Call backend API
+          const response = await authApi.register(userData);
 
           set({
             loading: false,
             error: null,
           });
 
-          return { message: "Registration successful! Please login." };
+          return response.data;
         } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Registration failed";
+
           set({
             loading: false,
-            error: error.message || "Registration failed",
+            error: errorMessage,
           });
           throw error;
         }
@@ -132,34 +104,28 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          // Check if email already exists
-          const existingUser = usersData.find((u) => u.email === email);
-          if (existingUser) {
-            throw new Error("Email already registered");
-          }
-
-          // Generate random 6-digit OTP
-          const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-          // In real app, send OTP via email service
-          console.log(`OTP sent to ${email}: ${otp}`);
+          // Call backend API
+          const response = await authApi.sendOtp(email);
 
           set({
             loading: false,
             error: null,
             signupPhase: 2,
             signupData: { ...get().signupData, email },
-            generatedOtp: otp,
+            generatedOtp: null, // Don't store OTP on frontend
           });
 
-          return { message: `OTP sent to ${email}`, otp }; // In real app, don't return OTP
+          return response.data;
         } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to send OTP";
+
           set({
             loading: false,
-            error: error.message || "Failed to send OTP",
+            error: errorMessage,
           });
           throw error;
         }
@@ -170,27 +136,29 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          const { signupData } = get();
 
-          const { generatedOtp } = get();
-
-          if (otp !== generatedOtp) {
-            throw new Error("Invalid OTP. Please try again.");
-          }
+          // Call backend API
+          const response = await authApi.verifyOtp(signupData.email, otp);
 
           set({
             loading: false,
             error: null,
             signupPhase: 3,
-            signupData: { ...get().signupData, otp },
+            signupData: { ...signupData, otp },
           });
 
-          return { message: "OTP verified successfully" };
+          return response.data;
         } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "OTP verification failed";
+
           set({
             loading: false,
-            error: error.message || "OTP verification failed",
+            error: errorMessage,
           });
           throw error;
         }
@@ -201,25 +169,18 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
           const { signupData } = get();
 
-          // Create new user
-          const newUser = {
-            id: Date.now().toString(),
+          // Prepare registration data for backend
+          const registrationData = {
             email: signupData.email,
-            firstName: personalData.firstName,
-            lastName: personalData.lastName,
-            role: "APPLICANT",
-            isVerified: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            password: personalData.password,
+            name: `${personalData.firstName} ${personalData.lastName}`,
+            // You can add more fields as needed
           };
 
-          // Add to users array (in memory only for demo)
-          usersData.push({ ...newUser, password: personalData.password });
+          // Call backend API
+          const response = await authApi.register(registrationData);
 
           set({
             loading: false,
@@ -228,14 +189,17 @@ export const useAuthStore = create(
             signupData: { ...signupData, ...personalData },
           });
 
-          return {
-            message: "Registration completed successfully!",
-            user: newUser,
-          };
+          return response.data;
         } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Registration failed";
+
           set({
             loading: false,
-            error: error.message || "Registration failed",
+            error: errorMessage,
           });
           throw error;
         }
@@ -264,34 +228,28 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          // Check if email exists
-          const existingUser = usersData.find((u) => u.email === email);
-          if (!existingUser) {
-            throw new Error("Email address not found in our system");
-          }
-
-          // Generate random 6-digit OTP
-          const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-          // In real app, send OTP via email service
-          console.log(`Password reset OTP sent to ${email}: ${otp}`);
+          // Call backend API
+          const response = await authApi.sendOtpForReset(email);
 
           set({
             loading: false,
             error: null,
             forgotPasswordPhase: 2,
             forgotPasswordData: { ...get().forgotPasswordData, email },
-            forgotPasswordOtp: otp,
+            forgotPasswordOtp: null, // Don't store OTP on frontend
           });
 
-          return { message: `Password reset OTP sent to ${email}`, otp }; // In real app, don't return OTP
+          return response.data;
         } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to send password reset OTP";
+
           set({
             loading: false,
-            error: error.message || "Failed to send password reset OTP",
+            error: errorMessage,
           });
           throw error;
         }
@@ -302,27 +260,32 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          const { forgotPasswordData } = get();
 
-          const { forgotPasswordOtp } = get();
-
-          if (otp !== forgotPasswordOtp) {
-            throw new Error("Invalid OTP. Please try again.");
-          }
+          // Call backend API
+          const response = await authApi.verifyOtpForReset(
+            forgotPasswordData.email,
+            otp
+          );
 
           set({
             loading: false,
             error: null,
             forgotPasswordPhase: 3,
-            forgotPasswordData: { ...get().forgotPasswordData, otp },
+            forgotPasswordData: { ...forgotPasswordData, otp },
           });
 
-          return { message: "OTP verified successfully" };
+          return response.data;
         } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "OTP verification failed";
+
           set({
             loading: false,
-            error: error.message || "OTP verification failed",
+            error: errorMessage,
           });
           throw error;
         }
@@ -333,25 +296,14 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
           const { forgotPasswordData } = get();
 
-          // Find user and update password
-          const userIndex = usersData.findIndex(
-            (u) => u.email === forgotPasswordData.email
+          // Call backend API
+          const response = await authApi.resetPassword(
+            forgotPasswordData.email,
+            forgotPasswordData.otp,
+            passwordData.newPassword
           );
-          if (userIndex === -1) {
-            throw new Error("User not found");
-          }
-
-          // Update password in dummy data (in real app, this would be sent to backend)
-          usersData[userIndex] = {
-            ...usersData[userIndex],
-            password: passwordData.newPassword,
-            updatedAt: new Date().toISOString(),
-          };
 
           set({
             loading: false,
@@ -360,11 +312,17 @@ export const useAuthStore = create(
             forgotPasswordData: { ...forgotPasswordData, ...passwordData },
           });
 
-          return { message: "Password reset successfully!" };
+          return response.data;
         } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Password reset failed";
+
           set({
             loading: false,
-            error: error.message || "Password reset failed",
+            error: errorMessage,
           });
           throw error;
         }
@@ -387,8 +345,8 @@ export const useAuthStore = create(
 
       logout: async () => {
         try {
-          // Simulate logout API call
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          // Note: Backend doesn't have logout endpoint, so we just clear local state
+          // In a real JWT implementation, you might want to blacklist the token
         } catch (error) {
           console.error("Logout error:", error);
         } finally {
@@ -485,19 +443,57 @@ export const useAuthStore = create(
         }
       },
 
-      changePassword: async (currentPassword, newPassword) => {
+      // For password change with OTP (not implemented in the simple change password flow)
+      changePasswordWithOtp: async (currentPassword, newPassword, otp) => {
         try {
           set({ loading: true, error: null });
-
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 1000));
 
           const { user } = get();
           if (!user) {
             throw new Error("No user logged in");
           }
 
-          // Find user in usersData to verify current password
+          // Call backend API
+          const response = await authApi.changePassword(
+            user.email,
+            currentPassword,
+            otp,
+            newPassword
+          );
+
+          set({
+            loading: false,
+            error: null,
+          });
+
+          return response.data;
+        } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to change password";
+
+          set({
+            loading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
+
+      // Simple password change (keeping the existing functionality for compatibility)
+      changePassword: async (currentPassword, newPassword) => {
+        try {
+          set({ loading: true, error: null });
+
+          const { user } = get();
+          if (!user) {
+            throw new Error("No user logged in");
+          }
+
+          // For now, we'll keep the dummy data logic for compatibility
+          // In a real app, you'd call the OTP-based password change or a simpler endpoint
           const userData = usersData.find((u) => u.id === user.id);
           if (!userData) {
             throw new Error("User not found");
@@ -508,7 +504,7 @@ export const useAuthStore = create(
             throw new Error("Current password is incorrect");
           }
 
-          // Update password in usersData
+          // Update password in usersData (for demo purposes)
           const userIndex = usersData.findIndex((u) => u.id === user.id);
           if (userIndex !== -1) {
             usersData[userIndex] = {
@@ -549,28 +545,37 @@ export const useAuthStore = create(
 
           set({ loading: true, error: null });
 
-          // Simulate token verification
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          // Simple JWT decode to check if token is expired (client-side check only)
+          try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            const currentTime = Date.now() / 1000;
 
-          // Extract user ID from mock token
-          const userId = token.split("-").pop();
-          const user = usersData.find((u) => u.id === userId);
+            if (payload.exp && payload.exp < currentTime) {
+              throw new Error("Token expired");
+            }
 
-          if (!user) {
-            throw new Error("Invalid token");
+            // For now, we'll use the dummy data to get user info
+            // In a real app, you'd call a /verify-token endpoint or decode user from JWT
+            const user = usersData.find((u) => u.id === payload.id.toString());
+
+            if (!user) {
+              throw new Error("Invalid token");
+            }
+
+            const { password: _, ...userWithoutPassword } = user;
+
+            set({
+              user: userWithoutPassword,
+              token,
+              isAuthenticated: true,
+              loading: false,
+              error: null,
+            });
+
+            return { user: userWithoutPassword };
+          } catch (jwtError) {
+            throw new Error("Invalid token format");
           }
-
-          const { password: _, ...userWithoutPassword } = user;
-
-          set({
-            user: userWithoutPassword,
-            token,
-            isAuthenticated: true,
-            loading: false,
-            error: null,
-          });
-
-          return { user: userWithoutPassword };
         } catch (error) {
           set({
             user: null,

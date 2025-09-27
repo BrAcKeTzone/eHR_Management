@@ -108,8 +108,8 @@ const SignupForm = () => {
 
     try {
       const result = await sendOtp(formData.email);
-      // Show OTP in alert for demo purposes (remove in production)
-      alert(`OTP sent! Demo OTP: ${result.otp}`);
+      // OTP will be sent to the user's email
+      console.log("OTP sent successfully");
     } catch (err) {
       console.error("Failed to send OTP:", err);
     }
@@ -192,15 +192,9 @@ const SignupForm = () => {
           Step 2 of 3: Verify your email
         </h3>
         <p className="text-sm text-gray-600 mb-4">
-          We've sent a 6-digit code to <strong>{signupData.email}</strong>
+          We've sent a 6-digit code to <strong>{signupData.email}</strong>.
+          Please check your email and enter the code below.
         </p>
-        {generatedOtp && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4">
-            <p className="text-sm">
-              <strong>Demo OTP:</strong> {generatedOtp}
-            </p>
-          </div>
-        )}
         <Input
           label="Enter OTP"
           name="otp"
