@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import Button from "./Button";
@@ -7,6 +7,15 @@ const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -22,6 +31,26 @@ const Navbar = ({ onMenuClick }) => {
       default:
         return role;
     }
+  };
+
+  const getRoleBadgeColor = (role) => {
+    switch (role) {
+      case "HR":
+        return "bg-blue-100 text-blue-800";
+      case "APPLICANT":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getUserInitials = (name) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join("");
   };
 
   return (
@@ -73,45 +102,75 @@ const Navbar = ({ onMenuClick }) => {
           {isAuthenticated ? (
             <div className="flex items-center space-x-4">
               {/* User info */}
-              <div className="hidden md:flex flex-col items-end">
+              <div className="hidden md:flex flex-col items-end mr-3">
                 <span className="text-sm font-medium text-gray-900">
-                  {user?.firstName} {user?.lastName}
+                  {user?.name}
                 </span>
-                <span className="text-xs text-gray-500">
-                  {getRoleDisplayName(user?.role)}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
+                      user?.role
+                    )}`}
+                  >
+                    {getRoleDisplayName(user?.role)}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-400">{user?.email}</span>
               </div>
 
               {/* User avatar */}
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="bg-gray-200 p-2 rounded-full text-gray-600 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-10 h-10 rounded-full text-white font-medium text-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
+                    user?.role === "HR"
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                  title={`${user?.name} (${getRoleDisplayName(user?.role)})`}
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
+                  {getUserInitials(user?.name)}
                 </button>
+                {/* Online status indicator */}
+                <div className="absolute -bottom-0 -right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
 
                 {/* Dropdown menu */}
                 {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                    <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200 md:hidden">
-                      <div className="font-medium">
-                        {user?.firstName} {user?.lastName}
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                    <div className="px-4 py-3 text-sm text-gray-700 border-b border-gray-200">
+                      <div className="font-medium text-gray-900 mb-1">
+                        {user?.name}
                       </div>
-                      <div className="text-gray-500">
-                        {getRoleDisplayName(user?.role)}
+                      <div className="text-xs text-gray-500 mb-2">
+                        {user?.email}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
+                            user?.role
+                          )}`}
+                        >
+                          {getRoleDisplayName(user?.role)}
+                        </span>
+                        {user?.phone && (
+                          <span className="text-xs text-gray-400">
+                            {user.phone}
+                          </span>
+                        )}
+                      </div>
+                      {user?.id && (
+                        <div className="text-xs text-gray-400 mt-2">
+                          ID: {user.id}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="text-xs text-gray-400">
+                          {currentTime.toLocaleString()}
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
+                          <span className="text-xs text-green-600">Online</span>
+                        </div>
                       </div>
                     </div>
 

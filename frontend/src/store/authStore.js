@@ -18,8 +18,7 @@ export const useAuthStore = create(
       signupData: {
         email: "",
         otp: "",
-        firstName: "",
-        lastName: "",
+        name: "",
         password: "",
         confirmPassword: "",
       },
@@ -175,8 +174,8 @@ export const useAuthStore = create(
           const registrationData = {
             email: signupData.email,
             password: personalData.password,
-            name: `${personalData.firstName} ${personalData.lastName}`,
-            // You can add more fields as needed
+            name: personalData.name,
+            phone: personalData.phone,
           };
 
           // Call backend API
@@ -212,8 +211,7 @@ export const useAuthStore = create(
           signupData: {
             email: "",
             otp: "",
-            firstName: "",
-            lastName: "",
+            name: "",
             password: "",
             confirmPassword: "",
           },
@@ -405,22 +403,18 @@ export const useAuthStore = create(
           if (userIndex !== -1) {
             usersData[userIndex] = {
               ...usersData[userIndex],
-              firstName: profileData.firstName,
-              lastName: profileData.lastName,
+              name: profileData.name,
               email: profileData.email,
-              phoneNumber: profileData.phoneNumber,
-              address: profileData.address,
+              phone: profileData.phone,
               updatedAt: new Date().toISOString(),
             };
           }
 
           const updatedUser = {
             ...user,
-            firstName: profileData.firstName,
-            lastName: profileData.lastName,
+            name: profileData.name,
             email: profileData.email,
-            phoneNumber: profileData.phoneNumber,
-            address: profileData.address,
+            phone: profileData.phone,
             updatedAt: new Date().toISOString(),
           };
 
@@ -443,8 +437,8 @@ export const useAuthStore = create(
         }
       },
 
-      // For password change with OTP (not implemented in the simple change password flow)
-      changePasswordWithOtp: async (currentPassword, newPassword, otp) => {
+      // Send OTP for password change
+      sendOtpForPasswordChange: async (currentPassword) => {
         try {
           set({ loading: true, error: null });
 
@@ -454,6 +448,46 @@ export const useAuthStore = create(
           }
 
           // Call backend API
+          const response = await authApi.sendOtpForChange(
+            user.email,
+            currentPassword
+          );
+
+          set({
+            loading: false,
+            error: null,
+          });
+
+          return response.data;
+        } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to send OTP for password change";
+
+          set({
+            loading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
+
+      // Password change with OTP verification
+      changePasswordWithOtp: async (currentPassword, newPassword, otp) => {
+        try {
+          set({ loading: true, error: null });
+
+          const { user } = get();
+          if (!user) {
+            throw new Error("No user logged in");
+          }
+
+          // First verify the OTP
+          await authApi.verifyOtpForChange(user.email, otp);
+
+          // Then change the password
           const response = await authApi.changePassword(
             user.email,
             currentPassword,
@@ -461,7 +495,13 @@ export const useAuthStore = create(
             newPassword
           );
 
+          // Update user state with password change timestamp
           set({
+            user: {
+              ...user,
+              passwordChangedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
             loading: false,
             error: null,
           });

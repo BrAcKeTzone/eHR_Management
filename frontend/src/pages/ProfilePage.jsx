@@ -8,35 +8,41 @@ import Modal from "../components/Modal";
 import { formatDate } from "../utils/formatDate";
 
 const ProfilePage = () => {
-  const { user, updateProfile, changePassword, loading, error } =
-    useAuthStore();
+  const {
+    user,
+    updateProfile,
+    changePasswordWithOtp,
+    sendOtpForPasswordChange,
+    loading,
+    error,
+  } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const [profileData, setProfileData] = useState({
-    firstName: "",
-    lastName: "",
+    name: "",
     email: "",
-    phoneNumber: "",
-    address: "",
+    phone: "",
   });
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
+    otp: "",
   });
 
   const [passwordError, setPasswordError] = useState("");
+  const [passwordStep, setPasswordStep] = useState(1); // 1: Send OTP, 2: Verify OTP & Change Password
+  const [otpSent, setOtpSent] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState("");
 
   useEffect(() => {
     if (user) {
       setProfileData({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
+        name: user.name || "",
         email: user.email || "",
-        phoneNumber: user.phoneNumber || "",
-        address: user.address || "",
+        phone: user.phone || "",
       });
     }
   }, [user]);
@@ -62,6 +68,24 @@ const ProfilePage = () => {
     }
   };
 
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+
+    if (!passwordData.currentPassword) {
+      setPasswordError("Please enter your current password");
+      return;
+    }
+
+    try {
+      await sendOtpForPasswordChange(passwordData.currentPassword);
+      setPasswordStep(2);
+      setOtpSent(true);
+    } catch (error) {
+      setPasswordError(error.message || "Failed to send OTP");
+    }
+  };
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setPasswordError("");
@@ -77,17 +101,30 @@ const ProfilePage = () => {
       return;
     }
 
+    if (!passwordData.otp) {
+      setPasswordError("Please enter the OTP code");
+      return;
+    }
+
     try {
-      await changePassword(
+      await changePasswordWithOtp(
         passwordData.currentPassword,
-        passwordData.newPassword
+        passwordData.newPassword,
+        passwordData.otp
       );
-      setShowPasswordModal(false);
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      setPasswordSuccess("Password changed successfully!");
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+          otp: "",
+        });
+        setPasswordStep(1);
+        setOtpSent(false);
+        setPasswordSuccess("");
+      }, 2000);
     } catch (error) {
       setPasswordError(error.message || "Failed to change password");
     }
@@ -98,11 +135,9 @@ const ProfilePage = () => {
     // Reset profile data to original values
     if (user) {
       setProfileData({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
+        name: user.name || "",
         email: user.email || "",
-        phoneNumber: user.phoneNumber || "",
-        address: user.address || "",
+        phone: user.phone || "",
       });
     }
   };
@@ -130,76 +165,44 @@ const ProfilePage = () => {
         {/* Profile Information */}
         <div className="lg:col-span-2">
           <DashboardCard title="Personal Information" className="h-fit">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6">
               <Input
-                label="First Name"
-                value={profileData.firstName}
+                label="Full Name"
+                value={profileData.name}
                 onChange={(e) =>
                   setProfileData({
                     ...profileData,
-                    firstName: e.target.value,
+                    name: e.target.value,
                   })
                 }
                 disabled={!isEditing}
                 required
+                placeholder="Enter your full name"
               />
 
               <Input
-                label="Last Name"
-                value={profileData.lastName}
+                label="Email Address"
+                type="email"
+                value={profileData.email}
                 onChange={(e) =>
-                  setProfileData({ ...profileData, lastName: e.target.value })
+                  setProfileData({ ...profileData, email: e.target.value })
                 }
                 disabled={!isEditing}
                 required
               />
 
-              <div className="sm:col-span-2">
-                <Input
-                  label="Email Address"
-                  type="email"
-                  value={profileData.email}
-                  onChange={(e) =>
-                    setProfileData({ ...profileData, email: e.target.value })
-                  }
-                  disabled={!isEditing}
-                  required
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <Input
-                  label="Phone Number"
-                  value={profileData.phoneNumber}
-                  onChange={(e) =>
-                    setProfileData({
-                      ...profileData,
-                      phoneNumber: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                  placeholder="Enter your phone number"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address
-                </label>
-                <textarea
-                  value={profileData.address}
-                  onChange={(e) =>
-                    setProfileData({
-                      ...profileData,
-                      address: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                  rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                  placeholder="Enter your address"
-                />
-              </div>
+              <Input
+                label="Phone Number"
+                value={profileData.phone}
+                onChange={(e) =>
+                  setProfileData({
+                    ...profileData,
+                    phone: e.target.value,
+                  })
+                }
+                disabled={!isEditing}
+                placeholder="Enter your phone number"
+              />
             </div>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -242,35 +245,47 @@ const ProfilePage = () => {
           <DashboardCard title="Account Summary">
             <div className="space-y-4">
               <div className="flex justify-center mb-4">
-                <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-12 h-12 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
+                <div
+                  className={`w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-xl ${
+                    user?.role === "HR" ? "bg-blue-600" : "bg-green-600"
+                  }`}
+                >
+                  {user?.name
+                    ? user.name
+                        .split(" ")
+                        .map((word) => word.charAt(0).toUpperCase())
+                        .slice(0, 2)
+                        .join("")
+                    : "U"}
                 </div>
               </div>
 
               <div className="text-center">
-                <h3 className="font-medium text-gray-900">
-                  {user?.firstName} {user?.lastName}
-                </h3>
+                <h3 className="font-medium text-gray-900">{user?.name}</h3>
                 <p className="text-sm text-gray-500 break-all">{user?.email}</p>
-                <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                <span
+                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${
+                    user?.role === "HR"
+                      ? "bg-blue-100 text-blue-800"
+                      : "bg-green-100 text-green-800"
+                  }`}
+                >
                   {getRoleDisplayName(user?.role)}
                 </span>
               </div>
 
               <div className="pt-4 border-t border-gray-200">
                 <div className="text-sm text-gray-600 space-y-2">
+                  <div className="flex justify-between">
+                    <span>User ID:</span>
+                    <span className="font-medium">#{user?.id}</span>
+                  </div>
+                  {user?.phone && (
+                    <div className="flex justify-between">
+                      <span>Phone:</span>
+                      <span className="font-medium">{user.phone}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Member since:</span>
                     <span className="font-medium">
@@ -310,21 +325,13 @@ const ProfilePage = () => {
 
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                 <div>
-                  <h4 className="font-medium text-gray-900">
-                    Email Verification
-                  </h4>
+                  <h4 className="font-medium text-gray-900">Account Status</h4>
                   <p className="text-sm text-gray-600">
-                    {user?.emailVerified ? "Verified" : "Not verified"}
+                    Your account is active and verified
                   </p>
                 </div>
-                <span
-                  className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    user?.emailVerified
-                      ? "bg-green-100 text-green-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
-                >
-                  {user?.emailVerified ? "Verified" : "Pending"}
+                <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                  Active
                 </span>
               </div>
             </div>
@@ -338,90 +345,179 @@ const ProfilePage = () => {
         onClose={() => {
           setShowPasswordModal(false);
           setPasswordError("");
+          setPasswordSuccess("");
           setPasswordData({
             currentPassword: "",
             newPassword: "",
             confirmPassword: "",
+            otp: "",
           });
+          setPasswordStep(1);
+          setOtpSent(false);
         }}
-        title="Change Password"
+        title={
+          passwordStep === 1
+            ? "Change Password - Verify Identity"
+            : "Change Password - Set New Password"
+        }
       >
-        <form
-          onSubmit={handlePasswordSubmit}
-          className="space-y-4 sm:space-y-6"
-        >
-          {passwordError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {passwordError}
+        {passwordStep === 1 ? (
+          // Step 1: Enter current password and send OTP
+          <form onSubmit={handleSendOtp} className="space-y-4 sm:space-y-6">
+            {passwordError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                {passwordError}
+              </div>
+            )}
+
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md">
+              <p className="text-sm">
+                For security, we'll send an OTP to your email to verify the
+                password change.
+              </p>
             </div>
-          )}
 
-          <PasswordInput
-            label="Current Password"
-            name="currentPassword"
-            value={passwordData.currentPassword}
-            onChange={(e) =>
-              setPasswordData({
-                ...passwordData,
-                currentPassword: e.target.value,
-              })
-            }
-            required
-            placeholder="Enter your current password"
-          />
-
-          <PasswordInput
-            label="New Password"
-            name="newPassword"
-            value={passwordData.newPassword}
-            onChange={(e) =>
-              setPasswordData({ ...passwordData, newPassword: e.target.value })
-            }
-            required
-            placeholder="Enter new password (minimum 6 characters)"
-          />
-
-          <PasswordInput
-            label="Confirm New Password"
-            name="confirmPassword"
-            value={passwordData.confirmPassword}
-            onChange={(e) =>
-              setPasswordData({
-                ...passwordData,
-                confirmPassword: e.target.value,
-              })
-            }
-            required
-            placeholder="Re-enter your new password"
-          />
-
-          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setShowPasswordModal(false);
-                setPasswordError("");
+            <PasswordInput
+              label="Current Password"
+              name="currentPassword"
+              value={passwordData.currentPassword}
+              onChange={(e) =>
                 setPasswordData({
-                  currentPassword: "",
-                  newPassword: "",
-                  confirmPassword: "",
-                });
-              }}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading}
-              className="w-full sm:w-auto"
-            >
-              {loading ? "Changing..." : "Change Password"}
-            </Button>
-          </div>
-        </form>
+                  ...passwordData,
+                  currentPassword: e.target.value,
+                })
+              }
+              required
+              placeholder="Enter your current password"
+            />
+
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordError("");
+                  setPasswordSuccess("");
+                  setPasswordData({
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
+                    otp: "",
+                  });
+                  setPasswordStep(1);
+                  setOtpSent(false);
+                }}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={loading}
+                className="w-full sm:w-auto"
+              >
+                {loading ? "Sending OTP..." : "Send OTP"}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          // Step 2: Enter OTP and new password
+          <form
+            onSubmit={handlePasswordSubmit}
+            className="space-y-4 sm:space-y-6"
+          >
+            {passwordError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                {passwordError}
+              </div>
+            )}
+
+            {passwordSuccess && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+                {passwordSuccess}
+              </div>
+            )}
+
+            {otpSent && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+                <p className="text-sm">
+                  OTP has been sent to your email ({user?.email}). Please check
+                  your inbox.
+                </p>
+              </div>
+            )}
+
+            <Input
+              label="Enter OTP Code"
+              name="otp"
+              type="text"
+              value={passwordData.otp}
+              onChange={(e) =>
+                setPasswordData({
+                  ...passwordData,
+                  otp: e.target.value,
+                })
+              }
+              required
+              placeholder="Enter 6-digit OTP"
+              maxLength={6}
+            />
+
+            <PasswordInput
+              label="New Password"
+              name="newPassword"
+              value={passwordData.newPassword}
+              onChange={(e) =>
+                setPasswordData({
+                  ...passwordData,
+                  newPassword: e.target.value,
+                })
+              }
+              required
+              placeholder="Enter new password (minimum 6 characters)"
+            />
+
+            <PasswordInput
+              label="Confirm New Password"
+              name="confirmPassword"
+              value={passwordData.confirmPassword}
+              onChange={(e) =>
+                setPasswordData({
+                  ...passwordData,
+                  confirmPassword: e.target.value,
+                })
+              }
+              required
+              placeholder="Re-enter your new password"
+            />
+
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setPasswordStep(1);
+                  setPasswordError("");
+                  setPasswordSuccess("");
+                  setOtpSent(false);
+                }}
+                className="w-full sm:w-auto"
+              >
+                Back
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={loading}
+                className="w-full sm:w-auto"
+              >
+                {loading ? "Changing..." : "Change Password"}
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   );

@@ -24,8 +24,8 @@ const SignupForm = () => {
   const [formData, setFormData] = useState({
     email: "",
     otp: "",
-    firstName: "",
-    lastName: "",
+    name: "",
+    phone: "",
     password: "",
     confirmPassword: "",
   });
@@ -79,12 +79,8 @@ const SignupForm = () => {
   const validatePersonalDetails = () => {
     const errors = {};
 
-    if (!formData.firstName.trim()) {
-      errors.firstName = "First name is required";
-    }
-
-    if (!formData.lastName.trim()) {
-      errors.lastName = "Last name is required";
+    if (!formData.name.trim()) {
+      errors.name = "Full name is required";
     }
 
     if (!formData.password) {
@@ -133,8 +129,8 @@ const SignupForm = () => {
 
     try {
       await completeRegistration({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        name: formData.name,
+        phone: formData.phone,
         password: formData.password,
       });
     } catch (err) {
@@ -147,8 +143,8 @@ const SignupForm = () => {
     setFormData({
       email: "",
       otp: "",
-      firstName: "",
-      lastName: "",
+      name: "",
+      phone: "",
       password: "",
       confirmPassword: "",
     });
@@ -243,34 +239,33 @@ const SignupForm = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Input
-                label="First Name"
-                name="firstName"
+                label="Full Name"
+                name="name"
                 type="text"
-                value={formData.firstName}
+                value={formData.name}
                 onChange={handleChange}
                 required
-                placeholder="John"
+                placeholder="John Doe"
               />
-              {validationErrors.firstName && (
+              {validationErrors.name && (
                 <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.firstName}
+                  {validationErrors.name}
                 </p>
               )}
             </div>
 
             <div>
               <Input
-                label="Last Name"
-                name="lastName"
-                type="text"
-                value={formData.lastName}
+                label="Phone Number"
+                name="phone"
+                type="tel"
+                value={formData.phone}
                 onChange={handleChange}
-                required
-                placeholder="Doe"
+                placeholder="+63-9123456789 (optional)"
               />
-              {validationErrors.lastName && (
+              {validationErrors.phone && (
                 <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.lastName}
+                  {validationErrors.phone}
                 </p>
               )}
             </div>
@@ -349,7 +344,7 @@ const SignupForm = () => {
           Your account has been created successfully.
         </p>
         <p className="text-sm text-gray-500">
-          Welcome to BCFI HR Application System, {signupData.firstName}!
+          Welcome to BCFI HR Application System, {signupData.name}!
         </p>
       </div>
 
