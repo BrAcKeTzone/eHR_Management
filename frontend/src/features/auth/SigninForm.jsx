@@ -39,17 +39,6 @@ const SigninForm = () => {
     }
   };
 
-  // Demo credentials helper
-  const fillDemoCredentials = (role) => {
-    const credentials = {
-      applicant: { email: "applicant1@example.com", password: "password123" },
-      hr: { email: "hr@bcfi.com", password: "hr123456" },
-      admin: { email: "admin@bcfi.com", password: "admin123" },
-    };
-
-    setFormData(credentials[role]);
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -60,29 +49,6 @@ const SigninForm = () => {
           <p className="mt-2 text-center text-sm text-gray-600">
             BCFI HR Application System
           </p>
-        </div>
-
-        {/* Demo Credentials */}
-        <div className="bg-blue-50 p-4 rounded-md">
-          <h3 className="text-sm font-medium text-blue-800 mb-2">
-            Demo Credentials:
-          </h3>
-          <div className="space-y-1 text-xs">
-            <button
-              type="button"
-              onClick={() => fillDemoCredentials("applicant")}
-              className="block text-blue-600 hover:text-blue-800 underline"
-            >
-              Applicant: applicant1@example.com / password123
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemoCredentials("hr")}
-              className="block text-blue-600 hover:text-blue-800 underline"
-            >
-              HR: hr@bcfi.com / hr123456
-            </button>
-          </div>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
