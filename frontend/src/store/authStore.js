@@ -438,9 +438,31 @@ export const useAuthStore = create(
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
           const { user } = get();
+          if (!user) {
+            throw new Error("No user logged in");
+          }
+
+          // Find and update user in usersData
+          const userIndex = usersData.findIndex((u) => u.id === user.id);
+          if (userIndex !== -1) {
+            usersData[userIndex] = {
+              ...usersData[userIndex],
+              firstName: profileData.firstName,
+              lastName: profileData.lastName,
+              email: profileData.email,
+              phoneNumber: profileData.phoneNumber,
+              address: profileData.address,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+
           const updatedUser = {
             ...user,
-            ...profileData,
+            firstName: profileData.firstName,
+            lastName: profileData.lastName,
+            email: profileData.email,
+            phoneNumber: profileData.phoneNumber,
+            address: profileData.address,
             updatedAt: new Date().toISOString(),
           };
 
@@ -450,7 +472,10 @@ export const useAuthStore = create(
             error: null,
           });
 
-          return { user: updatedUser };
+          return {
+            user: updatedUser,
+            message: "Profile updated successfully!",
+          };
         } catch (error) {
           set({
             loading: false,
@@ -460,20 +485,52 @@ export const useAuthStore = create(
         }
       },
 
-      changePassword: async (passwordData) => {
+      changePassword: async (currentPassword, newPassword) => {
         try {
           set({ loading: true, error: null });
 
           // Simulate API delay
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          // In real app, this would validate old password and update
+          const { user } = get();
+          if (!user) {
+            throw new Error("No user logged in");
+          }
+
+          // Find user in usersData to verify current password
+          const userData = usersData.find((u) => u.id === user.id);
+          if (!userData) {
+            throw new Error("User not found");
+          }
+
+          // Verify current password
+          if (userData.password !== currentPassword) {
+            throw new Error("Current password is incorrect");
+          }
+
+          // Update password in usersData
+          const userIndex = usersData.findIndex((u) => u.id === user.id);
+          if (userIndex !== -1) {
+            usersData[userIndex] = {
+              ...usersData[userIndex],
+              password: newPassword,
+              passwordChangedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+          }
+
+          // Update user state with password change timestamp
           set({
+            user: {
+              ...user,
+              passwordChangedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
             loading: false,
             error: null,
           });
 
-          return { message: "Password changed successfully" };
+          return { message: "Password changed successfully!" };
         } catch (error) {
           set({
             loading: false,

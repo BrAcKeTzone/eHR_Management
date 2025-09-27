@@ -1,12 +1,12 @@
 import React from "react";
-import MainLayout from "../layouts/MainLayout";
+import AuthLayout from "../layouts/AuthLayout";
 import ForgotPasswordForm from "../features/auth/ForgotPasswordForm";
 
 const ForgotPasswordPage = () => {
   return (
-    <MainLayout>
+    <AuthLayout>
       <ForgotPasswordForm />
-    </MainLayout>
+    </AuthLayout>
   );
 };
 

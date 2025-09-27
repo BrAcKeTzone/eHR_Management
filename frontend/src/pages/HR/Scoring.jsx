@@ -215,10 +215,12 @@ const Scoring = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Demo Scoring</h1>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+          Demo Scoring
+        </h1>
         <p className="text-gray-600">
           Score teaching demonstrations using the evaluation rubric.
         </p>
@@ -232,16 +234,16 @@ const Scoring = () => {
       )}
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         <DashboardCard title="Total Scheduled" className="text-center">
-          <div className="text-3xl font-bold text-blue-600">
+          <div className="text-xl sm:text-3xl font-bold text-blue-600">
             {scheduledApplications.length}
           </div>
           <div className="text-sm text-gray-500 mt-1">Demos</div>
         </DashboardCard>
 
         <DashboardCard title="Scored" className="text-center">
-          <div className="text-3xl font-bold text-green-600">
+          <div className="text-xl sm:text-3xl font-bold text-green-600">
             {
               scheduledApplications.filter(
                 (app) => app.scores && app.scores.length > 0
@@ -252,7 +254,7 @@ const Scoring = () => {
         </DashboardCard>
 
         <DashboardCard title="Pending" className="text-center">
-          <div className="text-3xl font-bold text-yellow-600">
+          <div className="text-xl sm:text-3xl font-bold text-yellow-600">
             {
               scheduledApplications.filter(
                 (app) => !app.scores || app.scores.length === 0
@@ -263,7 +265,7 @@ const Scoring = () => {
         </DashboardCard>
 
         <DashboardCard title="Pass Rate" className="text-center">
-          <div className="text-3xl font-bold text-purple-600">
+          <div className="text-xl sm:text-3xl font-bold text-purple-600">
             {scheduledApplications.filter((app) => app.result === "pass")
               .length > 0
               ? Math.round(
@@ -284,11 +286,97 @@ const Scoring = () => {
       {/* Applications Table */}
       <DashboardCard title="Scheduled Demos">
         {scheduledApplications.length > 0 ? (
-          <Table
-            columns={applicationsColumns}
-            data={scheduledApplications}
-            className="mt-4"
-          />
+          <div className="mt-4">
+            {/* Desktop Table View */}
+            <div className="hidden lg:block">
+              <Table
+                columns={applicationsColumns}
+                data={scheduledApplications}
+              />
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-4">
+              {scheduledApplications.map((app, index) => (
+                <div
+                  key={index}
+                  className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 break-words">
+                        {app.applicant_name}
+                      </h3>
+                      <p className="text-sm text-gray-500 break-all">
+                        {app.applicant_email}
+                      </p>
+                      <p className="text-sm font-medium break-words">
+                        {app.program}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 mb-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Demo Date:</span>
+                      <p className="font-medium">
+                        {app.demo_schedule
+                          ? `${formatDate(app.demo_schedule.date)} at ${
+                              app.demo_schedule.time
+                            }`
+                          : "Not scheduled"}
+                      </p>
+                      {app.demo_schedule?.location && (
+                        <p className="text-gray-500 text-xs break-words">
+                          Location: {app.demo_schedule.location}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Score Status:</span>
+                      {app.scores && app.scores.length > 0 ? (
+                        <div className="mt-1">
+                          <p className="font-medium text-green-600">Scored</p>
+                          <p className="text-gray-600">
+                            Total: {app.total_score}%
+                          </p>
+                          <span
+                            className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
+                              app.result === "pass"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {app.result?.toUpperCase()}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-yellow-600 font-medium">Pending</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={() => handleScoreApplication(app)}
+                      variant={
+                        app.scores && app.scores.length > 0
+                          ? "outline"
+                          : "primary"
+                      }
+                      size="sm"
+                      disabled={!app.demo_schedule}
+                      className="flex-1"
+                    >
+                      {app.scores && app.scores.length > 0
+                        ? "Edit Scores"
+                        : "Score Demo"}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500">No scheduled demos found.</p>
@@ -304,20 +392,20 @@ const Scoring = () => {
           title={`Score Demo - ${selectedApplication.applicant_name}`}
           size="large"
         >
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Application Info */}
-            <div className="bg-gray-50 p-4 rounded-md">
+            <div className="bg-gray-50 p-3 sm:p-4 rounded-md">
               <h4 className="font-medium text-gray-900 mb-2">Demo Details</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                 <div>
                   <span className="text-gray-500">Program:</span>
-                  <span className="ml-2 font-medium">
+                  <span className="ml-2 font-medium break-words">
                     {selectedApplication.program}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-500">Demo Date:</span>
-                  <span className="ml-2">
+                  <span className="ml-2 break-words">
                     {formatDate(selectedApplication.demo_schedule?.date)}
                   </span>
                 </div>
@@ -329,7 +417,7 @@ const Scoring = () => {
                 </div>
                 <div>
                   <span className="text-gray-500">Location:</span>
-                  <span className="ml-2">
+                  <span className="ml-2 break-words">
                     {selectedApplication.demo_schedule?.location ||
                       "Not specified"}
                   </span>
@@ -340,32 +428,32 @@ const Scoring = () => {
             {/* Scoring Rubric */}
             {rubricCriteria && rubricCriteria.length > 0 && (
               <div>
-                <h4 className="font-medium text-gray-900 mb-4">
+                <h4 className="font-medium text-gray-900 mb-3 sm:mb-4">
                   Evaluation Criteria
                 </h4>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {rubricCriteria.map((criteria) => (
                     <div
                       key={criteria.id}
-                      className="border border-gray-200 rounded-md p-4"
+                      className="border border-gray-200 rounded-md p-3 sm:p-4"
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <h5 className="font-medium text-gray-900">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-medium text-gray-900 break-words">
                             {criteria.name}
                           </h5>
                           {criteria.description && (
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-gray-600 mt-1 break-words">
                               {criteria.description}
                             </p>
                           )}
                         </div>
-                        <div className="ml-4 text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 flex-shrink-0">
                           Weight: {criteria.weight || 1}x
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                         <div className="flex-1">
                           <Input
                             type="number"
@@ -379,7 +467,7 @@ const Scoring = () => {
                             className="w-full"
                           />
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 text-center sm:text-left">
                           / 100 points
                         </div>
                       </div>
@@ -390,20 +478,20 @@ const Scoring = () => {
             )}
 
             {/* Total Score Display */}
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <div className="flex justify-between items-center">
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div>
                   <h4 className="font-medium text-blue-900">Total Score</h4>
                   <p className="text-sm text-blue-700">
                     Minimum passing score: {passingScore}%
                   </p>
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600">
+                <div className="text-center sm:text-right">
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600">
                     {totalScore}%
                   </div>
                   <span
-                    className={`px-3 py-1 text-sm font-medium rounded-full ${
+                    className={`inline-block px-3 py-1 text-sm font-medium rounded-full mt-1 ${
                       result === "pass"
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
@@ -432,25 +520,24 @@ const Scoring = () => {
             {/* Current Scores Info */}
             {selectedApplication.scores &&
               selectedApplication.scores.length > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 sm:p-4">
                   <h4 className="font-medium text-yellow-900 mb-2">
                     Current Scores
                   </h4>
-                  <div className="text-sm text-yellow-800">
+                  <div className="text-sm text-yellow-800 space-y-1">
                     <p>Total Score: {selectedApplication.total_score}%</p>
                     <p>Result: {selectedApplication.result?.toUpperCase()}</p>
-                    <p className="text-xs mt-1">
-                      You are editing existing scores.
-                    </p>
+                    <p className="text-xs">You are editing existing scores.</p>
                   </div>
                 </div>
               )}
 
             {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 sm:pt-6 border-t border-gray-200">
               <Button
                 onClick={() => setShowScoringModal(false)}
                 variant="outline"
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
@@ -458,6 +545,7 @@ const Scoring = () => {
                 onClick={handleSubmitScores}
                 variant="primary"
                 disabled={Object.keys(scores).length === 0 || scoreLoading}
+                className="w-full sm:w-auto"
               >
                 {scoreLoading
                   ? "Saving..."

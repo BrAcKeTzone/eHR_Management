@@ -15,9 +15,17 @@ import ApplicationHistory from "../pages/Applicant/History";
 // HR pages
 import HRDashboard from "../pages/HR/Dashboard";
 import ApplicationReview from "../pages/HR/Review";
+import ApplicationsManagement from "../pages/HR/ApplicationsManagement";
 import Scheduling from "../pages/HR/Scheduling";
 import Scoring from "../pages/HR/Scoring";
 import Reports from "../pages/HR/Reports";
+import UserManagement from "../pages/HR/UserManagement";
+
+// Shared pages
+import ProfilePage from "../pages/ProfilePage";
+
+// Test pages
+import ResumeParserTest from "../pages/ResumeParserTest";
 
 // Layout components
 import MainLayout from "../layouts/MainLayout";
@@ -103,15 +111,26 @@ const AppRoutes = () => {
       <Route
         path="/applicant"
         element={
-          <ProtectedRoute allowedRoles={["applicant"]}>
+          <ProtectedRoute allowedRoles={["APPLICANT"]}>
             <MainLayout />
           </ProtectedRoute>
         }
       >
         <Route path="dashboard" element={<ApplicantDashboard />} />
-        <Route path="application/new" element={<ApplicationForm />} />
+        <Route path="application" element={<ApplicationForm />} />
         <Route path="history" element={<ApplicationHistory />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
+
+      {/* Test Route (accessible to all authenticated users) */}
+      <Route
+        path="/test/resume-parser"
+        element={
+          <ProtectedRoute>
+            <ResumeParserTest />
+          </ProtectedRoute>
+        }
+      />
 
       {/* HR Routes */}
       <Route
@@ -124,10 +143,23 @@ const AppRoutes = () => {
       >
         <Route path="dashboard" element={<HRDashboard />} />
         <Route path="review" element={<ApplicationReview />} />
+        <Route path="applications" element={<ApplicationsManagement />} />
         <Route path="scheduling" element={<Scheduling />} />
         <Route path="scoring" element={<Scoring />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
+
+      {/* Shared Profile Route for direct access */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Fallback Routes */}
       <Route

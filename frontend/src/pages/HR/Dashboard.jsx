@@ -5,8 +5,10 @@ import DashboardCard from "../../components/DashboardCard";
 import Button from "../../components/Button";
 import Table from "../../components/Table";
 import { formatDate } from "../../utils/formatDate";
+import { useNavigate } from "react-router-dom";
 
 const HRDashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { applications, getAllApplications, loading, error } =
     useApplicationStore();
@@ -65,19 +67,19 @@ const HRDashboard = () => {
   const handleQuickAction = (action, applicationId = null) => {
     switch (action) {
       case "review":
-        window.location.href = "/hr/review";
+        navigate("/hr/review");
         break;
       case "schedule":
-        window.location.href = "/hr/scheduling";
+        navigate("/hr/scheduling");
         break;
       case "scoring":
-        window.location.href = "/hr/scoring";
+        navigate("/hr/scoring");
         break;
       case "reports":
-        window.location.href = "/hr/reports";
+        navigate("/hr/reports");
         break;
       case "view-application":
-        window.location.href = `/hr/applications/${applicationId}`;
+        navigate(`/hr/applications/${applicationId}`);
         break;
       default:
         break;
@@ -150,10 +152,12 @@ const HRDashboard = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Welcome Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">HR Dashboard</h1>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+          HR Dashboard
+        </h1>
         <p className="text-gray-600">
           Welcome back, {user?.name}! Here's an overview of application
           activities.
@@ -168,52 +172,52 @@ const HRDashboard = () => {
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        <DashboardCard title="Total Applications" className="text-center">
-          <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
-          <div className="text-sm text-gray-500 mt-1">All time</div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <DashboardCard
+          title="Total"
+          className="text-center col-span-2 md:col-span-1"
+        >
+          <div className="text-2xl sm:text-3xl font-bold text-blue-600">
+            {stats.total}
+          </div>
         </DashboardCard>
 
-        <DashboardCard title="Pending Review" className="text-center">
-          <div className="text-3xl font-bold text-yellow-600">
+        <DashboardCard title="Pending" className="text-center">
+          <div className="text-2xl sm:text-3xl font-bold text-yellow-600">
             {stats.pending}
           </div>
-          <div className="text-sm text-gray-500 mt-1">Needs attention</div>
         </DashboardCard>
 
         <DashboardCard title="Approved" className="text-center">
-          <div className="text-3xl font-bold text-green-600">
+          <div className="text-2xl sm:text-3xl font-bold text-green-600">
             {stats.approved}
           </div>
-          <div className="text-sm text-gray-500 mt-1">Ready for demo</div>
         </DashboardCard>
 
         <DashboardCard title="Rejected" className="text-center">
-          <div className="text-3xl font-bold text-red-600">
+          <div className="text-2xl sm:text-3xl font-bold text-red-600">
             {stats.rejected}
           </div>
-          <div className="text-sm text-gray-500 mt-1">Not qualified</div>
         </DashboardCard>
 
         <DashboardCard title="Completed" className="text-center">
-          <div className="text-3xl font-bold text-blue-600">
+          <div className="text-2xl sm:text-3xl font-bold text-blue-600">
             {stats.completed}
           </div>
-          <div className="text-sm text-gray-500 mt-1">Fully processed</div>
         </DashboardCard>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <DashboardCard title="Quick Actions">
+      {/* Quick Actions & Priority Tasks */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <DashboardCard title="Quick Actions" className="lg:col-span-1">
           <div className="grid grid-cols-2 gap-4">
             <Button
               onClick={() => handleQuickAction("review")}
               variant="primary"
-              className="flex flex-col items-center p-4 h-auto"
+              className="flex flex-col items-center p-2 sm:p-4 h-auto text-center"
             >
               <svg
-                className="w-8 h-8 mb-2"
+                className="w-6 h-6 sm:w-8 sm:h-8 mb-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -225,7 +229,7 @@ const HRDashboard = () => {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              <span>Review Applications</span>
+              <span className="text-xs sm:text-sm">Review Apps</span>
               {stats.pending > 0 && (
                 <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">
                   {stats.pending}
@@ -236,10 +240,10 @@ const HRDashboard = () => {
             <Button
               onClick={() => handleQuickAction("schedule")}
               variant="outline"
-              className="flex flex-col items-center p-4 h-auto"
+              className="flex flex-col items-center p-2 sm:p-4 h-auto text-center"
             >
               <svg
-                className="w-8 h-8 mb-2"
+                className="w-6 h-6 sm:w-8 sm:h-8 mb-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -251,16 +255,16 @@ const HRDashboard = () => {
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              <span>Schedule Demos</span>
+              <span className="text-xs sm:text-sm">Schedule</span>
             </Button>
 
             <Button
               onClick={() => handleQuickAction("scoring")}
               variant="outline"
-              className="flex flex-col items-center p-4 h-auto"
+              className="flex flex-col items-center p-2 sm:p-4 h-auto text-center"
             >
               <svg
-                className="w-8 h-8 mb-2"
+                className="w-6 h-6 sm:w-8 sm:h-8 mb-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -272,16 +276,16 @@ const HRDashboard = () => {
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                 />
               </svg>
-              <span>Score Demos</span>
+              <span className="text-xs sm:text-sm">Score Demos</span>
             </Button>
 
             <Button
               onClick={() => handleQuickAction("reports")}
               variant="outline"
-              className="flex flex-col items-center p-4 h-auto"
+              className="flex flex-col items-center p-2 sm:p-4 h-auto text-center"
             >
               <svg
-                className="w-8 h-8 mb-2"
+                className="w-6 h-6 sm:w-8 sm:h-8 mb-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -293,18 +297,17 @@ const HRDashboard = () => {
                   d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              <span>Generate Reports</span>
+              <span className="text-xs sm:text-sm">Reports</span>
             </Button>
           </div>
         </DashboardCard>
 
-        {/* Priority Tasks */}
-        <DashboardCard title="Priority Tasks">
+        <DashboardCard title="Priority Tasks" className="lg:col-span-2">
           <div className="space-y-4">
             {stats.pending > 0 && (
               <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                 <div className="flex items-center">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full mr-3 flex-shrink-0"></div>
                   <div>
                     <p className="font-medium text-yellow-900">
                       Pending Reviews
@@ -318,6 +321,7 @@ const HRDashboard = () => {
                   onClick={() => handleQuickAction("review")}
                   variant="outline"
                   size="sm"
+                  className="ml-2 flex-shrink-0"
                 >
                   Review
                 </Button>
@@ -327,7 +331,7 @@ const HRDashboard = () => {
             {stats.approved > 0 && (
               <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-md">
                 <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
                   <div>
                     <p className="font-medium text-green-900">Schedule Demos</p>
                     <p className="text-sm text-green-700">
@@ -339,6 +343,7 @@ const HRDashboard = () => {
                   onClick={() => handleQuickAction("schedule")}
                   variant="outline"
                   size="sm"
+                  className="ml-2 flex-shrink-0"
                 >
                   Schedule
                 </Button>
@@ -357,11 +362,62 @@ const HRDashboard = () => {
       {/* Recent Applications */}
       <DashboardCard title="Recent Applications">
         {recentApplications.length > 0 ? (
-          <Table
-            columns={recentApplicationsColumns}
-            data={recentApplications}
-            className="mt-4"
-          />
+          <div className="mt-4">
+            {/* Desktop Table View */}
+            <div className="hidden lg:block">
+              <Table
+                columns={recentApplicationsColumns}
+                data={recentApplications}
+              />
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-4">
+              {recentApplications.map((app, index) => (
+                <div
+                  key={index}
+                  className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 break-words">
+                        {app.applicant_name}
+                      </h3>
+                      <p className="text-sm text-gray-500 break-all">
+                        {app.applicant_email}
+                      </p>
+                      <p className="text-sm font-medium break-words mt-1">
+                        {app.program}
+                      </p>
+                    </div>
+                    <span
+                      className={`ml-2 px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ${getStatusColor(
+                        app.status
+                      )}`}
+                    >
+                      {app.status?.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500">
+                      Submitted: {formatDate(app.created_at)}
+                    </span>
+                    <Button
+                      onClick={() =>
+                        handleQuickAction("view-application", app.id)
+                      }
+                      variant="outline"
+                      size="sm"
+                      className="ml-2 flex-shrink-0"
+                    >
+                      View
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500">No applications found.</p>

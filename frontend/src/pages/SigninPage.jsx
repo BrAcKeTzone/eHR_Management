@@ -1,14 +1,14 @@
 import React from "react";
-import MainLayout from "../layouts/MainLayout";
+import AuthLayout from "../layouts/AuthLayout";
 import SigninForm from "../features/auth/SigninForm";
 
 const SigninPage = () => {
   return (
-    <MainLayout>
+    <AuthLayout>
       <div className="container mx-auto flex justify-center items-center min-h-screen">
         <SigninForm />
       </div>
-    </MainLayout>
+    </AuthLayout>
   );
 };
 
