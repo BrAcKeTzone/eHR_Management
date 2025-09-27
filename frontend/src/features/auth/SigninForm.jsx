@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import Input from "../../components/Input";
+import PasswordInput from "../../components/PasswordInput";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
@@ -69,10 +70,9 @@ const SigninForm = () => {
               placeholder="Enter your email"
             />
 
-            <Input
+            <PasswordInput
               label="Password"
               name="password"
-              type="password"
               value={formData.password}
               onChange={handleChange}
               required

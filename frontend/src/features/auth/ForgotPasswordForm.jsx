@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import Input from "../../components/Input";
+import PasswordInput from "../../components/PasswordInput";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
@@ -240,37 +241,27 @@ const ForgotPasswordForm = () => {
 
         <div className="space-y-4">
           <div>
-            <Input
+            <PasswordInput
               label="New Password"
               name="newPassword"
-              type="password"
               value={formData.newPassword}
               onChange={handleChange}
               required
               placeholder="Enter new password (minimum 6 characters)"
+              error={validationErrors.newPassword}
             />
-            {validationErrors.newPassword && (
-              <p className="mt-1 text-sm text-red-600">
-                {validationErrors.newPassword}
-              </p>
-            )}
           </div>
 
           <div>
-            <Input
+            <PasswordInput
               label="Confirm New Password"
               name="confirmPassword"
-              type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
               placeholder="Re-enter your new password"
+              error={validationErrors.confirmPassword}
             />
-            {validationErrors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-600">
-                {validationErrors.confirmPassword}
-              </p>
-            )}
           </div>
         </div>
       </div>

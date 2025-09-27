@@ -3,6 +3,7 @@ import { useAuthStore } from "../store/authStore";
 import DashboardCard from "../components/DashboardCard";
 import Button from "../components/Button";
 import Input from "../components/Input";
+import PasswordInput from "../components/PasswordInput";
 import Modal from "../components/Modal";
 import { formatDate } from "../utils/formatDate";
 
@@ -355,9 +356,9 @@ const ProfilePage = () => {
             </div>
           )}
 
-          <Input
+          <PasswordInput
             label="Current Password"
-            type="password"
+            name="currentPassword"
             value={passwordData.currentPassword}
             onChange={(e) =>
               setPasswordData({
@@ -366,22 +367,23 @@ const ProfilePage = () => {
               })
             }
             required
+            placeholder="Enter your current password"
           />
 
-          <Input
+          <PasswordInput
             label="New Password"
-            type="password"
+            name="newPassword"
             value={passwordData.newPassword}
             onChange={(e) =>
               setPasswordData({ ...passwordData, newPassword: e.target.value })
             }
             required
-            minLength={6}
+            placeholder="Enter new password (minimum 6 characters)"
           />
 
-          <Input
+          <PasswordInput
             label="Confirm New Password"
-            type="password"
+            name="confirmPassword"
             value={passwordData.confirmPassword}
             onChange={(e) =>
               setPasswordData({
@@ -390,7 +392,7 @@ const ProfilePage = () => {
               })
             }
             required
-            minLength={6}
+            placeholder="Re-enter your new password"
           />
 
           <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">

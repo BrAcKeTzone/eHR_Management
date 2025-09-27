@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import Input from "../../components/Input";
+import PasswordInput from "../../components/PasswordInput";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
@@ -276,37 +277,27 @@ const SignupForm = () => {
           </div>
 
           <div>
-            <Input
+            <PasswordInput
               label="Password"
               name="password"
-              type="password"
               value={formData.password}
               onChange={handleChange}
               required
               placeholder="Minimum 6 characters"
+              error={validationErrors.password}
             />
-            {validationErrors.password && (
-              <p className="mt-1 text-sm text-red-600">
-                {validationErrors.password}
-              </p>
-            )}
           </div>
 
           <div>
-            <Input
+            <PasswordInput
               label="Confirm Password"
               name="confirmPassword"
-              type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
               placeholder="Re-enter your password"
+              error={validationErrors.confirmPassword}
             />
-            {validationErrors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-600">
-                {validationErrors.confirmPassword}
-              </p>
-            )}
           </div>
         </div>
       </div>

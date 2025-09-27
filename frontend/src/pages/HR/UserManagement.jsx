@@ -6,6 +6,7 @@ import Button from "../../components/Button";
 import Table from "../../components/Table";
 import Modal from "../../components/Modal";
 import Input from "../../components/Input";
+import PasswordInput from "../../components/PasswordInput";
 import { formatDate } from "../../utils/formatDate";
 
 const UserManagement = () => {
@@ -537,20 +538,20 @@ const UserManagement = () => {
               />
             </div>
 
-            <Input
+            <PasswordInput
               label="Password"
-              type="password"
+              name="password"
               value={newUserData.password}
               onChange={(e) =>
                 setNewUserData({ ...newUserData, password: e.target.value })
               }
               required
-              minLength={6}
+              placeholder="Enter password (minimum 6 characters)"
             />
 
-            <Input
+            <PasswordInput
               label="Confirm Password"
-              type="password"
+              name="confirmPassword"
               value={newUserData.confirmPassword}
               onChange={(e) =>
                 setNewUserData({
@@ -559,7 +560,7 @@ const UserManagement = () => {
                 })
               }
               required
-              minLength={6}
+              placeholder="Re-enter password"
             />
           </div>
 
