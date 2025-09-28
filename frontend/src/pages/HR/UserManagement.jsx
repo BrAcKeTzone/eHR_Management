@@ -54,7 +54,6 @@ const UserManagement = () => {
     lastName: "",
     email: "",
     phoneNumber: "",
-    address: "",
     role: "APPLICANT",
     password: "",
     confirmPassword: "",
@@ -178,7 +177,6 @@ const UserManagement = () => {
         lastName: newUserData.lastName,
         email: newUserData.email,
         phoneNumber: newUserData.phoneNumber,
-        address: newUserData.address,
         role: newUserData.role,
         password: newUserData.password,
       });
@@ -189,7 +187,6 @@ const UserManagement = () => {
         lastName: "",
         email: "",
         phoneNumber: "",
-        address: "",
         role: "APPLICANT",
         password: "",
         confirmPassword: "",
@@ -566,7 +563,6 @@ const UserManagement = () => {
             lastName: "",
             email: "",
             phoneNumber: "",
-            address: "",
             role: "APPLICANT",
             password: "",
             confirmPassword: "",
@@ -639,21 +635,6 @@ const UserManagement = () => {
               </select>
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Address
-              </label>
-              <textarea
-                value={newUserData.address}
-                onChange={(e) =>
-                  setNewUserData({ ...newUserData, address: e.target.value })
-                }
-                rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter address"
-              />
-            </div>
-
             <PasswordInput
               label="Password"
               name="password"
@@ -692,7 +673,6 @@ const UserManagement = () => {
                   lastName: "",
                   email: "",
                   phoneNumber: "",
-                  address: "",
                   role: "APPLICANT",
                   password: "",
                   confirmPassword: "",

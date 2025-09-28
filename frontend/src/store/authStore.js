@@ -574,36 +574,66 @@ export const useAuthStore = create(
 
           set({ loading: true, error: null });
 
-          // Simple JWT decode to check if token is expired (client-side check only)
+          // Call backend API to get current user data instead of using static JSON
           try {
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            const currentTime = Date.now() / 1000;
+            // Import userApi dynamically to avoid circular imports
+            const { userApi } = await import("../api/userApi");
 
-            if (payload.exp && payload.exp < currentTime) {
-              throw new Error("Token expired");
-            }
-
-            // For now, we'll use the dummy data to get user info
-            // In a real app, you'd call a /verify-token endpoint or decode user from JWT
-            const user = usersData.find((u) => u.id === payload.id.toString());
+            // Get current user from backend API
+            const response = await userApi.getCurrentUser();
+            const user = response.data;
 
             if (!user) {
-              throw new Error("Invalid token");
+              throw new Error("Invalid token - user not found");
             }
 
-            const { password: _, ...userWithoutPassword } = user;
-
             set({
-              user: userWithoutPassword,
+              user,
               token,
               isAuthenticated: true,
               loading: false,
               error: null,
             });
 
-            return { user: userWithoutPassword };
-          } catch (jwtError) {
-            throw new Error("Invalid token format");
+            return { user };
+          } catch (apiError) {
+            // If API call fails, fall back to JWT decoding for basic validation
+            console.warn(
+              "Failed to fetch user from API, falling back to JWT decode:",
+              apiError
+            );
+
+            try {
+              const payload = JSON.parse(atob(token.split(".")[1]));
+              const currentTime = Date.now() / 1000;
+
+              if (payload.exp && payload.exp < currentTime) {
+                throw new Error("Token expired");
+              }
+
+              // Only use static data as absolute fallback
+              const user = usersData.find(
+                (u) => u.id === payload.id.toString()
+              );
+
+              if (!user) {
+                throw new Error("Invalid token");
+              }
+
+              const { password: _, ...userWithoutPassword } = user;
+
+              set({
+                user: userWithoutPassword,
+                token,
+                isAuthenticated: true,
+                loading: false,
+                error: null,
+              });
+
+              return { user: userWithoutPassword };
+            } catch (jwtError) {
+              throw new Error("Invalid token format");
+            }
           }
         } catch (error) {
           set({
