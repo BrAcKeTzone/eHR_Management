@@ -348,10 +348,8 @@ const ProfilePage = () => {
                     });
                     // Clear validation error when user starts typing
                     if (validationErrors.name) {
-                      setValidationErrors({
-                        ...validationErrors,
-                        name: undefined,
-                      });
+                      const { name, ...rest } = validationErrors;
+                      setValidationErrors(rest);
                     }
                   }}
                   disabled={!isEditing}
@@ -374,10 +372,8 @@ const ProfilePage = () => {
                     setProfileData({ ...profileData, email: e.target.value });
                     // Clear validation error when user starts typing
                     if (validationErrors.email) {
-                      setValidationErrors({
-                        ...validationErrors,
-                        email: undefined,
-                      });
+                      const { email, ...rest } = validationErrors;
+                      setValidationErrors(rest);
                     }
                   }}
                   disabled={!isEditing}
@@ -401,10 +397,8 @@ const ProfilePage = () => {
                     });
                     // Clear validation error when user starts typing
                     if (validationErrors.phone) {
-                      setValidationErrors({
-                        ...validationErrors,
-                        phone: undefined,
-                      });
+                      const { phone, ...rest } = validationErrors;
+                      setValidationErrors(rest);
                     }
                   }}
                   disabled={!isEditing}
