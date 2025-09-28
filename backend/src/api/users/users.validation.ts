@@ -10,8 +10,8 @@ export const createUser = Joi.object().keys({
 
 export const updateUser = Joi.object().keys({
   email: Joi.string().email().optional(),
-  name: Joi.string().optional(),
-  phone: Joi.string().optional().allow(""),
+  name: Joi.string().min(1).optional(),
+  phone: Joi.string().optional().allow("", null),
   role: Joi.string().valid("APPLICANT", "HR").optional(),
 });
 

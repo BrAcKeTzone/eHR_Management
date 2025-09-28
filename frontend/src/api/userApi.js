@@ -3,6 +3,18 @@ import { fetchClient } from "../utils/fetchClient";
 const API_BASE = "/api/users";
 
 export const userApi = {
+  // Get current user profile
+  getCurrentUser: async () => {
+    const response = await fetchClient.get(`${API_BASE}/me`);
+    return response.data;
+  },
+
+  // Update current user profile
+  updateCurrentUser: async (userData) => {
+    const response = await fetchClient.put(`${API_BASE}/me`, userData);
+    return response.data;
+  },
+
   // Get all users with pagination and filtering
   getAllUsers: async (options = {}) => {
     const params = new URLSearchParams();

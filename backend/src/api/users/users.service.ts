@@ -224,15 +224,24 @@ export const updateUser = async (
     }
   }
 
+  // Prepare update data
+  const updateData: any = {};
+  if (email && email !== existingUser.email) updateData.email = email;
+  if (name && name !== existingUser.name) updateData.name = name;
+  if (phone !== undefined) updateData.phone = phone || null;
+  if (role && role !== existingUser.role) updateData.role = role;
+
+  // Only update if there are changes
+  if (Object.keys(updateData).length === 0) {
+    // Return existing user if no changes
+    const { password: _, ...userWithoutPassword } = existingUser;
+    return userWithoutPassword as Omit<User, "password">;
+  }
+
   // Update user
   const user = await prisma.user.update({
     where: { id: userId },
-    data: {
-      ...(email && { email }),
-      ...(name && { name }),
-      ...(phone !== undefined && { phone: phone || null }),
-      ...(role && { role }),
-    },
+    data: updateData,
     select: {
       id: true,
       email: true,

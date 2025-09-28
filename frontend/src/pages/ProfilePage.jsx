@@ -16,6 +16,7 @@ const ProfilePage = () => {
     sendOtpForPasswordChange,
     loading,
     error,
+    clearError,
   } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -38,21 +39,43 @@ const ProfilePage = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch latest profile data when component mounts
+    // Only fetch profile data on initial mount, not on every user change
     const refreshProfile = async () => {
       try {
         await getProfile();
       } catch (error) {
         console.error("Failed to refresh profile:", error);
+
+        // Check if it's a 401 error (authentication failure)
+        if (error.response?.status === 401) {
+          console.error(
+            "Authentication failed, user will be redirected to login"
+          );
+          // The fetchClient interceptor will handle the redirect to /signin
+          // We don't need to do anything else here
+          return;
+        }
+
+        // For other errors, just log them and continue
+        // The error will be displayed in the UI via the error state
       }
     };
 
-    if (user) {
+    // Only call refreshProfile once on mount if user exists
+    if (user && !profileData.name && !profileData.email) {
       refreshProfile();
     }
-  }, []);
+
+    // Cleanup function to clear errors when component unmounts
+    return () => {
+      clearError();
+    };
+  }, [getProfile, clearError]); // Removed user dependency to prevent frequent calls
 
   useEffect(() => {
     if (user) {
@@ -61,6 +84,8 @@ const ProfilePage = () => {
         email: user.email || "",
         phone: user.phone || "",
       });
+      // Clear any validation errors when user data changes
+      setValidationErrors({});
     }
   }, [user]);
 
@@ -75,28 +100,62 @@ const ProfilePage = () => {
     }
   };
 
+  const validateProfileForm = () => {
+    const errors = {};
+
+    // Name validation
+    if (!profileData.name.trim()) {
+      errors.name = "Full name is required";
+    } else if (profileData.name.trim().length < 2) {
+      errors.name = "Name must be at least 2 characters long";
+    }
+
+    // Email validation
+    if (!profileData.email.trim()) {
+      errors.email = "Email address is required";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(profileData.email)) {
+        errors.email = "Please enter a valid email address";
+      }
+    }
+
+    // Phone validation (optional but if provided, should be valid)
+    if (profileData.phone && profileData.phone.trim()) {
+      // Remove all non-digit characters except + for counting digits
+      const cleanPhone = profileData.phone.replace(/[^\d]/g, "");
+
+      // Flexible phone validation that accepts various formats:
+      // - International: +1234567890, +1 234 567 8900
+      // - Domestic: 1234567890, 123-456-7890, (123) 456-7890
+      // - Various separators: spaces, dashes, dots, parentheses
+      const phoneRegex = /^[\+]?[\s]?[\(]?[\d\s\-\.\(\)]{7,}$/;
+
+      // Check if it has reasonable number of digits (7-15 is international standard)
+      if (cleanPhone.length < 7 || cleanPhone.length > 15) {
+        errors.phone = "Phone number must contain 7-15 digits";
+      } else if (!phoneRegex.test(profileData.phone.trim())) {
+        errors.phone = "Please enter a valid phone number format";
+      }
+    }
+
+    return errors;
+  };
+
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setProfileSuccess("");
+    setValidationErrors({});
+    clearError(); // Clear any existing errors
 
-    // Basic validation
-    if (!profileData.name.trim()) {
-      alert("Name is required");
+    // Validate form
+    const errors = validateProfileForm();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
       return;
     }
 
-    if (!profileData.email.trim()) {
-      alert("Email is required");
-      return;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(profileData.email)) {
-      alert("Please enter a valid email address");
-      return;
-    }
-
+    setIsUpdatingProfile(true); // Set local loading state
     try {
       await updateProfile(profileData);
       setIsEditing(false);
@@ -104,6 +163,17 @@ const ProfilePage = () => {
       setTimeout(() => setProfileSuccess(""), 3000);
     } catch (error) {
       console.error("Failed to update profile:", error);
+
+      // Handle 401 authentication errors
+      if (error.response?.status === 401) {
+        console.error("Authentication failed during profile update");
+        // The fetchClient interceptor will handle the redirect
+        return;
+      }
+
+      // Error is already handled in the store and displayed via the error state
+    } finally {
+      setIsUpdatingProfile(false); // Clear local loading state
     }
   };
 
@@ -116,12 +186,22 @@ const ProfilePage = () => {
       return;
     }
 
+    setIsPasswordLoading(true);
     try {
       await sendOtpForPasswordChange(passwordData.currentPassword);
       setPasswordStep(2);
       setOtpSent(true);
     } catch (error) {
+      // Handle 401 authentication errors
+      if (error.response?.status === 401) {
+        console.error("Authentication failed during OTP send");
+        // The fetchClient interceptor will handle the redirect
+        return;
+      }
+
       setPasswordError(error.message || "Failed to send OTP");
+    } finally {
+      setIsPasswordLoading(false);
     }
   };
 
@@ -145,6 +225,7 @@ const ProfilePage = () => {
       return;
     }
 
+    setIsPasswordLoading(true);
     try {
       await changePasswordWithOtp(
         passwordData.currentPassword,
@@ -163,14 +244,28 @@ const ProfilePage = () => {
         setPasswordStep(1);
         setOtpSent(false);
         setPasswordSuccess("");
+        setIsPasswordLoading(false);
       }, 2000);
     } catch (error) {
+      // Handle 401 authentication errors
+      if (error.response?.status === 401) {
+        console.error("Authentication failed during password change");
+        // The fetchClient interceptor will handle the redirect
+        return;
+      }
+
       setPasswordError(error.message || "Failed to change password");
+    } finally {
+      setIsPasswordLoading(false);
     }
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setValidationErrors({});
+    setProfileSuccess("");
+    setIsUpdatingProfile(false); // Reset local loading state
+    clearError();
     // Reset profile data to original values
     if (user) {
       setProfileData({
@@ -180,6 +275,36 @@ const ProfilePage = () => {
       });
     }
   };
+
+  // Show loading state if no user data is available yet
+  if (!user && loading) {
+    return (
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-gray-600">Loading profile...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no user data and not loading
+  if (!user && !loading) {
+    return (
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">Unable to load profile data.</p>
+            <Button variant="primary" onClick={() => window.location.reload()}>
+              Refresh Page
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
@@ -212,43 +337,85 @@ const ProfilePage = () => {
         <div className="lg:col-span-2">
           <DashboardCard title="Personal Information" className="h-fit">
             <div className="grid grid-cols-1 gap-4 sm:gap-6">
-              <Input
-                label="Full Name"
-                value={profileData.name}
-                onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    name: e.target.value,
-                  })
-                }
-                disabled={!isEditing}
-                required
-                placeholder="Enter your full name"
-              />
+              <div>
+                <Input
+                  label="Full Name"
+                  value={profileData.name}
+                  onChange={(e) => {
+                    setProfileData({
+                      ...profileData,
+                      name: e.target.value,
+                    });
+                    // Clear validation error when user starts typing
+                    if (validationErrors.name) {
+                      setValidationErrors({
+                        ...validationErrors,
+                        name: undefined,
+                      });
+                    }
+                  }}
+                  disabled={!isEditing}
+                  required
+                  placeholder="Enter your full name"
+                />
+                {validationErrors.name && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {validationErrors.name}
+                  </p>
+                )}
+              </div>
 
-              <Input
-                label="Email Address"
-                type="email"
-                value={profileData.email}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, email: e.target.value })
-                }
-                disabled={!isEditing}
-                required
-              />
+              <div>
+                <Input
+                  label="Email Address"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => {
+                    setProfileData({ ...profileData, email: e.target.value });
+                    // Clear validation error when user starts typing
+                    if (validationErrors.email) {
+                      setValidationErrors({
+                        ...validationErrors,
+                        email: undefined,
+                      });
+                    }
+                  }}
+                  disabled={!isEditing}
+                  required
+                />
+                {validationErrors.email && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {validationErrors.email}
+                  </p>
+                )}
+              </div>
 
-              <Input
-                label="Phone Number"
-                value={profileData.phone}
-                onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    phone: e.target.value,
-                  })
-                }
-                disabled={!isEditing}
-                placeholder="Enter your phone number"
-              />
+              <div>
+                <Input
+                  label="Phone Number"
+                  value={profileData.phone}
+                  onChange={(e) => {
+                    setProfileData({
+                      ...profileData,
+                      phone: e.target.value,
+                    });
+                    // Clear validation error when user starts typing
+                    if (validationErrors.phone) {
+                      setValidationErrors({
+                        ...validationErrors,
+                        phone: undefined,
+                      });
+                    }
+                  }}
+                  disabled={!isEditing}
+                  placeholder="Enter your phone number"
+                />
+                {validationErrors.phone && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {validationErrors.phone}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -257,10 +424,20 @@ const ProfilePage = () => {
                   <Button
                     type="submit"
                     variant="primary"
-                    disabled={loading}
+                    disabled={
+                      isUpdatingProfile ||
+                      Object.keys(validationErrors).length > 0
+                    }
                     className="w-full sm:w-auto"
                   >
-                    {loading ? "Saving..." : "Save Changes"}
+                    {isUpdatingProfile ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Saving...
+                      </div>
+                    ) : (
+                      "Save Changes"
+                    )}
                   </Button>
                   <Button
                     type="button"
@@ -275,7 +452,10 @@ const ProfilePage = () => {
                 <Button
                   type="button"
                   variant="primary"
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => {
+                    setIsEditing(true);
+                    clearError(); // Clear any existing errors when starting to edit
+                  }}
                   className="w-full sm:w-auto"
                 >
                   Edit Profile
@@ -461,10 +641,19 @@ const ProfilePage = () => {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={loading}
+                disabled={
+                  isPasswordLoading || !passwordData.currentPassword.trim()
+                }
                 className="w-full sm:w-auto"
               >
-                {loading ? "Sending OTP..." : "Send OTP"}
+                {isPasswordLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Sending OTP...
+                  </div>
+                ) : (
+                  "Send OTP"
+                )}
               </Button>
             </div>
           </form>
@@ -556,10 +745,22 @@ const ProfilePage = () => {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={loading}
+                disabled={
+                  isPasswordLoading ||
+                  !passwordData.otp.trim() ||
+                  !passwordData.newPassword.trim() ||
+                  !passwordData.confirmPassword.trim()
+                }
                 className="w-full sm:w-auto"
               >
-                {loading ? "Changing..." : "Change Password"}
+                {isPasswordLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Changing...
+                  </div>
+                ) : (
+                  "Change Password"
+                )}
               </Button>
             </div>
           </form>

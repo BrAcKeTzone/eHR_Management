@@ -363,20 +363,12 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          const { user } = get();
-          if (!user) {
-            throw new Error("No user logged in");
-          }
-
           // Get latest user data from the backend
           const { userApi } = await import("../api/userApi");
-          const response = await userApi.getUserById(user.id);
+          const response = await userApi.getCurrentUser();
 
           // Update local user state with fresh data from backend
-          const updatedUser = {
-            ...user,
-            ...response.data,
-          };
+          const updatedUser = response.data;
 
           set({
             user: updatedUser,
@@ -398,26 +390,18 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          const { user } = get();
-          if (!user) {
-            throw new Error("No user logged in");
-          }
-
           // Import userApi dynamically to avoid circular imports
           const { userApi } = await import("../api/userApi");
 
-          // Call the backend API to update the user
-          const response = await userApi.updateUser(user.id, {
+          // Call the backend API to update the current user
+          const response = await userApi.updateCurrentUser({
             name: profileData.name,
             email: profileData.email,
             phone: profileData.phone,
           });
 
           // Update the local user state with the response from backend
-          const updatedUser = {
-            ...user,
-            ...response.data,
-          };
+          const updatedUser = response.data;
 
           set({
             user: updatedUser,
@@ -430,9 +414,13 @@ export const useAuthStore = create(
             message: "Profile updated successfully!",
           };
         } catch (error) {
+          const errorMessage =
+            error?.response?.data?.message ||
+            error.message ||
+            "Failed to update profile";
           set({
             loading: false,
-            error: error.message || "Failed to update profile",
+            error: errorMessage,
           });
           throw error;
         }

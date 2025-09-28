@@ -14,6 +14,9 @@ const router = express.Router();
 // All user routes require authentication
 router.use(auth);
 
+// GET /api/users/me - Get current user profile
+router.get("/me", usersController.getCurrentUser);
+
 // GET /api/users - Get all users with pagination and filtering (HR only)
 router.get(
   "/",
@@ -34,6 +37,13 @@ router.post(
   requireHR,
   validate(usersValidation.createUser),
   usersController.createUser
+);
+
+// PUT /api/users/me - Update current user profile
+router.put(
+  "/me",
+  validate(usersValidation.updateUser),
+  usersController.updateCurrentUser
 );
 
 // PUT /api/users/:id - Update user (HR for others, or own profile)

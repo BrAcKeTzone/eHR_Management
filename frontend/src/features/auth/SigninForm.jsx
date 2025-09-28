@@ -32,8 +32,13 @@ const SigninForm = () => {
     }
 
     try {
-      await login(formData);
-      navigate("/dashboard");
+      const { user } = await login(formData);
+      // Navigate to appropriate dashboard based on user role
+      if (user?.role === "HR") {
+        navigate("/hr/dashboard");
+      } else {
+        navigate("/applicant/dashboard");
+      }
     } catch (err) {
       // Error is handled by the store
       console.error("Login failed:", err);

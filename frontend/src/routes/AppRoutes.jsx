@@ -28,6 +28,28 @@ import ProfilePage from "../pages/ProfilePage";
 import MainLayout from "../layouts/MainLayout";
 import AdminLayout from "../layouts/AdminLayout";
 
+// Dashboard Redirect Component
+const DashboardRedirect = () => {
+  const { user } = useAuthStore();
+  
+  if (user?.role === "HR") {
+    return <Navigate to="/hr/dashboard" replace />;
+  } else {
+    return <Navigate to="/applicant/dashboard" replace />;
+  }
+};
+
+// Profile Redirect Component
+const ProfileRedirect = () => {
+  const { user } = useAuthStore();
+  
+  if (user?.role === "HR") {
+    return <Navigate to="/hr/profile" replace />;
+  } else {
+    return <Navigate to="/applicant/profile" replace />;
+  }
+};
+
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -138,12 +160,12 @@ const AppRoutes = () => {
         <Route path="profile" element={<ProfilePage />} />
       </Route>
 
-      {/* Shared Profile Route for direct access */}
+      {/* Shared Profile Route for direct access - redirect to role-specific profile */}
       <Route
         path="/profile"
         element={
           <ProtectedRoute>
-            <ProfilePage />
+            <ProfileRedirect />
           </ProtectedRoute>
         }
       />
@@ -153,7 +175,7 @@ const AppRoutes = () => {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Navigate to="/applicant/dashboard" replace />
+            <DashboardRedirect />
           </ProtectedRoute>
         }
       />

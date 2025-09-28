@@ -20,6 +20,17 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, result, "Users retrieved successfully"));
 });
 
+// Get current user profile
+export const getCurrentUser = asyncHandler(
+  async (req: Request, res: Response) => {
+    const requestingUser = (req as any).user;
+    const user = await usersService.getUserById(requestingUser.id);
+    res
+      .status(200)
+      .json(new ApiResponse(200, user, "Profile retrieved successfully"));
+  }
+);
+
 // Get user by ID
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   const userId = parseInt(req.params.id);
@@ -34,6 +45,22 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
   const user = await usersService.createUser(req.body);
   res.status(201).json(new ApiResponse(201, user, "User created successfully"));
 });
+
+// Update current user profile
+export const updateCurrentUser = asyncHandler(
+  async (req: Request, res: Response) => {
+    const requestingUser = (req as any).user;
+    const user = await usersService.updateUser(
+      requestingUser.id,
+      req.body,
+      requestingUser.id,
+      requestingUser.role
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, user, "Profile updated successfully"));
+  }
+);
 
 // Update user
 export const updateUser = asyncHandler(async (req: Request, res: Response) => {

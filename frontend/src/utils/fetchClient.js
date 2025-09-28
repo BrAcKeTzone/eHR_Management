@@ -35,8 +35,21 @@ fetchClient.interceptors.response.use(
 
       // Only redirect on 401 for non-auth endpoints (protected routes)
       if (!isAuthEndpoint) {
+        // Clear the token
         localStorage.removeItem("authToken");
-        window.location.href = "/signin";
+
+        // Prevent redirect loop by checking current location
+        const currentPath = window.location.pathname;
+        if (
+          currentPath !== "/signin" &&
+          currentPath !== "/signup" &&
+          currentPath !== "/forgot-password"
+        ) {
+          // Use a small delay to prevent race conditions with React routing
+          setTimeout(() => {
+            window.location.href = "/signin";
+          }, 100);
+        }
       }
       // For auth endpoints (like login), let the error bubble up to be handled by the form
     }
