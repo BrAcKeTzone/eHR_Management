@@ -3,83 +3,99 @@ import { fetchClient } from "../utils/fetchClient";
 const API_BASE = "/api/scoring";
 
 export const scoringApi = {
-  // Submit rubric scores for application (HR only)
-  submitScores: async (applicationId, scores) => {
-    const response = await fetchClient.post(
-      `${API_BASE}/${applicationId}`,
-      scores
+  // ========== RUBRIC MANAGEMENT ==========
+
+  // Create new rubric (HR/Admin only)
+  createRubric: async (rubricData) => {
+    const response = await fetchClient.post(`${API_BASE}/rubrics`, rubricData);
+    return response.data;
+  },
+
+  // Get all rubrics (HR/Admin only)
+  getAllRubrics: async (includeInactive = false) => {
+    const params = includeInactive ? "?includeInactive=true" : "";
+    const response = await fetchClient.get(`${API_BASE}/rubrics${params}`);
+    return response.data;
+  },
+
+  // Get rubric by ID (HR/Admin only)
+  getRubricById: async (rubricId) => {
+    const response = await fetchClient.get(`${API_BASE}/rubrics/${rubricId}`);
+    return response.data;
+  },
+
+  // Update rubric (HR/Admin only)
+  updateRubric: async (rubricId, rubricData) => {
+    const response = await fetchClient.put(
+      `${API_BASE}/rubrics/${rubricId}`,
+      rubricData
     );
     return response.data;
   },
 
-  // Update existing scores (HR only)
-  updateScores: async (applicationId, scores) => {
-    const response = await fetchClient.put(
-      `${API_BASE}/${applicationId}`,
-      scores
+  // Delete rubric (Admin only)
+  deleteRubric: async (rubricId) => {
+    const response = await fetchClient.delete(
+      `${API_BASE}/rubrics/${rubricId}`
     );
+    return response.data;
+  },
+
+  // ========== SCORE MANAGEMENT ==========
+
+  // Create/Submit score for application (HR only)
+  createScore: async (scoreData) => {
+    const response = await fetchClient.post(`${API_BASE}/scores`, scoreData);
     return response.data;
   },
 
   // Get scores for specific application
-  getScores: async (applicationId) => {
-    const response = await fetchClient.get(`${API_BASE}/${applicationId}`);
+  getScoresByApplication: async (applicationId) => {
+    const response = await fetchClient.get(
+      `${API_BASE}/applications/${applicationId}/scores`
+    );
     return response.data;
   },
 
-  // Get current user's scores (applicant)
-  getMyScores: async () => {
-    const response = await fetchClient.get(`${API_BASE}/my-scores`);
-    return response.data;
-  },
-
-  // Get all scored applications (HR only)
-  getAllScores: async (filters = {}) => {
-    const queryParams = new URLSearchParams(filters).toString();
-    const response = await fetchClient.get(`${API_BASE}?${queryParams}`);
-    return response.data;
-  },
-
-  // Get rubric criteria and weights
-  getRubricCriteria: async () => {
-    const response = await fetchClient.get(`${API_BASE}/rubric-criteria`);
-    return response.data;
-  },
-
-  // Update rubric criteria (Admin only)
-  updateRubricCriteria: async (criteria) => {
+  // Update existing score (HR only)
+  updateScore: async (applicationId, rubricId, scoreData) => {
     const response = await fetchClient.put(
-      `${API_BASE}/rubric-criteria`,
-      criteria
+      `${API_BASE}/applications/${applicationId}/scores/${rubricId}`,
+      scoreData
     );
     return response.data;
   },
 
-  // Calculate total score for application
-  calculateTotal: async (applicationId) => {
-    const response = await fetchClient.get(
-      `${API_BASE}/${applicationId}/calculate-total`
+  // Delete score (HR only)
+  deleteScore: async (applicationId, rubricId) => {
+    const response = await fetchClient.delete(
+      `${API_BASE}/applications/${applicationId}/scores/${rubricId}`
     );
     return response.data;
   },
 
-  // Get scoring statistics (HR only)
-  getStatistics: async (filters = {}) => {
-    const queryParams = new URLSearchParams(filters).toString();
+  // ========== SCORE CALCULATION ==========
+
+  // Calculate total score for application (HR only)
+  calculateApplicationScore: async (applicationId) => {
     const response = await fetchClient.get(
-      `${API_BASE}/statistics?${queryParams}`
+      `${API_BASE}/applications/${applicationId}/calculate`
     );
     return response.data;
   },
 
-  // Export scores report (HR only)
-  exportReport: async (filters = {}) => {
-    const queryParams = new URLSearchParams(filters).toString();
+  // Complete application scoring (HR only)
+  completeApplicationScoring: async (applicationId) => {
+    const response = await fetchClient.post(
+      `${API_BASE}/applications/${applicationId}/complete`
+    );
+    return response.data;
+  },
+
+  // Get application scores summary
+  getApplicationScoresSummary: async (applicationId) => {
     const response = await fetchClient.get(
-      `${API_BASE}/export?${queryParams}`,
-      {
-        responseType: "blob",
-      }
+      `${API_BASE}/applications/${applicationId}/summary`
     );
     return response.data;
   },

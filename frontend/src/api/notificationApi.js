@@ -1,62 +1,61 @@
 import { fetchClient } from "../utils/fetchClient";
 
+/**
+ * IMPORTANT: The backend does NOT have REST API endpoints for notifications.
+ * Notifications are sent automatically via email by the backend notification service.
+ * This file is kept for potential future expansion or client-side notification management.
+ *
+ * For now, notifications are handled entirely server-side:
+ * - Application submission → emails sent automatically
+ * - Application approval → emails sent automatically
+ * - Application rejection → emails sent automatically
+ * - Demo scheduling → emails sent automatically
+ * - Results → emails sent automatically
+ */
+
+// Note: These functions are placeholders and will return empty data
+// since there are no actual backend endpoints for these operations
+
 const API_BASE = "/api/notifications";
 
 export const notificationApi = {
-  // Get user notifications
-  getUserNotifications: async (filters = {}) => {
-    const queryParams = new URLSearchParams(filters).toString();
-    const response = await fetchClient.get(`${API_BASE}?${queryParams}`);
-    return response.data;
+  // Placeholder: Backend sends emails automatically, no API needed
+  getUserNotifications: async () => {
+    console.warn(
+      "Notifications are sent via email by backend, no API endpoint available"
+    );
+    return { data: [] };
   },
 
-  // Mark notification as read
+  // Placeholder
   markAsRead: async (notificationId) => {
-    const response = await fetchClient.put(
-      `${API_BASE}/${notificationId}/read`
+    console.warn(
+      "Notifications are sent via email by backend, no API endpoint available"
     );
-    return response.data;
+    return { data: null };
   },
 
-  // Mark all notifications as read
+  // Placeholder
   markAllAsRead: async () => {
-    const response = await fetchClient.put(`${API_BASE}/mark-all-read`);
-    return response.data;
+    console.warn(
+      "Notifications are sent via email by backend, no API endpoint available"
+    );
+    return { data: null };
   },
 
-  // Delete notification
+  // Placeholder
   deleteNotification: async (notificationId) => {
-    const response = await fetchClient.delete(`${API_BASE}/${notificationId}`);
-    return response.data;
+    console.warn(
+      "Notifications are sent via email by backend, no API endpoint available"
+    );
+    return { data: null };
   },
 
-  // Get unread notification count
+  // Placeholder
   getUnreadCount: async () => {
-    const response = await fetchClient.get(`${API_BASE}/unread-count`);
-    return response.data;
-  },
-
-  // Send notification (HR only)
-  sendNotification: async (notificationData) => {
-    const response = await fetchClient.post(
-      `${API_BASE}/send`,
-      notificationData
+    console.warn(
+      "Notifications are sent via email by backend, no API endpoint available"
     );
-    return response.data;
-  },
-
-  // Get notification templates (HR only)
-  getTemplates: async () => {
-    const response = await fetchClient.get(`${API_BASE}/templates`);
-    return response.data;
-  },
-
-  // Update notification template (Admin only)
-  updateTemplate: async (templateId, templateData) => {
-    const response = await fetchClient.put(
-      `${API_BASE}/templates/${templateId}`,
-      templateData
-    );
-    return response.data;
+    return { data: { count: 0 } };
   },
 };

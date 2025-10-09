@@ -186,6 +186,25 @@ export const applicationApi = {
     }
   },
 
+  // Schedule demo for application (HR only)
+  // Backend endpoint: PUT /api/applications/:id/schedule
+  scheduleDemo: async (applicationId, demoSchedule) => {
+    try {
+      const response = await fetchClient.put(
+        `${API_BASE_URL}/applications/${applicationId}/schedule`,
+        { demoSchedule } // ISO date string
+      );
+      return { application: response.data.data };
+    } catch (error) {
+      console.error("Error scheduling demo:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to schedule demo";
+      throw new Error(message);
+    }
+  },
+
   // Submit for review (change status from draft to pending)
   submit: async (applicationId) => {
     try {
