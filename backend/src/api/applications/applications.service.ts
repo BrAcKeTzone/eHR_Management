@@ -1,4 +1,10 @@
-import { Application, ApplicationStatus, User, Prisma } from "@prisma/client";
+import {
+  Application,
+  ApplicationStatus,
+  ApplicationResult,
+  User,
+  Prisma,
+} from "@prisma/client";
 import prisma from "../../configs/prisma";
 import ApiError from "../../utils/ApiError";
 import notificationService from "../notifications/notifications.service";
@@ -27,6 +33,9 @@ export interface CreateApplicationData {
 export interface UpdateApplicationData {
   status?: ApplicationStatus;
   demoSchedule?: Date;
+  demoLocation?: string;
+  demoDuration?: number;
+  demoNotes?: string;
   hrNotes?: string;
   totalScore?: number;
   result?: "PASS" | "FAIL";
@@ -34,6 +43,23 @@ export interface UpdateApplicationData {
 
 export interface ApplicationWithApplicant extends Application {
   applicant: Pick<User, "id" | "name" | "email" | "phone">;
+}
+
+// Helper function to format application for frontend
+function formatApplicationForFrontend(app: any) {
+  let formattedApp: any = { ...app };
+
+  // Format demoSchedule to include separate time string
+  if (app.demoSchedule) {
+    // Convert to local timezone and extract time
+    const demoDate = new Date(app.demoSchedule);
+    // Get local hours and minutes (this accounts for the timezone offset)
+    const hours = demoDate.getHours().toString().padStart(2, "0");
+    const minutes = demoDate.getMinutes().toString().padStart(2, "0");
+    formattedApp.demoTime = `${hours}:${minutes}`;
+  }
+
+  return formattedApp;
 }
 
 class ApplicationService {
@@ -108,7 +134,7 @@ class ApplicationService {
   async getApplicationById(
     id: number
   ): Promise<ApplicationWithApplicant | null> {
-    return await prisma.application.findUnique({
+    const application = await prisma.application.findUnique({
       where: { id },
       include: {
         applicant: {
@@ -121,6 +147,8 @@ class ApplicationService {
         },
       },
     });
+
+    return application ? formatApplicationForFrontend(application) : null;
   }
 
   async getApplicationsByApplicant(
@@ -130,10 +158,12 @@ class ApplicationService {
     const id =
       typeof applicantId === "string" ? parseInt(applicantId) : applicantId;
 
-    return await prisma.application.findMany({
+    const applications = await prisma.application.findMany({
       where: { applicantId: id },
       orderBy: { attemptNumber: "desc" },
     });
+
+    return applications.map((app: any) => formatApplicationForFrontend(app));
   }
 
   async getActiveApplicationByApplicant(
@@ -143,7 +173,7 @@ class ApplicationService {
     const id =
       typeof applicantId === "string" ? parseInt(applicantId) : applicantId;
 
-    return await prisma.application.findFirst({
+    const application = await prisma.application.findFirst({
       where: {
         applicantId: id,
         status: {
@@ -151,18 +181,22 @@ class ApplicationService {
         },
       },
     });
+
+    return application ? formatApplicationForFrontend(application) : null;
   }
 
   async getAllApplications(filters?: {
     status?: ApplicationStatus;
+    result?: ApplicationResult;
     search?: string;
     page?: number;
     limit?: number;
   }): Promise<{ applications: ApplicationWithApplicant[]; total: number }> {
-    const { status, search, page = 1, limit = 10 } = filters || {};
+    const { status, result, search, page = 1, limit = 10 } = filters || {};
 
     const where: Prisma.ApplicationWhereInput = {
       ...(status && { status }),
+      ...(result && { result }),
       ...(search && {
         applicant: {
           OR: [{ name: { contains: search } }, { email: { contains: search } }],
@@ -190,7 +224,12 @@ class ApplicationService {
       prisma.application.count({ where }),
     ]);
 
-    return { applications, total };
+    // Format applications for frontend
+    const formattedApplications = applications.map(
+      formatApplicationForFrontend
+    );
+
+    return { applications: formattedApplications, total };
   }
 
   async updateApplication(
@@ -258,7 +297,13 @@ class ApplicationService {
     return application;
   }
 
-  async scheduleDemo(id: number, demoSchedule: Date): Promise<Application> {
+  async scheduleDemo(
+    id: number,
+    demoSchedule: Date,
+    demoLocation?: string,
+    demoDuration?: number,
+    demoNotes?: string
+  ): Promise<Application> {
     const application = await prisma.application.findUnique({ where: { id } });
 
     if (!application) {
@@ -274,6 +319,9 @@ class ApplicationService {
 
     const updatedApplication = await this.updateApplication(id, {
       demoSchedule,
+      demoLocation,
+      demoDuration,
+      demoNotes,
     });
 
     // Get applicant details for notification

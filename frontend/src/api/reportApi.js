@@ -1,95 +1,91 @@
 import { fetchClient } from "../utils/fetchClient";
 
-/**
- * IMPORTANT: The backend does NOT have /api/reports endpoints.
- * Reports and statistics should be generated client-side from data retrieved via:
- * - applicationApi.getAll() - for application reports
- * - scoringApi endpoints - for scoring reports
- * - userApi.getUserStats() - for user statistics
- *
- * This file is kept as placeholders. Implement client-side report generation
- * using the data from the above APIs.
- */
-
-const API_BASE_APPLICATIONS = "/api/applications";
-const API_BASE_USERS = "/api/users";
+const API_BASE_URL = "/api/reports";
 
 export const reportApi = {
-  // Get application data for client-side report generation
-  getApplicationsData: async (filters = {}) => {
-    const response = await fetchClient.get(API_BASE_APPLICATIONS, {
+  // Get report statistics
+  getReportStatistics: async (filters = {}) => {
+    const response = await fetchClient.get(`${API_BASE_URL}/statistics`, {
       params: filters,
     });
     return response.data;
   },
 
-  // Get user statistics (HR only)
-  getUserStatistics: async () => {
-    const response = await fetchClient.get(`${API_BASE_USERS}/stats`);
+  // Get dashboard analytics
+  getDashboardAnalytics: async () => {
+    const response = await fetchClient.get(`${API_BASE_URL}/analytics`);
     return response.data;
   },
 
-  // Get scoring data for reports - use scoringApi instead
-  getScoringData: async (applicationId) => {
-    console.warn(
-      "Use scoringApi.getApplicationScoresSummary() for scoring data"
+  // Export applications to CSV
+  exportApplicationsCSV: async (filters = {}) => {
+    const response = await fetchClient.get(
+      `${API_BASE_URL}/export/applications/csv`,
+      {
+        params: filters,
+        responseType: "blob",
+      }
     );
-    return { data: null };
+    return response.data;
   },
 
-  // Placeholder: Generate reports client-side
-  generateApplicationReport: async (filters = {}) => {
-    console.warn(
-      "Backend has no report generation. Fetch data via applicationApi and generate reports client-side."
+  // Export scoring to CSV
+  exportScoringCSV: async (filters = {}) => {
+    const response = await fetchClient.get(
+      `${API_BASE_URL}/export/scoring/csv`,
+      {
+        params: filters,
+        responseType: "blob",
+      }
     );
-    return null;
+    return response.data;
   },
 
-  // Placeholder: Generate reports client-side
-  generateScoringReport: async (filters = {}) => {
-    console.warn(
-      "Backend has no report generation. Fetch data via scoringApi and generate reports client-side."
+  // Export applicants to CSV
+  exportApplicantsCSV: async (filters = {}) => {
+    const response = await fetchClient.get(
+      `${API_BASE_URL}/export/applicants/csv`,
+      {
+        params: filters,
+        responseType: "blob",
+      }
     );
-    return null;
+    return response.data;
   },
 
-  // Placeholder: Generate reports client-side
-  generateApplicantReport: async (filters = {}) => {
-    console.warn(
-      "Backend has no report generation. Fetch data via userApi and generate reports client-side."
+  // Generate applications PDF
+  generateApplicationsPDF: async (filters = {}) => {
+    const response = await fetchClient.get(
+      `${API_BASE_URL}/export/applications/pdf`,
+      {
+        params: filters,
+        responseType: "blob",
+      }
     );
-    return null;
+    return response.data;
   },
 
-  // Placeholder
-  getReportStatistics: async (dateRange = {}) => {
-    console.warn(
-      "Backend has no report statistics. Use userApi.getUserStats() instead."
+  // Generate scoring PDF
+  generateScoringPDF: async (filters = {}) => {
+    const response = await fetchClient.get(
+      `${API_BASE_URL}/export/scoring/pdf`,
+      {
+        params: filters,
+        responseType: "blob",
+      }
     );
-    return { data: null };
+    return response.data;
   },
 
-  // Placeholder
-  getDashboardAnalytics: async () => {
-    console.warn(
-      "Backend has no analytics endpoint. Combine data from userApi.getUserStats() and applicationApi.getAll()."
+  // Generate applicants PDF
+  generateApplicantsPDF: async (filters = {}) => {
+    const response = await fetchClient.get(
+      `${API_BASE_URL}/export/applicants/pdf`,
+      {
+        params: filters,
+        responseType: "blob",
+      }
     );
-    return { data: null };
-  },
-
-  // Placeholder
-  exportToCsv: async (dataType, filters = {}) => {
-    console.warn(
-      "Backend has no CSV export. Implement client-side CSV generation."
-    );
-    return null;
-  },
-
-  // Placeholder
-  exportToPdf: async (dataType, filters = {}) => {
-    console.warn(
-      "Backend has no PDF export. Implement client-side PDF generation."
-    );
-    return null;
+    return response.data;
   },
 };

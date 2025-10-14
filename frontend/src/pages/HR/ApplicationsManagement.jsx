@@ -6,6 +6,7 @@ import Table from "../../components/Table";
 import Modal from "../../components/Modal";
 import Input from "../../components/Input";
 import { formatDate } from "../../utils/formatDate";
+import { APPLICATION_STATUS, APPLICATION_RESULT } from "../../utils/constants";
 
 const ApplicationsManagement = () => {
   const {
@@ -31,8 +32,8 @@ const ApplicationsManagement = () => {
   });
 
   useEffect(() => {
-    getAllApplications();
-  }, [getAllApplications]);
+    getAllApplications(filters);
+  }, [getAllApplications, filters]);
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "pending":
@@ -67,18 +68,18 @@ const ApplicationsManagement = () => {
         app.program.toLowerCase().includes(filters.program.toLowerCase());
       const matchesSearch =
         !filters.search ||
-        app.applicant_name
+        app.applicant?.name
           ?.toLowerCase()
           .includes(filters.search.toLowerCase()) ||
-        app.applicant_email
+        app.applicant?.email
           ?.toLowerCase()
           .includes(filters.search.toLowerCase());
       const matchesStartDate =
         !filters.startDate ||
-        new Date(app.created_at) >= new Date(filters.startDate);
+        new Date(app.createdAt) >= new Date(filters.startDate);
       const matchesEndDate =
         !filters.endDate ||
-        new Date(app.created_at) <= new Date(filters.endDate);
+        new Date(app.createdAt) <= new Date(filters.endDate);
       const matchesResult = !filters.result || app.result === filters.result;
 
       return (
@@ -98,19 +99,21 @@ const ApplicationsManagement = () => {
 
   const handleViewHistory = async (application) => {
     try {
-      const history = await getApplicationHistory(application.applicant_email);
-      setApplicationHistory(history);
+      const result = await getApplicationHistory(application.applicant?.email);
+      // Extract applications array from the result object
+      setApplicationHistory(result?.applications || []);
       setSelectedApplication(application);
       setShowHistoryModal(true);
     } catch (error) {
       console.error("Failed to fetch application history:", error);
+      setApplicationHistory([]); // Set empty array on error
     }
   };
 
   const handleStatusUpdate = async (applicationId, newStatus, reason = "") => {
     try {
       await updateApplicationStatus(applicationId, newStatus, reason);
-      getAllApplications(); // Refresh the list
+      getAllApplications(filters); // Refresh the list with current filters
     } catch (error) {
       console.error("Failed to update application status:", error);
     }
@@ -119,12 +122,12 @@ const ApplicationsManagement = () => {
   const applicationsColumns = [
     {
       header: "Applicant",
-      accessor: "applicant_name",
+      accessor: "applicant.name",
       cell: (row) => (
         <div>
-          <p className="font-medium text-gray-900">{row.applicant_name}</p>
-          <p className="text-sm text-gray-500">{row.applicant_email}</p>
-          <p className="text-xs text-gray-400">Attempt #{row.attempt_number}</p>
+          <p className="font-medium text-gray-900">{row.applicant?.name}</p>
+          <p className="text-sm text-gray-500">{row.applicant?.email}</p>
+          <p className="text-xs text-gray-400">Attempt #{row.attemptNumber}</p>
         </div>
       ),
     },
@@ -171,11 +174,11 @@ const ApplicationsManagement = () => {
     },
     {
       header: "Score",
-      accessor: "total_score",
+      accessor: "totalScore",
       cell: (row) => (
         <div className="text-sm">
-          {row.total_score ? (
-            <span className="font-medium">{row.total_score}%</span>
+          {row.totalScore !== null && row.totalScore !== undefined ? (
+            <span className="font-medium">{row.totalScore}</span>
           ) : (
             <span className="text-gray-400">-</span>
           )}
@@ -184,24 +187,25 @@ const ApplicationsManagement = () => {
     },
     {
       header: "Submitted",
-      accessor: "created_at",
+      accessor: "createdAt",
       cell: (row) => (
-        <div className="text-sm text-gray-600">
-          {formatDate(row.created_at)}
-        </div>
+        <div className="text-sm text-gray-600">{formatDate(row.createdAt)}</div>
       ),
     },
     {
       header: "Demo Schedule",
-      accessor: "demo_schedule",
+      accessor: "demoSchedule",
       cell: (row) => (
         <div className="text-sm">
-          {row.demo_schedule ? (
+          {row.demoSchedule ? (
             <div>
-              <p className="text-gray-900">
-                {formatDate(row.demo_schedule.date)}
+              <p className="text-gray-900">{formatDate(row.demoSchedule)}</p>
+              <p className="text-xs text-gray-600">
+                {row.demoTime || "Time not set"}
               </p>
-              <p className="text-gray-600">{row.demo_schedule.time}</p>
+              {row.demoLocation && (
+                <p className="text-xs text-gray-500">{row.demoLocation}</p>
+              )}
             </div>
           ) : (
             <span className="text-gray-400">Not scheduled</span>
@@ -271,28 +275,28 @@ const ApplicationsManagement = () => {
           {
             title: "Pending",
             value: filteredApplications.filter(
-              (app) => app.status === "pending"
+              (app) => app.status === APPLICATION_STATUS.PENDING
             ).length,
             color: "text-yellow-600",
           },
           {
             title: "Approved",
             value: filteredApplications.filter(
-              (app) => app.status === "approved"
+              (app) => app.status === APPLICATION_STATUS.APPROVED
             ).length,
             color: "text-green-600",
           },
           {
             title: "Rejected",
             value: filteredApplications.filter(
-              (app) => app.status === "rejected"
+              (app) => app.status === APPLICATION_STATUS.REJECTED
             ).length,
             color: "text-red-600",
           },
           {
             title: "Completed",
             value: filteredApplications.filter(
-              (app) => app.status === "completed"
+              (app) => app.status === APPLICATION_STATUS.COMPLETED
             ).length,
             color: "text-purple-600",
           },
@@ -320,10 +324,10 @@ const ApplicationsManagement = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="completed">Completed</option>
+              <option value={APPLICATION_STATUS.PENDING}>Pending</option>
+              <option value={APPLICATION_STATUS.APPROVED}>Approved</option>
+              <option value={APPLICATION_STATUS.REJECTED}>Rejected</option>
+              <option value={APPLICATION_STATUS.COMPLETED}>Completed</option>
             </select>
           </div>
 
@@ -373,8 +377,8 @@ const ApplicationsManagement = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Results</option>
-              <option value="pass">Pass</option>
-              <option value="fail">Fail</option>
+              <option value={APPLICATION_RESULT.PASS}>Pass</option>
+              <option value={APPLICATION_RESULT.FAIL}>Fail</option>
             </select>
           </div>
         </div>
@@ -414,19 +418,19 @@ const ApplicationsManagement = () => {
             <div className="lg:hidden space-y-4">
               {filteredApplications.map((app, index) => (
                 <div
-                  key={index}
+                  key={app.id || index}
                   className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-medium text-gray-900">
-                        {app.applicant_name}
+                        {app.applicant?.name}
                       </h3>
                       <p className="text-sm text-gray-500 break-all">
-                        {app.applicant_email}
+                        {app.applicant?.email}
                       </p>
                       <p className="text-xs text-gray-400">
-                        Attempt #{app.attempt_number}
+                        Attempt #{app.attemptNumber}
                       </p>
                     </div>
                     <div className="flex flex-col items-end space-y-1">
@@ -457,18 +461,20 @@ const ApplicationsManagement = () => {
                     <div>
                       <span className="text-gray-500">Score:</span>
                       <p className="font-medium">
-                        {app.total_score ? `${app.total_score}%` : "-"}
+                        {app.totalScore !== null && app.totalScore !== undefined
+                          ? app.totalScore
+                          : "-"}
                       </p>
                     </div>
                     <div>
                       <span className="text-gray-500">Submitted:</span>
-                      <p>{formatDate(app.created_at)}</p>
+                      <p>{formatDate(app.createdAt)}</p>
                     </div>
                     <div>
                       <span className="text-gray-500">Demo:</span>
                       <p>
-                        {app.demo_schedule
-                          ? formatDate(app.demo_schedule.date)
+                        {app.demoSchedule
+                          ? formatDate(app.demoSchedule)
                           : "Not scheduled"}
                       </p>
                     </div>
@@ -510,95 +516,200 @@ const ApplicationsManagement = () => {
         <Modal
           isOpen={true}
           onClose={() => setShowDetailsModal(false)}
-          title={`Application Details - ${selectedApplication.applicant_name}`}
+          title={`Application Details - ${selectedApplication.applicant?.name}`}
           size="large"
         >
           <div className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Status</p>
-                <span
-                  className={`inline-block px-2 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                    selectedApplication.status
-                  )}`}
-                >
-                  {selectedApplication.status?.toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Attempt Number
-                </p>
-                <p className="mt-1">#{selectedApplication.attempt_number}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Email</p>
-                <p className="mt-1 break-all">
-                  {selectedApplication.applicant_email}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Program</p>
-                <p className="mt-1 break-words">
-                  {selectedApplication.program}
-                </p>
-              </div>
-            </div>
-
-            {selectedApplication.demo_schedule && (
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Demo Schedule
-                </p>
-                <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                  <p className="break-words">
-                    {formatDate(selectedApplication.demo_schedule.date)} at{" "}
-                    {selectedApplication.demo_schedule.time}
-                  </p>
-                  {selectedApplication.demo_schedule.location && (
-                    <p className="text-sm text-gray-600 break-words">
-                      Location: {selectedApplication.demo_schedule.location}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {selectedApplication.total_score && (
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Score & Result
-                </p>
-                <div className="mt-1 p-3 bg-gray-50 rounded-md flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                  <span className="text-lg font-bold">
-                    {selectedApplication.total_score}%
-                  </span>
+            {/* Status Section */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                Application Status
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Status</p>
                   <span
-                    className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
-                      selectedApplication.result
+                    className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
+                      selectedApplication.status
                     )}`}
                   >
-                    {selectedApplication.result?.toUpperCase()}
+                    {selectedApplication.status?.toUpperCase()}
                   </span>
+                </div>
+                {selectedApplication.result && (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Result</p>
+                    <span
+                      className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                        selectedApplication.result
+                      )}`}
+                    >
+                      {selectedApplication.result?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Applicant Information */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                Applicant Information
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Application ID</p>
+                  <p className="mt-1 font-medium">#{selectedApplication.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Attempt Number</p>
+                  <p className="mt-1 font-medium">
+                    #{selectedApplication.attemptNumber}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Name</p>
+                  <p className="mt-1 font-medium">
+                    {selectedApplication.applicant?.name}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="mt-1 font-medium break-all">
+                    {selectedApplication.applicant?.email}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Phone</p>
+                  <p className="mt-1 font-medium">
+                    {selectedApplication.applicant?.phone || "Not provided"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Program</p>
+                  <p className="mt-1 font-medium break-words">
+                    {selectedApplication.program}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                Timeline
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Submitted Date</p>
+                  <p className="mt-1 font-medium">
+                    {formatDate(selectedApplication.createdAt)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Last Updated</p>
+                  <p className="mt-1 font-medium">
+                    {formatDate(selectedApplication.updatedAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Demo Schedule */}
+            {selectedApplication.demoSchedule && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  Demo Schedule
+                </h3>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-blue-700">Date & Time</p>
+                      <p className="mt-1 font-medium text-blue-900">
+                        {formatDate(selectedApplication.demoSchedule)}
+                      </p>
+                      <p className="text-sm text-blue-800">
+                        {selectedApplication.demoTime || "Time not set"}
+                      </p>
+                    </div>
+                    {selectedApplication.demoDuration && (
+                      <div>
+                        <p className="text-sm text-blue-700">Duration</p>
+                        <p className="mt-1 font-medium text-blue-900">
+                          {selectedApplication.demoDuration} minutes
+                        </p>
+                      </div>
+                    )}
+                    {selectedApplication.demoLocation && (
+                      <div className="col-span-1 sm:col-span-2">
+                        <p className="text-sm text-blue-700">Location</p>
+                        <p className="mt-1 font-medium text-blue-900 break-words">
+                          {selectedApplication.demoLocation}
+                        </p>
+                      </div>
+                    )}
+                    {selectedApplication.demoNotes && (
+                      <div className="col-span-1 sm:col-span-2">
+                        <p className="text-sm text-blue-700 mb-1">
+                          Instructions
+                        </p>
+                        <p className="text-sm text-blue-800 bg-white rounded p-2 break-words">
+                          {selectedApplication.demoNotes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
-            {selectedApplication.feedback && (
+            {/* Assessment Score */}
+            {selectedApplication.totalScore !== null &&
+              selectedApplication.totalScore !== undefined && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                    Assessment Score
+                  </h3>
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4">
+                    <div className="text-center">
+                      <p className="text-4xl font-bold text-blue-600">
+                        {selectedApplication.totalScore}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">Total Score</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            {/* HR Notes / Rejection Reason */}
+            {selectedApplication.hrNotes && (
               <div>
-                <p className="text-sm font-medium text-gray-500">Feedback</p>
-                <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                  <p className="text-sm text-gray-700 break-words">
-                    {selectedApplication.feedback}
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  {selectedApplication.status === "REJECTED"
+                    ? "Rejection Reason"
+                    : "HR Notes"}
+                </h3>
+                <div
+                  className={`p-4 rounded-lg ${
+                    selectedApplication.status === "REJECTED"
+                      ? "bg-red-50 border border-red-200"
+                      : "bg-yellow-50 border border-yellow-200"
+                  }`}
+                >
+                  <p
+                    className={`text-sm break-words ${
+                      selectedApplication.status === "REJECTED"
+                        ? "text-red-800"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {selectedApplication.hrNotes}
                   </p>
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-4 border-t">
               <Button
                 onClick={() => setShowDetailsModal(false)}
                 variant="outline"
@@ -616,12 +727,12 @@ const ApplicationsManagement = () => {
         <Modal
           isOpen={true}
           onClose={() => setShowHistoryModal(false)}
-          title={`Application History - ${selectedApplication.applicant_name}`}
+          title={`Application History - ${selectedApplication.applicant?.name}`}
           size="large"
         >
           <div className="space-y-4 sm:space-y-6">
             <div className="text-sm text-gray-600 break-words">
-              All applications from {selectedApplication.applicant_email}
+              All applications from {selectedApplication.applicant?.email}
             </div>
 
             {applicationHistory.length > 0 ? (
@@ -634,7 +745,7 @@ const ApplicationsManagement = () => {
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-gray-900">
-                          Attempt #{app.attempt_number}
+                          Attempt #{app.attemptNumber}
                         </h4>
                         <p className="text-sm text-gray-600 break-words">
                           {app.program}
@@ -664,28 +775,29 @@ const ApplicationsManagement = () => {
                       <div>
                         <span className="text-gray-500">Submitted:</span>
                         <span className="ml-2 break-words">
-                          {formatDate(app.created_at)}
+                          {formatDate(app.createdAt)}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-500">Updated:</span>
                         <span className="ml-2 break-words">
-                          {formatDate(app.updated_at)}
+                          {formatDate(app.updatedAt)}
                         </span>
                       </div>
-                      {app.total_score && (
-                        <div>
-                          <span className="text-gray-500">Score:</span>
-                          <span className="ml-2 font-medium">
-                            {app.total_score}%
-                          </span>
-                        </div>
-                      )}
-                      {app.demo_schedule && (
+                      {app.totalScore !== null &&
+                        app.totalScore !== undefined && (
+                          <div>
+                            <span className="text-gray-500">Score:</span>
+                            <span className="ml-2 font-medium">
+                              {app.totalScore}
+                            </span>
+                          </div>
+                        )}
+                      {app.demoSchedule && (
                         <div>
                           <span className="text-gray-500">Demo:</span>
                           <span className="ml-2 break-words">
-                            {formatDate(app.demo_schedule.date)}
+                            {formatDate(app.demoSchedule)}
                           </span>
                         </div>
                       )}

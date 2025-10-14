@@ -12,27 +12,26 @@ const ApplicantDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
-  const { applications, loading, error, fetchApplications } =
+  const { applicationHistory, loading, error, getApplicationHistory } =
     useApplicationStore();
 
   const [showNewApplicationModal, setShowNewApplicationModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  // Get user's applications
-  const userApplications = applications.filter(
-    (app) => app.applicantEmail === user?.email
-  );
+  // Use applicationHistory for applicant's own applications
+  const userApplications = applicationHistory || [];
 
   // Get current (most recent) application
   const currentApplication =
     userApplications.length > 0
       ? userApplications.sort(
-          (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         )[0]
       : null;
 
   useEffect(() => {
-    fetchApplications();
+    // Applicants should use getApplicationHistory, not fetchApplications
+    getApplicationHistory();
 
     // Show success message if redirected from form submission
     if (location.state?.message) {
@@ -40,7 +39,7 @@ const ApplicantDashboard = () => {
       // Clear the state
       window.history.replaceState({}, document.title);
     }
-  }, [fetchApplications, location.state]);
+  }, [getApplicationHistory, location.state]);
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -86,13 +85,18 @@ const ApplicantDashboard = () => {
   const getUpcomingDemo = () => {
     if (!currentApplication?.demoSchedule) return null;
 
-    const demoDate = new Date(
-      `${currentApplication.demoSchedule.date} ${currentApplication.demoSchedule.time}`
-    );
+    // Backend returns demoSchedule as ISO DateTime string
+    const demoDate = new Date(currentApplication.demoSchedule);
     const now = new Date();
 
     if (demoDate > now) {
-      return currentApplication.demoSchedule;
+      return {
+        date: currentApplication.demoSchedule,
+        time: currentApplication.demoTime || "Time not set",
+        location: currentApplication.demoLocation,
+        duration: currentApplication.demoDuration,
+        notes: currentApplication.demoNotes,
+      };
     }
     return null;
   };
@@ -322,13 +326,13 @@ const ApplicantDashboard = () => {
                 <div>
                   <p className="text-gray-600">Submitted:</p>
                   <p className="font-medium">
-                    {formatDate(currentApplication.submittedAt)}
+                    {formatDate(currentApplication.createdAt)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Specialization:</p>
+                  <p className="text-gray-600">Program:</p>
                   <p className="font-medium">
-                    {currentApplication.subjectSpecialization}
+                    {currentApplication.program || "N/A"}
                   </p>
                 </div>
                 <div>
@@ -381,6 +385,34 @@ const ApplicantDashboard = () => {
                   )}
                 </div>
               </div>
+
+              {/* Rejection Reason */}
+              {currentApplication.status === "REJECTED" &&
+                currentApplication.hrNotes && (
+                  <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                    <div className="flex items-start">
+                      <svg
+                        className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-red-900 mb-1">
+                          Rejection Reason
+                        </h4>
+                        <p className="text-sm text-red-800">
+                          {currentApplication.hrNotes}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
               <div className="flex space-x-3">
                 <Button
@@ -460,23 +492,40 @@ const ApplicantDashboard = () => {
 
               <div className="space-y-3 text-sm">
                 <div>
-                  <p className="text-gray-600">Date:</p>
+                  <p className="text-gray-600">Date & Time:</p>
                   <p className="font-medium">{formatDate(upcomingDemo.date)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Time:</p>
                   <p className="font-medium">{upcomingDemo.time}</p>
                 </div>
-                <div>
-                  <p className="text-gray-600">Location:</p>
-                  <p className="font-medium">
-                    {upcomingDemo.location || "TBA"}
-                  </p>
-                </div>
-                {upcomingDemo.notes && (
+                {upcomingDemo.duration && (
                   <div>
-                    <p className="text-gray-600">Notes:</p>
-                    <p className="font-medium">{upcomingDemo.notes}</p>
+                    <p className="text-gray-600">Duration:</p>
+                    <p className="font-medium">
+                      {upcomingDemo.duration} minutes
+                    </p>
+                  </div>
+                )}
+                {upcomingDemo.location && (
+                  <div>
+                    <p className="text-gray-600">Location:</p>
+                    <p className="font-medium">{upcomingDemo.location}</p>
+                  </div>
+                )}
+                {upcomingDemo.notes && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                    <p className="text-xs font-medium text-blue-900 mb-1">
+                      Instructions:
+                    </p>
+                    <p className="text-xs text-blue-800">
+                      {upcomingDemo.notes}
+                    </p>
+                  </div>
+                )}
+                {!upcomingDemo.notes && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                    <p className="text-xs text-blue-800">
+                      Please arrive 15 minutes early. Further details will be
+                      sent via email.
+                    </p>
                   </div>
                 )}
               </div>

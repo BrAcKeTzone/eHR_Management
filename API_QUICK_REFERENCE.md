@@ -182,6 +182,76 @@ await userApi.updateUserPassword(userId, {
 await userApi.deleteUser(userId);
 ```
 
+### File Uploads
+
+```javascript
+import { fetchClient } from "../utils/fetchClient";
+
+// Single File Upload (public or authenticated)
+async function uploadFile(file, type = "application") {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetchClient.post(
+    `/api/uploads?type=${type}`,
+    formData
+  );
+  return response.data;
+}
+
+// Multiple File Upload (authenticated required)
+async function uploadMultipleFiles(files, type = "document") {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const response = await fetchClient.post(
+    `/api/uploads/multiple?type=${type}`,
+    formData
+  );
+  return response.data;
+}
+
+// Base64 Image Upload
+async function uploadBase64(base64String, type = "profile") {
+  const response = await fetchClient.post(`/api/uploads/base64?type=${type}`, {
+    image: base64String,
+  });
+  return response.data;
+}
+
+// Application Documents Upload (authenticated)
+async function uploadApplicationDocs(documents) {
+  const formData = new FormData();
+  documents.forEach((doc) => {
+    formData.append("files", doc);
+  });
+
+  const response = await fetchClient.post("/api/uploads/application", formData);
+  return response.data;
+}
+
+// Delete File (authenticated)
+async function deleteFile(publicId) {
+  const encodedId = encodeURIComponent(publicId);
+  const response = await fetchClient.delete(`/api/uploads/${encodedId}`);
+  return response.data;
+}
+
+// Upload Types:
+// - 'application': Application documents → bcfi_hr/applications/
+// - 'id': ID verification → bcfi_hr/valid_ids/
+// - 'document': General docs → bcfi_hr/documents/
+// - 'profile': Profile images → bcfi_hr/profiles/
+// - 'general': Other files → bcfi_hr/general/
+
+// File Constraints:
+// - Max size: 10MB per file
+// - Max files: 10 per request
+// - Allowed: JPG, PNG, PDF, DOC, DOCX, TXT
+```
+
 ### Reports (Client-Side Implementation Required)
 
 ```javascript

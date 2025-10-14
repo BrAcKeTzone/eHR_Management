@@ -224,4 +224,31 @@ export const applicationApi = {
       throw new Error(message);
     }
   },
+
+  // Complete application with score and result (HR only)
+  completeApplication: async (
+    applicationId,
+    totalScore,
+    result,
+    hrNotes = ""
+  ) => {
+    try {
+      const response = await fetchClient.put(
+        `${API_BASE_URL}/applications/${applicationId}/complete`,
+        {
+          totalScore: parseFloat(totalScore),
+          result: result.toUpperCase(),
+          hrNotes,
+        }
+      );
+      return { application: response.data.data };
+    } catch (error) {
+      console.error("Error completing application:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to complete application";
+      throw new Error(message);
+    }
+  },
 };

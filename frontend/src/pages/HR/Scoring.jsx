@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useApplicationStore } from "../../store/applicationStore";
-import { useScoringStore } from "../../store/scoringStore";
+import { applicationApi } from "../../api/applicationApi";
 import DashboardCard from "../../components/DashboardCard";
 import Button from "../../components/Button";
 import Table from "../../components/Table";
@@ -16,117 +16,103 @@ const Scoring = () => {
     error: appError,
   } = useApplicationStore();
 
-  const {
-    submitScores,
-    updateScores,
-    getRubricCriteria,
-    rubricCriteria,
-    loading: scoreLoading,
-    error: scoreError,
-  } = useScoringStore();
-
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showScoringModal, setShowScoringModal] = useState(false);
-  const [scores, setScores] = useState({});
-  const [totalScore, setTotalScore] = useState(0);
+  const [totalScore, setTotalScore] = useState("");
   const [result, setResult] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const passingScore = 75; // Minimum passing score
 
   useEffect(() => {
     // Load applications with scheduled demos
-    getAllApplications({ status: "approved" });
-    getRubricCriteria();
-  }, [getAllApplications, getRubricCriteria]);
+    getAllApplications({ status: "APPROVED" });
+  }, [getAllApplications]);
 
+  // Auto-calculate result when totalScore changes
   useEffect(() => {
-    // Calculate total score when individual scores change
-    if (rubricCriteria && Object.keys(scores).length > 0) {
-      let total = 0;
-      let totalWeight = 0;
-
-      rubricCriteria.forEach((criteria) => {
-        const score = scores[criteria.id] || 0;
-        const weight = criteria.weight || 1;
-        total += score * weight;
-        totalWeight += weight;
-      });
-
-      const calculatedTotal = totalWeight > 0 ? total / totalWeight : 0;
-      setTotalScore(Math.round(calculatedTotal * 100) / 100);
-      setResult(calculatedTotal >= passingScore ? "pass" : "fail");
+    if (totalScore !== "") {
+      const score = parseFloat(totalScore);
+      if (!isNaN(score)) {
+        setResult(score >= passingScore ? "PASS" : "FAIL");
+      }
     }
-  }, [scores, rubricCriteria]);
+  }, [totalScore]);
 
   const scheduledApplications =
     applications?.filter(
-      (app) => app.status === "approved" && app.demo_schedule
+      (app) => app.status === "APPROVED" && app.demoSchedule
     ) || [];
 
   const handleScoreApplication = (application) => {
     setSelectedApplication(application);
     setShowScoringModal(true);
 
-    // Initialize scores
-    if (application.scores) {
-      const initialScores = {};
-      application.scores.forEach((score) => {
-        initialScores[score.criteria_id] = score.score;
-      });
-      setScores(initialScores);
-      setFeedback(application.feedback || "");
+    // Initialize with existing data if available
+    if (
+      application.totalScore !== null &&
+      application.totalScore !== undefined
+    ) {
+      setTotalScore(application.totalScore.toString());
+      setResult(application.result || "");
+      setFeedback(application.hrNotes || "");
     } else {
-      setScores({});
+      setTotalScore("");
+      setResult("");
       setFeedback("");
     }
-  };
-
-  const handleScoreChange = (criteriaId, value) => {
-    const numericValue = Math.max(0, Math.min(100, parseFloat(value) || 0));
-    setScores((prev) => ({
-      ...prev,
-      [criteriaId]: numericValue,
-    }));
+    setError(null);
   };
 
   const handleSubmitScores = async () => {
-    if (!selectedApplication || Object.keys(scores).length === 0) return;
+    if (!selectedApplication || totalScore === "") {
+      setError("Please enter a total score");
+      return;
+    }
+
+    const score = parseFloat(totalScore);
+    if (isNaN(score) || score < 0 || score > 100) {
+      setError("Total score must be between 0 and 100");
+      return;
+    }
 
     try {
-      const scoreData = {
-        scores: Object.entries(scores).map(([criteriaId, score]) => ({
-          criteria_id: criteriaId,
-          score: score,
-        })),
-        total_score: totalScore,
-        result: result,
-        feedback: feedback,
-      };
+      setLoading(true);
+      setError(null);
 
-      if (selectedApplication.scores && selectedApplication.scores.length > 0) {
-        await updateScores(selectedApplication.id, scoreData);
-      } else {
-        await submitScores(selectedApplication.id, scoreData);
-      }
+      await applicationApi.completeApplication(
+        selectedApplication.id,
+        score,
+        result,
+        feedback
+      );
 
       setShowScoringModal(false);
       setSelectedApplication(null);
+      setTotalScore("");
+      setResult("");
+      setFeedback("");
+
       // Refresh applications
-      getAllApplications({ status: "approved" });
+      getAllApplications({ status: "APPROVED" });
     } catch (error) {
       console.error("Failed to submit scores:", error);
+      setError(error.message || "Failed to submit scores");
+    } finally {
+      setLoading(false);
     }
   };
 
   const applicationsColumns = [
     {
       header: "Applicant",
-      accessor: "applicant_name",
+      accessor: "applicant.name",
       cell: (row) => (
         <div>
-          <p className="font-medium text-gray-900">{row.applicant_name}</p>
-          <p className="text-sm text-gray-500">{row.applicant_email}</p>
+          <p className="font-medium text-gray-900">{row.applicant?.name}</p>
+          <p className="text-sm text-gray-500">{row.applicant?.email}</p>
         </div>
       ),
     },
@@ -141,15 +127,15 @@ const Scoring = () => {
     },
     {
       header: "Demo Schedule",
-      accessor: "demo_schedule",
+      accessor: "demoSchedule",
       cell: (row) => (
         <div className="text-sm">
-          {row.demo_schedule ? (
+          {row.demoSchedule ? (
             <div>
-              <p>{formatDate(row.demo_schedule.date)}</p>
-              <p className="text-gray-600">{row.demo_schedule.time}</p>
+              <p>{formatDate(row.demoSchedule)}</p>
+              <p className="text-gray-600">{row.demoTime || "Time not set"}</p>
               <p className="text-gray-500 text-xs">
-                {row.demo_schedule.location || "Location TBA"}
+                {row.demoLocation || "Location TBA"}
               </p>
             </div>
           ) : (
@@ -160,16 +146,16 @@ const Scoring = () => {
     },
     {
       header: "Score Status",
-      accessor: "scores",
+      accessor: "totalScore",
       cell: (row) => (
         <div className="text-sm">
-          {row.scores && row.scores.length > 0 ? (
+          {row.totalScore !== null && row.totalScore !== undefined ? (
             <div>
               <p className="font-medium text-green-600">Scored</p>
-              <p className="text-gray-600">Total: {row.total_score}%</p>
+              <p className="text-gray-600">Total: {row.totalScore}</p>
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  row.result === "pass"
+                  row.result?.toLowerCase() === "pass"
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"
                 }`}
@@ -191,22 +177,23 @@ const Scoring = () => {
           <Button
             onClick={() => handleScoreApplication(row)}
             variant={
-              row.scores && row.scores.length > 0 ? "outline" : "primary"
+              row.totalScore !== null && row.totalScore !== undefined
+                ? "outline"
+                : "primary"
             }
             size="sm"
-            disabled={!row.demo_schedule}
+            disabled={!row.demoSchedule}
           >
-            {row.scores && row.scores.length > 0 ? "Edit Scores" : "Score Demo"}
+            {row.totalScore !== null && row.totalScore !== undefined
+              ? "Edit Scores"
+              : "Score Demo"}
           </Button>
         </div>
       ),
     },
   ];
 
-  const loading = appLoading || scoreLoading;
-  const error = appError || scoreError;
-
-  if (loading && !applications) {
+  if (appLoading && !applications) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -222,14 +209,14 @@ const Scoring = () => {
           Demo Scoring
         </h1>
         <p className="text-gray-600">
-          Score teaching demonstrations using the evaluation rubric.
+          Score teaching demonstrations and provide feedback.
         </p>
       </div>
 
       {/* Error Display */}
-      {error && (
+      {appError && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-          {error}
+          {appError}
         </div>
       )}
 
@@ -246,7 +233,7 @@ const Scoring = () => {
           <div className="text-xl sm:text-3xl font-bold text-green-600">
             {
               scheduledApplications.filter(
-                (app) => app.scores && app.scores.length > 0
+                (app) => app.totalScore !== null && app.totalScore !== undefined
               ).length
             }
           </div>
@@ -257,7 +244,7 @@ const Scoring = () => {
           <div className="text-xl sm:text-3xl font-bold text-yellow-600">
             {
               scheduledApplications.filter(
-                (app) => !app.scores || app.scores.length === 0
+                (app) => app.totalScore === null || app.totalScore === undefined
               ).length
             }
           </div>
@@ -266,13 +253,16 @@ const Scoring = () => {
 
         <DashboardCard title="Pass Rate" className="text-center">
           <div className="text-xl sm:text-3xl font-bold text-purple-600">
-            {scheduledApplications.filter((app) => app.result === "pass")
-              .length > 0
+            {scheduledApplications.filter(
+              (app) => app.result?.toLowerCase() === "pass"
+            ).length > 0
               ? Math.round(
-                  (scheduledApplications.filter((app) => app.result === "pass")
-                    .length /
+                  (scheduledApplications.filter(
+                    (app) => app.result?.toLowerCase() === "pass"
+                  ).length /
                     scheduledApplications.filter(
-                      (app) => app.scores && app.scores.length > 0
+                      (app) =>
+                        app.totalScore !== null && app.totalScore !== undefined
                     ).length) *
                     100
                 )
@@ -299,16 +289,16 @@ const Scoring = () => {
             <div className="lg:hidden space-y-4">
               {scheduledApplications.map((app, index) => (
                 <div
-                  key={index}
+                  key={app.id || index}
                   className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 break-words">
-                        {app.applicant_name}
+                        {app.applicant?.name}
                       </h3>
                       <p className="text-sm text-gray-500 break-all">
-                        {app.applicant_email}
+                        {app.applicant?.email}
                       </p>
                       <p className="text-sm font-medium break-words">
                         {app.program}
@@ -320,29 +310,30 @@ const Scoring = () => {
                     <div>
                       <span className="text-gray-500">Demo Date:</span>
                       <p className="font-medium">
-                        {app.demo_schedule
-                          ? `${formatDate(app.demo_schedule.date)} at ${
-                              app.demo_schedule.time
+                        {app.demoSchedule
+                          ? `${formatDate(app.demoSchedule)} at ${
+                              app.demoTime || "Time not set"
                             }`
                           : "Not scheduled"}
                       </p>
-                      {app.demo_schedule?.location && (
+                      {app.demoLocation && (
                         <p className="text-gray-500 text-xs break-words">
-                          Location: {app.demo_schedule.location}
+                          Location: {app.demoLocation}
                         </p>
                       )}
                     </div>
                     <div>
                       <span className="text-gray-500">Score Status:</span>
-                      {app.scores && app.scores.length > 0 ? (
+                      {app.totalScore !== null &&
+                      app.totalScore !== undefined ? (
                         <div className="mt-1">
                           <p className="font-medium text-green-600">Scored</p>
                           <p className="text-gray-600">
-                            Total: {app.total_score}%
+                            Total: {app.totalScore}
                           </p>
                           <span
                             className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
-                              app.result === "pass"
+                              app.result?.toLowerCase() === "pass"
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-800"
                             }`}
@@ -360,15 +351,15 @@ const Scoring = () => {
                     <Button
                       onClick={() => handleScoreApplication(app)}
                       variant={
-                        app.scores && app.scores.length > 0
+                        app.totalScore !== null && app.totalScore !== undefined
                           ? "outline"
                           : "primary"
                       }
                       size="sm"
-                      disabled={!app.demo_schedule}
+                      disabled={!app.demoSchedule}
                       className="flex-1"
                     >
-                      {app.scores && app.scores.length > 0
+                      {app.totalScore !== null && app.totalScore !== undefined
                         ? "Edit Scores"
                         : "Score Demo"}
                     </Button>
@@ -388,8 +379,11 @@ const Scoring = () => {
       {showScoringModal && selectedApplication && (
         <Modal
           isOpen={true}
-          onClose={() => setShowScoringModal(false)}
-          title={`Score Demo - ${selectedApplication.applicant_name}`}
+          onClose={() => {
+            setShowScoringModal(false);
+            setError(null);
+          }}
+          title={`Score Demo - ${selectedApplication.applicant?.name}`}
           size="large"
         >
           <div className="space-y-4 sm:space-y-6">
@@ -406,102 +400,78 @@ const Scoring = () => {
                 <div>
                   <span className="text-gray-500">Demo Date:</span>
                   <span className="ml-2 break-words">
-                    {formatDate(selectedApplication.demo_schedule?.date)}
+                    {selectedApplication.demoSchedule
+                      ? formatDate(selectedApplication.demoSchedule)
+                      : "Not scheduled"}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-500">Time:</span>
                   <span className="ml-2">
-                    {selectedApplication.demo_schedule?.time}
+                    {selectedApplication.demoTime || "Not set"}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-500">Location:</span>
                   <span className="ml-2 break-words">
-                    {selectedApplication.demo_schedule?.location ||
-                      "Not specified"}
+                    {selectedApplication.demoLocation || "Not specified"}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Scoring Rubric */}
-            {rubricCriteria && rubricCriteria.length > 0 && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3 sm:mb-4">
-                  Evaluation Criteria
-                </h4>
-                <div className="space-y-3 sm:space-y-4">
-                  {rubricCriteria.map((criteria) => (
-                    <div
-                      key={criteria.id}
-                      className="border border-gray-200 rounded-md p-3 sm:p-4"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h5 className="font-medium text-gray-900 break-words">
-                            {criteria.name}
-                          </h5>
-                          {criteria.description && (
-                            <p className="text-sm text-gray-600 mt-1 break-words">
-                              {criteria.description}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-500 flex-shrink-0">
-                          Weight: {criteria.weight || 1}x
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                        <div className="flex-1">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={scores[criteria.id] || ""}
-                            onChange={(e) =>
-                              handleScoreChange(criteria.id, e.target.value)
-                            }
-                            placeholder="Score (0-100)"
-                            className="w-full"
-                          />
-                        </div>
-                        <div className="text-sm text-gray-600 text-center sm:text-left">
-                          / 100 points
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                {error}
               </div>
             )}
 
-            {/* Total Score Display */}
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 sm:p-4">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                <div>
-                  <h4 className="font-medium text-blue-900">Total Score</h4>
-                  <p className="text-sm text-blue-700">
-                    Minimum passing score: {passingScore}%
-                  </p>
-                </div>
-                <div className="text-center sm:text-right">
-                  <div className="text-2xl sm:text-3xl font-bold text-blue-600">
-                    {totalScore}%
+            {/* Total Score Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Total Score (0-100)
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={totalScore}
+                onChange={(e) => setTotalScore(e.target.value)}
+                placeholder="Enter total score (e.g., 85.5)"
+                className="w-full"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Minimum passing score: {passingScore}
+              </p>
+            </div>
+
+            {/* Result Display */}
+            {result && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                  <div>
+                    <h4 className="font-medium text-blue-900">Result</h4>
+                    <p className="text-sm text-blue-700">
+                      Based on the score entered
+                    </p>
                   </div>
-                  <span
-                    className={`inline-block px-3 py-1 text-sm font-medium rounded-full mt-1 ${
-                      result === "pass"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {result?.toUpperCase()}
-                  </span>
+                  <div className="text-center sm:text-right">
+                    <span
+                      className={`inline-block px-4 py-2 text-lg font-medium rounded-full ${
+                        result === "PASS"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {result}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Feedback */}
             <div>
@@ -511,23 +481,33 @@ const Scoring = () => {
               <textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                rows="4"
+                rows="5"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Provide detailed feedback about the demonstration performance..."
+                placeholder="Provide detailed feedback about the demonstration performance, strengths, areas for improvement, etc..."
               />
             </div>
 
             {/* Current Scores Info */}
-            {selectedApplication.scores &&
-              selectedApplication.scores.length > 0 && (
+            {selectedApplication.totalScore !== null &&
+              selectedApplication.totalScore !== undefined && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 sm:p-4">
                   <h4 className="font-medium text-yellow-900 mb-2">
-                    Current Scores
+                    ⚠️ Editing Existing Score
                   </h4>
                   <div className="text-sm text-yellow-800 space-y-1">
-                    <p>Total Score: {selectedApplication.total_score}%</p>
-                    <p>Result: {selectedApplication.result?.toUpperCase()}</p>
-                    <p className="text-xs">You are editing existing scores.</p>
+                    <p>
+                      Current Total Score:{" "}
+                      <strong>{selectedApplication.totalScore}</strong>
+                    </p>
+                    <p>
+                      Current Result:{" "}
+                      <strong>
+                        {selectedApplication.result?.toUpperCase()}
+                      </strong>
+                    </p>
+                    <p className="text-xs mt-2">
+                      Submitting will overwrite the current score and result.
+                    </p>
                   </div>
                 </div>
               )}
@@ -535,24 +515,28 @@ const Scoring = () => {
             {/* Actions */}
             <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 sm:pt-6 border-t border-gray-200">
               <Button
-                onClick={() => setShowScoringModal(false)}
+                onClick={() => {
+                  setShowScoringModal(false);
+                  setError(null);
+                }}
                 variant="outline"
                 className="w-full sm:w-auto"
+                disabled={loading}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmitScores}
                 variant="primary"
-                disabled={Object.keys(scores).length === 0 || scoreLoading}
+                disabled={!totalScore || loading}
                 className="w-full sm:w-auto"
               >
-                {scoreLoading
+                {loading
                   ? "Saving..."
-                  : selectedApplication.scores &&
-                    selectedApplication.scores.length > 0
-                  ? "Update Scores"
-                  : "Submit Scores"}
+                  : selectedApplication.totalScore !== null &&
+                    selectedApplication.totalScore !== undefined
+                  ? "Update Score"
+                  : "Submit Score"}
               </Button>
             </div>
           </div>

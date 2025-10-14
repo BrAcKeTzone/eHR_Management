@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ApplicationStatus } from "@prisma/client";
+import { ApplicationStatus, ApplicationResult } from "@prisma/client";
 import applicationService from "./applications.service";
 import ApiResponse from "../../utils/ApiResponse";
 import ApiError from "../../utils/ApiError";
@@ -101,10 +101,20 @@ export const getAllApplications = asyncHandler(
       throw new ApiError(403, "Only HR and Admin can view all applications");
     }
 
-    const { status, search, page, limit } = req.query;
+    const { status, result: resultFilter, search, page, limit } = req.query;
+
+    // Convert status and result to uppercase to match enums
+    const normalizedStatus = status
+      ? ((status as string).toUpperCase() as ApplicationStatus)
+      : undefined;
+
+    const normalizedResult = resultFilter
+      ? ((resultFilter as string).toUpperCase() as ApplicationResult)
+      : undefined;
 
     const filters = {
-      ...(status && { status: status as ApplicationStatus }),
+      ...(normalizedStatus && { status: normalizedStatus }),
+      ...(normalizedResult && { result: normalizedResult }),
       ...(search && { search: search as string }),
       ...(page && { page: parseInt(page as string) }),
       ...(limit && { limit: parseInt(limit as string) }),
@@ -194,7 +204,7 @@ export const scheduleDemo = asyncHandler(
     }
 
     const { id } = req.params;
-    const { demoSchedule } = req.body;
+    const { demoSchedule, demoLocation, demoDuration, demoNotes } = req.body;
     const applicationId = parseInt(id);
 
     if (!demoSchedule) {
@@ -203,7 +213,10 @@ export const scheduleDemo = asyncHandler(
 
     const application = await applicationService.scheduleDemo(
       applicationId,
-      new Date(demoSchedule)
+      new Date(demoSchedule),
+      demoLocation,
+      demoDuration ? parseInt(demoDuration) : undefined,
+      demoNotes
     );
 
     res.json(new ApiResponse(200, application, "Demo scheduled successfully"));
@@ -243,5 +256,45 @@ export const deleteApplication = asyncHandler(
     await applicationService.deleteApplication(applicationId);
 
     res.json(new ApiResponse(200, null, "Application deleted successfully"));
+  }
+);
+
+export const completeApplication = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!["HR", "ADMIN"].includes(req.user!.role)) {
+      throw new ApiError(403, "Only HR and Admin can complete applications");
+    }
+
+    const { id } = req.params;
+    const { totalScore, result, hrNotes } = req.body;
+    const applicationId = parseInt(id);
+
+    if (totalScore === undefined || totalScore === null) {
+      throw new ApiError(400, "Total score is required");
+    }
+
+    if (!result || !["PASS", "FAIL"].includes(result.toUpperCase())) {
+      throw new ApiError(400, "Valid result (PASS or FAIL) is required");
+    }
+
+    // Update application with score, result, and optional notes
+    const updateData: any = {
+      totalScore: parseFloat(totalScore),
+      result: result.toUpperCase() as ApplicationResult,
+      status: ApplicationStatus.COMPLETED,
+    };
+
+    if (hrNotes) {
+      updateData.hrNotes = hrNotes;
+    }
+
+    const application = await applicationService.updateApplication(
+      applicationId,
+      updateData
+    );
+
+    res.json(
+      new ApiResponse(200, application, "Application completed successfully")
+    );
   }
 );

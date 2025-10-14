@@ -7,6 +7,7 @@ import Table from "../../components/Table";
 import Modal from "../../components/Modal";
 import Input from "../../components/Input";
 import { formatDate } from "../../utils/formatDate";
+import { APPLICATION_STATUS } from "../../utils/constants";
 
 const Scheduling = () => {
   const {
@@ -39,7 +40,7 @@ const Scheduling = () => {
 
   useEffect(() => {
     // Load approved applications that need scheduling
-    getAllApplications({ status: "approved" });
+    getAllApplications({ status: APPLICATION_STATUS.APPROVED });
   }, [getAllApplications]);
 
   useEffect(() => {
@@ -49,7 +50,8 @@ const Scheduling = () => {
   }, [selectedDate, getAvailableSlots]);
 
   const approvedApplications =
-    applications?.filter((app) => app.status === "approved") || [];
+    applications?.filter((app) => app.status === APPLICATION_STATUS.APPROVED) ||
+    [];
 
   const handleScheduleDemo = (application) => {
     setSelectedApplication(application);
@@ -69,7 +71,7 @@ const Scheduling = () => {
       return;
 
     try {
-      if (selectedApplication.demo_schedule) {
+      if (selectedApplication.demoSchedule) {
         await updateDemoSchedule(selectedApplication.id, scheduleData);
       } else {
         await setDemoSchedule(selectedApplication.id, scheduleData);
@@ -78,7 +80,7 @@ const Scheduling = () => {
       setShowScheduleModal(false);
       setSelectedApplication(null);
       // Refresh applications
-      getAllApplications({ status: "approved" });
+      getAllApplications({ status: APPLICATION_STATUS.APPROVED });
     } catch (error) {
       console.error("Failed to schedule demo:", error);
     }
@@ -104,11 +106,11 @@ const Scheduling = () => {
   const applicationsColumns = [
     {
       header: "Applicant",
-      accessor: "applicant_name",
+      accessor: "applicant",
       cell: (row) => (
         <div>
-          <p className="font-medium text-gray-900">{row.applicant_name}</p>
-          <p className="text-sm text-gray-500">{row.applicant_email}</p>
+          <p className="font-medium text-gray-900">{row.applicant?.name}</p>
+          <p className="text-sm text-gray-500">{row.applicant?.email}</p>
         </div>
       ),
     },
@@ -123,29 +125,20 @@ const Scheduling = () => {
     },
     {
       header: "Approved Date",
-      accessor: "approved_at",
+      accessor: "updatedAt",
       cell: (row) => (
-        <div className="text-sm text-gray-600">
-          {formatDate(row.approved_at || row.updated_at)}
-        </div>
+        <div className="text-sm text-gray-600">{formatDate(row.updatedAt)}</div>
       ),
     },
     {
       header: "Demo Schedule",
-      accessor: "demo_schedule",
+      accessor: "demoSchedule",
       cell: (row) => (
         <div className="text-sm">
-          {row.demo_schedule ? (
+          {row.demoSchedule ? (
             <div>
               <p className="font-medium text-green-600">Scheduled</p>
-              <p className="text-gray-600">
-                {formatDate(row.demo_schedule.date)} at {row.demo_schedule.time}
-              </p>
-              {row.demo_schedule.location && (
-                <p className="text-gray-500 text-xs">
-                  {row.demo_schedule.location}
-                </p>
-              )}
+              <p className="text-gray-600">{formatDate(row.demoSchedule)}</p>
             </div>
           ) : (
             <span className="text-yellow-600 font-medium">Pending</span>
@@ -160,10 +153,10 @@ const Scheduling = () => {
         <div className="flex space-x-2">
           <Button
             onClick={() => handleScheduleDemo(row)}
-            variant={row.demo_schedule ? "outline" : "primary"}
+            variant={row.demoSchedule ? "outline" : "primary"}
             size="sm"
           >
-            {row.demo_schedule ? "Reschedule" : "Schedule"}
+            {row.demoSchedule ? "Reschedule" : "Schedule"}
           </Button>
         </div>
       ),
@@ -211,14 +204,14 @@ const Scheduling = () => {
 
         <DashboardCard title="Scheduled" className="text-center">
           <div className="text-2xl sm:text-3xl font-bold text-green-600">
-            {approvedApplications.filter((app) => app.demo_schedule).length}
+            {approvedApplications.filter((app) => app.demoSchedule).length}
           </div>
           <div className="text-sm text-gray-500 mt-1">Demos</div>
         </DashboardCard>
 
         <DashboardCard title="Pending Schedule" className="text-center">
           <div className="text-2xl sm:text-3xl font-bold text-yellow-600">
-            {approvedApplications.filter((app) => !app.demo_schedule).length}
+            {approvedApplications.filter((app) => !app.demoSchedule).length}
           </div>
           <div className="text-sm text-gray-500 mt-1">Need scheduling</div>
         </DashboardCard>
@@ -246,10 +239,10 @@ const Scheduling = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 break-words">
-                        {app.applicant_name}
+                        {app.applicant?.name}
                       </h3>
                       <p className="text-sm text-gray-500 break-all">
-                        {app.applicant_email}
+                        {app.applicant?.email}
                       </p>
                       <p className="text-sm font-medium break-words">
                         {app.program}
@@ -260,26 +253,18 @@ const Scheduling = () => {
                   <div className="grid grid-cols-1 gap-3 mb-4 text-sm">
                     <div>
                       <span className="text-gray-500">Approved:</span>
-                      <p className="font-medium">
-                        {formatDate(app.approved_at || app.updated_at)}
-                      </p>
+                      <p className="font-medium">{formatDate(app.updatedAt)}</p>
                     </div>
                     <div>
                       <span className="text-gray-500">Demo Schedule:</span>
-                      {app.demo_schedule ? (
+                      {app.demoSchedule ? (
                         <div className="mt-1">
                           <p className="font-medium text-green-600">
                             Scheduled
                           </p>
                           <p className="text-gray-600">
-                            {formatDate(app.demo_schedule.date)} at{" "}
-                            {app.demo_schedule.time}
+                            {formatDate(app.demoSchedule)}
                           </p>
-                          {app.demo_schedule.location && (
-                            <p className="text-gray-500 text-xs">
-                              {app.demo_schedule.location}
-                            </p>
-                          )}
                         </div>
                       ) : (
                         <p className="text-yellow-600 font-medium">Pending</p>
@@ -290,11 +275,11 @@ const Scheduling = () => {
                   <div className="flex space-x-2">
                     <Button
                       onClick={() => handleScheduleDemo(app)}
-                      variant={app.demo_schedule ? "outline" : "primary"}
+                      variant={app.demoSchedule ? "outline" : "primary"}
                       size="sm"
                       className="flex-1"
                     >
-                      {app.demo_schedule ? "Reschedule" : "Schedule"}
+                      {app.demoSchedule ? "Reschedule" : "Schedule"}
                     </Button>
                   </div>
                 </div>
@@ -313,7 +298,7 @@ const Scheduling = () => {
         <Modal
           isOpen={true}
           onClose={() => setShowScheduleModal(false)}
-          title={`Schedule Demo - ${selectedApplication.applicant_name}`}
+          title={`Schedule Demo - ${selectedApplication.applicant?.name}`}
           size="large"
         >
           <div className="space-y-4 sm:space-y-6">
@@ -332,7 +317,7 @@ const Scheduling = () => {
                 <div>
                   <span className="text-gray-500">Email:</span>
                   <span className="ml-2 break-all">
-                    {selectedApplication.applicant_email}
+                    {selectedApplication.applicant?.email}
                   </span>
                 </div>
               </div>
@@ -428,20 +413,14 @@ const Scheduling = () => {
             </div>
 
             {/* Current Schedule Info */}
-            {selectedApplication.demo_schedule && (
+            {selectedApplication.demoSchedule && (
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3 sm:p-4">
                 <h4 className="font-medium text-blue-900 mb-2">
                   Current Schedule
                 </h4>
                 <div className="text-sm text-blue-800 space-y-1">
                   <p className="break-words">
-                    Date: {formatDate(selectedApplication.demo_schedule.date)}
-                  </p>
-                  <p>Time: {selectedApplication.demo_schedule.time}</p>
-                  <p className="break-words">
-                    Location:{" "}
-                    {selectedApplication.demo_schedule.location ||
-                      "Not specified"}
+                    Date: {formatDate(selectedApplication.demoSchedule)}
                   </p>
                 </div>
               </div>
@@ -466,7 +445,7 @@ const Scheduling = () => {
               >
                 {scheduleLoading
                   ? "Saving..."
-                  : selectedApplication.demo_schedule
+                  : selectedApplication.demoSchedule
                   ? "Update Schedule"
                   : "Schedule Demo"}
               </Button>

@@ -107,7 +107,7 @@ const ApplicationHistory = () => {
                 <div className="flex-1">
                   <div className="flex items-center space-x-4 mb-3">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Attempt #{application.attempt_number}
+                      Attempt #{application.attemptNumber}
                     </h3>
                     <span
                       className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
@@ -135,7 +135,7 @@ const ApplicationHistory = () => {
                     <div>
                       <p className="text-gray-500">Submitted:</p>
                       <p className="font-medium">
-                        {formatDate(application.created_at)}
+                        {formatDate(application.createdAt)}
                       </p>
                     </div>
                     {application.status === "completed" &&
@@ -150,32 +150,43 @@ const ApplicationHistory = () => {
                   </div>
 
                   {/* Demo Schedule Info */}
-                  {application.demo_schedule && (
+                  {application.demoSchedule && (
                     <div className="mt-3 pt-3 border-t border-gray-200">
                       <p className="text-gray-500 text-sm mb-1">
                         Demo Schedule:
                       </p>
                       <p className="text-sm">
-                        {formatDate(application.demo_schedule.date)} at{" "}
-                        {application.demo_schedule.time}
-                        {application.demo_schedule.location &&
-                          ` - ${application.demo_schedule.location}`}
+                        {formatDate(application.demoSchedule)}
                       </p>
                     </div>
                   )}
 
                   {/* Rejection Reason */}
-                  {application.status === "rejected" &&
-                    application.rejection_reason && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <p className="text-gray-500 text-sm mb-1">
-                          Rejection Reason:
-                        </p>
-                        <p className="text-sm text-red-600">
-                          {application.rejection_reason}
-                        </p>
+                  {application.status === "REJECTED" && application.hrNotes && (
+                    <div className="mt-3 pt-3 border-t border-red-200 bg-red-50 rounded-md p-3">
+                      <div className="flex items-start">
+                        <svg
+                          className="w-4 h-4 text-red-600 mt-0.5 mr-2 flex-shrink-0"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <div>
+                          <p className="text-xs font-semibold text-red-900 mb-0.5">
+                            Rejection Reason:
+                          </p>
+                          <p className="text-sm text-red-800">
+                            {application.hrNotes}
+                          </p>
+                        </div>
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-2">
@@ -221,16 +232,16 @@ const ApplicationHistory = () => {
       {/* Application Detail Modal */}
       {selectedApplication && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
                   Application Details - Attempt #
-                  {selectedApplication.attempt_number}
+                  {selectedApplication.attemptNumber}
                 </h2>
                 <button
                   onClick={() => setSelectedApplication(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <svg
                     className="w-6 h-6"
@@ -248,106 +259,241 @@ const ApplicationHistory = () => {
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Status</p>
-                    <span
-                      className={`px-2 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                        selectedApplication.status
-                      )}`}
-                    >
-                      {selectedApplication.status?.toUpperCase()}
-                    </span>
-                  </div>
-                  {selectedApplication.result && (
+              <div className="space-y-6">
+                {/* Status Section */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                    Application Status
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">
-                        Result
-                      </p>
+                      <p className="text-sm text-gray-500 mb-1">Status</p>
                       <span
-                        className={`px-2 py-1 text-sm font-medium rounded-full ${getResultColor(
-                          selectedApplication.result
+                        className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
+                          selectedApplication.status
                         )}`}
                       >
-                        {selectedApplication.result?.toUpperCase()}
+                        {selectedApplication.status?.toUpperCase()}
                       </span>
                     </div>
+                    {selectedApplication.result && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Result</p>
+                        <span
+                          className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                            selectedApplication.result
+                          )}`}
+                        >
+                          {selectedApplication.result?.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Basic Information */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                    Basic Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Application ID</p>
+                      <p className="mt-1 font-medium">
+                        #{selectedApplication.id}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Attempt Number</p>
+                      <p className="mt-1 font-medium">
+                        #{selectedApplication.attemptNumber}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Program</p>
+                      <p className="mt-1 font-medium">
+                        {selectedApplication.program}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Submitted Date</p>
+                      <p className="mt-1 font-medium">
+                        {formatDate(selectedApplication.createdAt)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Last Updated</p>
+                      <p className="mt-1 font-medium">
+                        {formatDate(selectedApplication.updatedAt)}
+                      </p>
+                    </div>
+                    {selectedApplication.totalScore && (
+                      <div>
+                        <p className="text-sm text-gray-500">Total Score</p>
+                        <p className="mt-1 font-medium text-lg text-blue-600">
+                          {selectedApplication.totalScore}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Demo Schedule Section */}
+                {selectedApplication.demoSchedule && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                      Demo Schedule
+                    </h3>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-blue-700">Date & Time</p>
+                          <p className="mt-1 font-medium text-blue-900">
+                            {formatDate(selectedApplication.demoSchedule)}
+                          </p>
+                          <p className="text-sm text-blue-800">
+                            {selectedApplication.demoTime || "Time not set"}
+                          </p>
+                        </div>
+                        {selectedApplication.demoDuration && (
+                          <div>
+                            <p className="text-sm text-blue-700">Duration</p>
+                            <p className="mt-1 font-medium text-blue-900">
+                              {selectedApplication.demoDuration} minutes
+                            </p>
+                          </div>
+                        )}
+                        {selectedApplication.demoLocation && (
+                          <div className="col-span-2">
+                            <p className="text-sm text-blue-700">Location</p>
+                            <p className="mt-1 font-medium text-blue-900">
+                              {selectedApplication.demoLocation}
+                            </p>
+                          </div>
+                        )}
+                        {selectedApplication.demoNotes && (
+                          <div className="col-span-2">
+                            <p className="text-sm text-blue-700 mb-1">
+                              Instructions
+                            </p>
+                            <p className="text-sm text-blue-800 bg-white rounded p-2">
+                              {selectedApplication.demoNotes}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rejection Reason */}
+                {selectedApplication.status === "REJECTED" &&
+                  selectedApplication.hrNotes && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                        Rejection Information
+                      </h3>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-start">
+                          <svg
+                            className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-red-900 mb-1">
+                              Reason for Rejection
+                            </h4>
+                            <p className="text-sm text-red-800">
+                              {selectedApplication.hrNotes}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </div>
 
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Program</p>
-                  <p className="mt-1">{selectedApplication.program}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Submitted Date
-                  </p>
-                  <p className="mt-1">
-                    {formatDate(selectedApplication.created_at)}
-                  </p>
-                </div>
-
-                {selectedApplication.education && (
+                {/* Additional Information */}
+                {(selectedApplication.education ||
+                  selectedApplication.experience ||
+                  selectedApplication.motivation) && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Educational Background
-                    </p>
-                    <p className="mt-1 text-sm text-gray-700">
-                      {selectedApplication.education}
-                    </p>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                      Additional Information
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedApplication.education && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">
+                            Educational Background
+                          </p>
+                          <p className="mt-1 text-sm text-gray-700 bg-gray-50 rounded p-2">
+                            {selectedApplication.education}
+                          </p>
+                        </div>
+                      )}
+
+                      {selectedApplication.experience && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">
+                            Teaching Experience
+                          </p>
+                          <p className="mt-1 text-sm text-gray-700 bg-gray-50 rounded p-2">
+                            {selectedApplication.experience}
+                          </p>
+                        </div>
+                      )}
+
+                      {selectedApplication.motivation && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">
+                            Motivation
+                          </p>
+                          <p className="mt-1 text-sm text-gray-700 bg-gray-50 rounded p-2">
+                            {selectedApplication.motivation}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
-                {selectedApplication.experience && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Teaching Experience
-                    </p>
-                    <p className="mt-1 text-sm text-gray-700">
-                      {selectedApplication.experience}
-                    </p>
-                  </div>
-                )}
-
-                {selectedApplication.motivation && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Motivation
-                    </p>
-                    <p className="mt-1 text-sm text-gray-700">
-                      {selectedApplication.motivation}
-                    </p>
-                  </div>
-                )}
-
+                {/* Assessment Score */}
                 {selectedApplication.score && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
                       Assessment Score
-                    </p>
-                    <div className="mt-2 bg-gray-50 rounded-lg p-4">
-                      <div className="text-center">
-                        <p className="text-3xl font-bold text-blue-600">
+                    </h3>
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4">
+                      <div className="text-center mb-4">
+                        <p className="text-4xl font-bold text-blue-600">
                           {selectedApplication.score.total}%
                         </p>
-                        <p className="text-sm text-gray-600">Overall Score</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Overall Score
+                        </p>
                       </div>
                       {selectedApplication.score.breakdown && (
-                        <div className="mt-4 space-y-2">
+                        <div className="space-y-2 border-t border-blue-200 pt-4">
                           {Object.entries(
                             selectedApplication.score.breakdown
                           ).map(([criteria, score]) => (
                             <div
                               key={criteria}
-                              className="flex justify-between text-sm"
+                              className="flex justify-between items-center bg-white rounded px-3 py-2"
                             >
-                              <span className="capitalize">
+                              <span className="text-sm capitalize text-gray-700">
                                 {criteria.replace("_", " ")}
                               </span>
-                              <span className="font-medium">{score}%</span>
+                              <span className="font-semibold text-blue-600">
+                                {score}%
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -355,9 +501,40 @@ const ApplicationHistory = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Documents */}
+                {selectedApplication.documents && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                      Submitted Documents
+                    </h3>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-sm text-gray-600">
+                        {typeof selectedApplication.documents === "string"
+                          ? "Documents submitted"
+                          : `${
+                              JSON.parse(selectedApplication.documents || "[]")
+                                .length
+                            } document(s) submitted`}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex justify-end space-x-3 border-t pt-4">
+                {selectedApplication.status === "completed" &&
+                  selectedApplication.score && (
+                    <Button
+                      onClick={() => {
+                        setSelectedApplication(null);
+                        window.location.href = `/applicant/application/${selectedApplication.id}/results`;
+                      }}
+                      variant="primary"
+                    >
+                      View Full Scores
+                    </Button>
+                  )}
                 <Button
                   onClick={() => setSelectedApplication(null)}
                   variant="outline"

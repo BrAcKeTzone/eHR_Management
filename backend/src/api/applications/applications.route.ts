@@ -10,6 +10,7 @@ import {
   scheduleDemo,
   updateApplication,
   deleteApplication,
+  completeApplication,
 } from "./applications.controller";
 import authMiddleware from "../../middlewares/auth.middleware";
 import {
@@ -37,5 +38,6 @@ router.delete("/:id", deleteApplication);
 router.put("/:id/approve", approveApplication);
 router.put("/:id/reject", rejectApplication);
 router.put("/:id/schedule", scheduleDemo);
+router.put("/:id/complete", completeApplication);
 
 export default router;

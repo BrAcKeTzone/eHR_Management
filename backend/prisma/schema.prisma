@@ -14,6 +14,7 @@ generator client {
 enum UserRole {
   APPLICANT
   HR
+  ADMIN
 }
 
 enum ApplicationStatus {
@@ -52,6 +53,9 @@ model Application {
   program        String            // Teaching program/subject
   documents      String?           @db.Text // JSON string of uploaded file paths
   demoSchedule   DateTime?         // Teaching demo date/time
+  demoLocation   String?           // Demo location/room
+  demoDuration   Int?              // Duration in minutes
+  demoNotes      String?           @db.Text // Instructions/notes for applicant
   totalScore     Float?            // Calculated from rubric scores
   result         ApplicationResult?
   hrNotes        String?           @db.Text // HR comments during review

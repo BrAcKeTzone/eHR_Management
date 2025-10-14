@@ -1,7 +1,5 @@
 import { create } from "zustand";
-
-// Simulate API delay
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+import { scheduleApi } from "../api/scheduleApi";
 
 // Sample occupied time slots for conflict detection
 const occupiedSlots = {
@@ -22,24 +20,31 @@ export const useScheduleStore = create((set, get) => ({
   setDemoSchedule: async (applicationId, scheduleData) => {
     try {
       set({ loading: true, error: null });
-      await delay(800);
 
-      // Simulate setting the schedule
-      console.log(
-        `Setting demo schedule for application ${applicationId}:`,
-        scheduleData
-      );
+      // Combine date and time into ISO DateTime string (without Z to keep it as local time)
+      const demoScheduleDateTime = `${scheduleData.date}T${scheduleData.time}:00.000`;
+
+      // Call real API with all schedule fields
+      const response = await scheduleApi.setDemoSchedule(applicationId, {
+        demoSchedule: demoScheduleDateTime,
+        demoLocation: scheduleData.location || undefined,
+        demoDuration: scheduleData.duration
+          ? parseInt(scheduleData.duration)
+          : undefined,
+        demoNotes: scheduleData.notes || undefined,
+      });
 
       set({
         loading: false,
         error: null,
       });
 
-      return { success: true, schedule: scheduleData };
+      return { success: true, schedule: response.data };
     } catch (error) {
+      console.error("Failed to set demo schedule:", error);
       set({
         loading: false,
-        error: "Failed to set demo schedule",
+        error: error.message || "Failed to set demo schedule",
       });
       throw error;
     }
@@ -48,24 +53,31 @@ export const useScheduleStore = create((set, get) => ({
   updateDemoSchedule: async (applicationId, scheduleData) => {
     try {
       set({ loading: true, error: null });
-      await delay(800);
 
-      // Simulate updating the schedule
-      console.log(
-        `Updating demo schedule for application ${applicationId}:`,
-        scheduleData
-      );
+      // Combine date and time into ISO DateTime string (without Z to keep it as local time)
+      const demoScheduleDateTime = `${scheduleData.date}T${scheduleData.time}:00.000`;
+
+      // Call real API (same endpoint as setDemoSchedule) with all fields
+      const response = await scheduleApi.updateDemoSchedule(applicationId, {
+        demoSchedule: demoScheduleDateTime,
+        demoLocation: scheduleData.location || undefined,
+        demoDuration: scheduleData.duration
+          ? parseInt(scheduleData.duration)
+          : undefined,
+        demoNotes: scheduleData.notes || undefined,
+      });
 
       set({
         loading: false,
         error: null,
       });
 
-      return { success: true, schedule: scheduleData };
+      return { success: true, schedule: response.data };
     } catch (error) {
+      console.error("Failed to update demo schedule:", error);
       set({
         loading: false,
-        error: "Failed to update demo schedule",
+        error: error.message || "Failed to update demo schedule",
       });
       throw error;
     }
@@ -74,30 +86,21 @@ export const useScheduleStore = create((set, get) => ({
   getDemoSchedule: async (applicationId) => {
     try {
       set({ loading: true, error: null });
-      await delay(300);
 
-      // Find demo schedule from applications data
-      // This would typically come from a separate schedules endpoint
-      const sampleSchedule = {
-        id: `schedule-${applicationId}`,
-        applicationId,
-        date: "2024-03-20",
-        time: "14:00",
-        location: "Room 205",
-        duration: "45",
-        notes: "Demo lesson preparation",
-      };
+      // Call real API
+      const response = await scheduleApi.getDemoSchedule(applicationId);
 
       set({
         loading: false,
         error: null,
       });
 
-      return { schedule: sampleSchedule };
+      return { schedule: response.data.demoSchedule };
     } catch (error) {
+      console.error("Failed to fetch demo schedule:", error);
       set({
         loading: false,
-        error: "Failed to fetch demo schedule",
+        error: error.message || "Failed to fetch demo schedule",
       });
       throw error;
     }
@@ -106,28 +109,19 @@ export const useScheduleStore = create((set, get) => ({
   getMyDemoSchedule: async () => {
     try {
       set({ loading: true, error: null });
-      await delay(400);
 
-      // Simulate getting current user's demo schedule
-      const sampleMySchedule = {
-        id: "schedule-current",
-        applicationId: "app-1",
-        date: "2024-03-20",
-        time: "14:00",
-        location: "Room 205",
-        duration: "45",
-        notes: "Prepare a lesson on quadratic equations",
-        confirmed: false,
-      };
+      // Call real API
+      const response = await scheduleApi.getMyDemoSchedule();
 
       set({
-        mySchedule: sampleMySchedule,
+        mySchedule: response.data.demoSchedule,
         loading: false,
         error: null,
       });
 
-      return { schedule: sampleMySchedule };
+      return { schedule: response.data.demoSchedule };
     } catch (error) {
+      console.error("Failed to fetch my demo schedule:", error);
       set({
         mySchedule: null,
         loading: false,
@@ -140,56 +134,22 @@ export const useScheduleStore = create((set, get) => ({
   getAllSchedules: async (filters = {}) => {
     try {
       set({ loading: true, error: null });
-      await delay(600);
 
-      // Sample schedules data
-      const sampleSchedules = [
-        {
-          id: "schedule-1",
-          applicationId: "app-1",
-          applicantName: "John Doe",
-          program: "Secondary Education - Mathematics",
-          date: "2024-03-15",
-          time: "10:00",
-          location: "Room 101",
-          duration: "60",
-          status: "completed",
-        },
-        {
-          id: "schedule-2",
-          applicationId: "app-4",
-          applicantName: "Maria Santos",
-          program: "Secondary Education - English",
-          date: "2024-03-20",
-          time: "14:00",
-          location: "Room 205",
-          duration: "45",
-          status: "scheduled",
-        },
-        {
-          id: "schedule-3",
-          applicationId: "app-6",
-          applicantName: "Ana Gutierrez",
-          program: "Special Education",
-          date: "2024-02-15",
-          time: "09:00",
-          location: "Special Education Room",
-          duration: "60",
-          status: "completed",
-        },
-      ];
+      // Call real API
+      const response = await scheduleApi.getAllSchedules(filters);
 
       set({
-        schedules: sampleSchedules,
+        schedules: response.data,
         loading: false,
         error: null,
       });
 
-      return { schedules: sampleSchedules };
+      return { schedules: response.data };
     } catch (error) {
+      console.error("Failed to fetch schedules:", error);
       set({
         loading: false,
-        error: "Failed to fetch schedules",
+        error: error.message || "Failed to fetch schedules",
       });
       throw error;
     }
@@ -198,13 +158,13 @@ export const useScheduleStore = create((set, get) => ({
   cancelDemoSchedule: async (applicationId, reason = "") => {
     try {
       set({ loading: true, error: null });
-      await delay(600);
 
-      console.log(
-        `Cancelling demo schedule for application ${applicationId}. Reason: ${reason}`
-      );
+      // Backend expects to set demoSchedule to null to cancel
+      const response = await scheduleApi.setDemoSchedule(applicationId, {
+        demoSchedule: null,
+      });
 
-      // Update schedules if they exist
+      // Update schedules if they exist in state
       const { schedules } = get();
       if (schedules) {
         const updatedSchedules = schedules.filter(
@@ -215,13 +175,16 @@ export const useScheduleStore = create((set, get) => ({
           loading: false,
           error: null,
         });
+      } else {
+        set({ loading: false, error: null });
       }
 
       return { success: true };
     } catch (error) {
+      console.error("Failed to cancel demo schedule:", error);
       set({
         loading: false,
-        error: "Failed to cancel demo schedule",
+        error: error.message || "Failed to cancel demo schedule",
       });
       throw error;
     }
@@ -230,21 +193,10 @@ export const useScheduleStore = create((set, get) => ({
   getAvailableSlots: async (date) => {
     try {
       set({ loading: true, error: null });
-      await delay(300);
 
-      // Get occupied slots for the date
+      // Get occupied slots for the date (currently using mock data)
+      // TODO: Implement real API call to check booked time slots
       const occupied = occupiedSlots[date] || [];
-
-      // Generate all possible time slots (8 AM to 5 PM, 30-minute intervals)
-      const allSlots = [];
-      for (let hour = 8; hour <= 17; hour++) {
-        for (let minute = 0; minute < 60; minute += 30) {
-          const time = `${hour.toString().padStart(2, "0")}:${minute
-            .toString()
-            .padStart(2, "0")}`;
-          allSlots.push(time);
-        }
-      }
 
       // Return occupied slots (slots that are NOT available)
       set({
@@ -255,9 +207,10 @@ export const useScheduleStore = create((set, get) => ({
 
       return occupied;
     } catch (error) {
+      console.error("Failed to fetch available slots:", error);
       set({
         loading: false,
-        error: "Failed to fetch available slots",
+        error: error.message || "Failed to fetch available slots",
       });
       throw error;
     }
@@ -266,8 +219,8 @@ export const useScheduleStore = create((set, get) => ({
   confirmAttendance: async (applicationId) => {
     try {
       set({ loading: true, error: null });
-      await delay(500);
 
+      // TODO: Implement real API call when backend supports attendance confirmation
       console.log(`Confirming attendance for application ${applicationId}`);
 
       // Update my schedule if it matches
@@ -278,13 +231,16 @@ export const useScheduleStore = create((set, get) => ({
           loading: false,
           error: null,
         });
+      } else {
+        set({ loading: false, error: null });
       }
 
       return { success: true };
     } catch (error) {
+      console.error("Failed to confirm attendance:", error);
       set({
         loading: false,
-        error: "Failed to confirm attendance",
+        error: error.message || "Failed to confirm attendance",
       });
       throw error;
     }

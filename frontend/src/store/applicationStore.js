@@ -1,104 +1,18 @@
 import { create } from "zustand";
 import { applicationApi } from "../api/applicationApi";
-import { delay } from "../utils/helpers";
-
-// Hardcoded sample data as fallback
-const sampleApplicationsData = [
-  {
-    id: "app-1",
-    user_id: "user-1",
-    applicant_name: "John Doe",
-    applicant_email: "john.doe@example.com",
-    program: "Secondary Education - Mathematics",
-    subject_specialization: "Mathematics",
-    status: "completed",
-    created_at: "2024-01-15T08:30:00Z",
-    updated_at: "2024-03-01T14:00:00Z",
-    documents: [
-      { name: "resume.pdf", type: "application/pdf", size: 1024000 },
-      { name: "transcript.pdf", type: "application/pdf", size: 2048000 },
-    ],
-    education: "Bachelor of Science in Mathematics Education",
-    experience: "3 years teaching experience",
-    motivation: "Passionate about mathematics education",
-  },
-  {
-    id: "app-2",
-    user_id: "user-2",
-    applicant_name: "Jane Smith",
-    applicant_email: "jane.smith@example.com",
-    program: "Elementary Education",
-    subject_specialization: "English Language Arts",
-    status: "pending",
-    created_at: "2024-02-01T09:15:00Z",
-    updated_at: "2024-02-01T09:15:00Z",
-    documents: [
-      { name: "resume.pdf", type: "application/pdf", size: 890000 },
-      { name: "transcript.pdf", type: "application/pdf", size: 1560000 },
-    ],
-    education: "Bachelor of Elementary Education",
-    experience: "Fresh graduate with practice teaching experience",
-    motivation:
-      "I believe every child deserves a strong foundation in literacy",
-  },
-  {
-    id: "app-3",
-    user_id: "user-3",
-    applicant_name: "Maria Santos",
-    applicant_email: "maria.santos@example.com",
-    program: "Secondary Education - English",
-    subject_specialization: "English Literature",
-    status: "approved",
-    created_at: "2024-02-10T14:20:00Z",
-    updated_at: "2024-02-15T11:30:00Z",
-    documents: [
-      { name: "resume.pdf", type: "application/pdf", size: 967000 },
-      {
-        name: "teaching_portfolio.pdf",
-        type: "application/pdf",
-        size: 2100000,
-      },
-    ],
-    education: "Bachelor of Arts in English Literature",
-    experience: "2 years teaching experience at tutorial center",
-    motivation: "Literature has the power to transform lives",
-  },
-];
-
-// Try to import JSON data, fallback to sample data
-let applicationsData;
-try {
-  applicationsData =
-    require("../data/applications.json") || sampleApplicationsData;
-  console.log(
-    "applicationStore: JSON import success:",
-    applicationsData?.length
-  );
-} catch (error) {
-  console.error(
-    "applicationStore: JSON import failed, using sample data:",
-    error
-  );
-  applicationsData = sampleApplicationsData;
-}
-
-console.log(
-  "applicationStore: applicationsData final:",
-  applicationsData?.length
-);
 
 export const useApplicationStore = create((set, get) => ({
   // State
-  applications: applicationsData || sampleApplicationsData, // Initialize with data
+  applications: [],
   currentApplication: null,
   applicationHistory: null,
   loading: false,
   error: null,
 
-  // Initialize store with sample data
+  // Initialize store - no longer needed with real API
   initialize: () => {
     set({
-      applications: applicationsData,
+      applications: [],
       error: null,
     });
   },
@@ -113,34 +27,9 @@ export const useApplicationStore = create((set, get) => ({
     set({ loading });
   },
 
-  // Fetch all applications
+  // Fetch all applications (deprecated - use getAllApplications instead)
   fetchApplications: async () => {
-    try {
-      console.log(
-        "fetchApplications: starting, applicationsData:",
-        applicationsData?.length
-      );
-      set({ loading: true, error: null });
-      await delay(500);
-
-      const apps = applicationsData || sampleApplicationsData;
-      console.log("fetchApplications: setting applications to:", apps.length);
-
-      set({
-        applications: apps,
-        loading: false,
-        error: null,
-      });
-
-      return { applications: apps };
-    } catch (error) {
-      console.error("fetchApplications error:", error);
-      set({
-        loading: false,
-        error: "Failed to fetch applications",
-      });
-      throw error;
-    }
+    return get().getAllApplications();
   },
 
   // Get applications for a specific user
@@ -202,34 +91,28 @@ export const useApplicationStore = create((set, get) => ({
   },
 
   // Update application status
-  updateApplicationStatus: async (
-    applicationId,
-    status,
-    additionalData = {}
-  ) => {
+  updateApplicationStatus: async (applicationId, status, reason = "") => {
     try {
       set({ loading: true, error: null });
-      await delay(800);
 
+      // Call the actual API
+      const result = await applicationApi.updateStatus(
+        applicationId,
+        status,
+        reason
+      );
+
+      // Update the applications array with the updated application
       const { applications } = get();
       const updatedApplications = applications.map((app) =>
-        app.id === applicationId
-          ? {
-              ...app,
-              status,
-              updatedAt: new Date().toISOString(),
-              ...additionalData,
-            }
-          : app
+        app.id === applicationId ? result.application : app
       );
 
       // Update current application if it matches
       const { currentApplication } = get();
       let updatedCurrentApp = currentApplication;
       if (currentApplication?.id === applicationId) {
-        updatedCurrentApp = updatedApplications.find(
-          (app) => app.id === applicationId
-        );
+        updatedCurrentApp = result.application;
       }
 
       set({
@@ -239,11 +122,12 @@ export const useApplicationStore = create((set, get) => ({
         error: null,
       });
 
-      return { success: true };
+      return { success: true, application: result.application };
     } catch (error) {
+      console.error("updateApplicationStatus error:", error);
       set({
         loading: false,
-        error: "Failed to update application status",
+        error: error.message || "Failed to update application status",
       });
       throw error;
     }
@@ -267,21 +151,21 @@ export const useApplicationStore = create((set, get) => ({
   getApplicationById: async (applicationId) => {
     try {
       set({ loading: true, error: null });
-      await delay(300);
 
-      const { applications } = get();
-      const application = applications.find((app) => app.id === applicationId);
+      // Call the actual API
+      const result = await applicationApi.getById(applicationId);
 
       set({
         loading: false,
         error: null,
       });
 
-      return { application };
+      return { application: result.application };
     } catch (error) {
+      console.error("getApplicationById error:", error);
       set({
         loading: false,
-        error: "Failed to fetch application",
+        error: error.message || "Failed to fetch application",
       });
       throw error;
     }
@@ -291,31 +175,28 @@ export const useApplicationStore = create((set, get) => ({
   getApplicationHistory: async (userEmail = null) => {
     try {
       set({ loading: true, error: null });
-      await delay(500);
 
-      const targetEmail = userEmail || "john.doe@example.com";
-      const { applications } = get();
-      const history = applications.filter(
-        (app) => app.applicantEmail === targetEmail
-      );
-
+      let result;
       if (userEmail) {
-        // If email provided, return directly (for HR viewing history)
+        // HR viewing specific user's history - fetch by email through getAll
+        result = await applicationApi.getAll({ search: userEmail });
         set({ loading: false, error: null });
-        return { applications: history };
+        return { applications: result.applications };
       } else {
-        // If no email, set to state (for applicant viewing own history)
+        // Applicant viewing own history
+        result = await applicationApi.getHistory();
         set({
-          applicationHistory: history,
+          applicationHistory: result.applications,
           loading: false,
           error: null,
         });
-        return { applications: history };
+        return { applications: result.applications };
       }
     } catch (error) {
+      console.error("getApplicationHistory error:", error);
       set({
         loading: false,
-        error: "Failed to fetch application history",
+        error: error.message || "Failed to fetch application history",
       });
       throw error;
     }
@@ -325,50 +206,23 @@ export const useApplicationStore = create((set, get) => ({
   getAllApplications: async (filters = {}) => {
     try {
       set({ loading: true, error: null });
-      await delay(600);
 
-      const { applications } = get();
-
-      // If applications are empty, initialize with sample data first
-      let allApplications =
-        applications.length === 0 ? applicationsData : applications;
-
-      let filteredApplications = [...allApplications];
-
-      // Apply filters
-      if (filters.status) {
-        filteredApplications = filteredApplications.filter(
-          (app) => app.status.toLowerCase() === filters.status.toLowerCase()
-        );
-      }
-      if (filters.program) {
-        filteredApplications = filteredApplications.filter((app) =>
-          app.program?.toLowerCase().includes(filters.program.toLowerCase())
-        );
-      }
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        filteredApplications = filteredApplications.filter(
-          (app) =>
-            app.firstName?.toLowerCase().includes(searchTerm) ||
-            app.lastName?.toLowerCase().includes(searchTerm) ||
-            app.applicant_email?.toLowerCase().includes(searchTerm) ||
-            app.program?.toLowerCase().includes(searchTerm) ||
-            app.position?.toLowerCase().includes(searchTerm)
-        );
-      }
+      // Call the actual API
+      const result = await applicationApi.getAll(filters);
 
       set({
-        applications: allApplications, // Set the full dataset
+        applications: result.applications,
         loading: false,
         error: null,
       });
 
-      return { applications: filteredApplications };
+      return { applications: result.applications, total: result.total };
     } catch (error) {
+      console.error("getAllApplications error:", error);
       set({
         loading: false,
-        error: "Failed to fetch applications",
+        error: error.message || "Failed to fetch applications",
+        applications: [], // Clear applications on error
       });
       throw error;
     }
