@@ -4,6 +4,7 @@ import { useAuthStore } from "../../store/authStore";
 import DashboardCard from "../../components/DashboardCard";
 import Button from "../../components/Button";
 import Table from "../../components/Table";
+import Modal from "../../components/Modal";
 import { formatDate } from "../../utils/formatDate";
 import { useNavigate } from "react-router-dom";
 
@@ -22,6 +23,8 @@ const HRDashboard = () => {
   });
 
   const [recentApplications, setRecentApplications] = useState([]);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     getAllApplications();
@@ -32,7 +35,8 @@ const HRDashboard = () => {
       // Calculate statistics
       const newStats = applications.reduce(
         (acc, app) => {
-          acc[app.status] = (acc[app.status] || 0) + 1;
+          const status = app.status?.toLowerCase();
+          acc[status] = (acc[status] || 0) + 1;
           acc.total += 1;
           return acc;
         },
@@ -43,7 +47,7 @@ const HRDashboard = () => {
 
       // Get recent applications (last 10)
       const recent = applications
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, 10);
       setRecentApplications(recent);
     }
@@ -79,7 +83,12 @@ const HRDashboard = () => {
         navigate("/hr/reports");
         break;
       case "view-application":
-        navigate(`/hr/applications/${applicationId}`);
+        // Find and show application in modal
+        const app = recentApplications.find((a) => a.id === applicationId);
+        if (app) {
+          setSelectedApplication(app);
+          setShowModal(true);
+        }
         break;
       default:
         break;
@@ -89,11 +98,15 @@ const HRDashboard = () => {
   const recentApplicationsColumns = [
     {
       header: "Applicant",
-      accessor: "applicant_name",
+      accessor: "applicant.name",
       cell: (row) => (
         <div>
-          <p className="font-medium text-gray-900">{row.applicant_name}</p>
-          <p className="text-sm text-gray-500">{row.applicant_email}</p>
+          <p className="font-medium text-gray-900">
+            {row.applicant?.name || "N/A"}
+          </p>
+          <p className="text-sm text-gray-500">
+            {row.applicant?.email || "N/A"}
+          </p>
         </div>
       ),
     },
@@ -121,11 +134,9 @@ const HRDashboard = () => {
     },
     {
       header: "Submitted",
-      accessor: "created_at",
+      accessor: "createdAt",
       cell: (row) => (
-        <div className="text-sm text-gray-600">
-          {formatDate(row.created_at)}
-        </div>
+        <div className="text-sm text-gray-600">{formatDate(row.createdAt)}</div>
       ),
     },
     {
@@ -381,10 +392,10 @@ const HRDashboard = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 break-words">
-                        {app.applicant_name}
+                        {app.applicant?.name || "N/A"}
                       </h3>
                       <p className="text-sm text-gray-500 break-all">
-                        {app.applicant_email}
+                        {app.applicant?.email || "N/A"}
                       </p>
                       <p className="text-sm font-medium break-words mt-1">
                         {app.program}
@@ -401,7 +412,7 @@ const HRDashboard = () => {
 
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">
-                      Submitted: {formatDate(app.created_at)}
+                      Submitted: {formatDate(app.createdAt)}
                     </span>
                     <Button
                       onClick={() =>
@@ -424,6 +435,191 @@ const HRDashboard = () => {
           </div>
         )}
       </DashboardCard>
+
+      {/* Application Detail Modal */}
+      {showModal && selectedApplication && (
+        <Modal
+          isOpen={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedApplication(null);
+          }}
+          title="Application Details"
+          size="lg"
+        >
+          <div className="space-y-6">
+            {/* Applicant Information */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Applicant Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600">Name</p>
+                  <p className="font-medium">
+                    {selectedApplication.applicant?.name || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Email</p>
+                  <p className="font-medium">
+                    {selectedApplication.applicant?.email || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Phone</p>
+                  <p className="font-medium">
+                    {selectedApplication.applicant?.phone || "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Application Details */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Application Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600">Application ID</p>
+                  <p className="font-medium">#{selectedApplication.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Attempt Number</p>
+                  <p className="font-medium">
+                    {selectedApplication.attemptNumber}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Program</p>
+                  <p className="font-medium">{selectedApplication.program}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <span
+                    className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                      selectedApplication.status
+                    )}`}
+                  >
+                    {selectedApplication.status?.toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Date Submitted</p>
+                  <p className="font-medium">
+                    {formatDate(selectedApplication.createdAt)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Last Updated</p>
+                  <p className="font-medium">
+                    {formatDate(selectedApplication.updatedAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Demo Schedule (if exists) */}
+            {selectedApplication.demoSchedule && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Demo Schedule
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-sm text-blue-700">Date & Time</p>
+                    <p className="font-medium text-blue-900">
+                      {formatDate(selectedApplication.demoSchedule)}
+                      {selectedApplication.demoTime &&
+                        ` at ${selectedApplication.demoTime}`}
+                    </p>
+                  </div>
+                  {selectedApplication.demoLocation && (
+                    <div>
+                      <p className="text-sm text-blue-700">Location</p>
+                      <p className="font-medium text-blue-900">
+                        {selectedApplication.demoLocation}
+                      </p>
+                    </div>
+                  )}
+                  {selectedApplication.demoDuration && (
+                    <div>
+                      <p className="text-sm text-blue-700">Duration</p>
+                      <p className="font-medium text-blue-900">
+                        {selectedApplication.demoDuration} minutes
+                      </p>
+                    </div>
+                  )}
+                  {selectedApplication.demoNotes && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-blue-700">Notes</p>
+                      <p className="font-medium text-blue-900">
+                        {selectedApplication.demoNotes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Assessment (if completed) */}
+            {selectedApplication.totalScore && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Assessment
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-green-50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-sm text-green-700">Total Score</p>
+                    <p className="font-medium text-green-900">
+                      {selectedApplication.totalScore}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-green-700">Result</p>
+                    <p className="font-medium text-green-900">
+                      {selectedApplication.result || "N/A"}
+                    </p>
+                  </div>
+                  {selectedApplication.hrNotes && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-green-700">HR Notes</p>
+                      <p className="font-medium text-green-900">
+                        {selectedApplication.hrNotes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-4 border-t">
+              <Button
+                onClick={() => {
+                  setShowModal(false);
+                  navigate("/hr/review");
+                }}
+                variant="primary"
+                className="flex-1"
+              >
+                Go to Review Page
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowModal(false);
+                  setSelectedApplication(null);
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

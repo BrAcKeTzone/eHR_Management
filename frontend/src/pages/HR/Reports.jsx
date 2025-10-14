@@ -101,7 +101,8 @@ const Reports = () => {
 
     return applications.reduce(
       (acc, app) => {
-        acc[app.status] = (acc[app.status] || 0) + 1;
+        const status = app.status?.toLowerCase();
+        acc[status] = (acc[status] || 0) + 1;
         return acc;
       },
       { pending: 0, approved: 0, rejected: 0, completed: 0 }
@@ -112,11 +113,12 @@ const Reports = () => {
     if (!applications) return { pass: 0, fail: 0 };
 
     const completedApps = applications.filter(
-      (app) => app.status === "completed" && app.result
+      (app) => app.status?.toLowerCase() === "completed" && app.result
     );
     return completedApps.reduce(
       (acc, app) => {
-        acc[app.result] = (acc[app.result] || 0) + 1;
+        const result = app.result?.toLowerCase();
+        acc[result] = (acc[result] || 0) + 1;
         return acc;
       },
       { pass: 0, fail: 0 }
@@ -489,7 +491,7 @@ const Reports = () => {
         <DashboardCard title="Recent Activity" className="mt-8">
           <div className="space-y-3">
             {applications
-              .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+              .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
               .slice(0, 10)
               .map((app, index) => (
                 <div
@@ -498,11 +500,11 @@ const Reports = () => {
                 >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">
-                      {app.applicant_name} - {app.program}
+                      {app.applicant?.name || "N/A"} - {app.program}
                     </p>
                     <p className="text-xs text-gray-500">
                       Status changed to {app.status} on{" "}
-                      {formatDate(app.updated_at)}
+                      {formatDate(app.updatedAt)}
                     </p>
                   </div>
                   <span
