@@ -24,9 +24,23 @@ export const applicationApi = {
       if (applicationData.documents && applicationData.documents.length > 0) {
         applicationData.documents.forEach((doc, index) => {
           if (doc.file) {
+            console.log(
+              "Appending file:",
+              doc.file.name,
+              "Size:",
+              doc.file.size,
+              "Type:",
+              doc.file.type
+            );
             formData.append("documents", doc.file);
           }
         });
+      }
+
+      // Log FormData contents for debugging
+      console.log("FormData entries:");
+      for (let pair of formData.entries()) {
+        console.log(pair[0], ":", pair[1]);
       }
 
       const response = await fetchClient.post(
@@ -34,8 +48,10 @@ export const applicationApi = {
         formData,
         {
           headers: {
-            // Don't set Content-Type - let browser set it for FormData with boundary
+            // Don't set Content-Type - let axios set it with proper boundary
+            "Content-Type": undefined,
           },
+          timeout: 60000, // 60 seconds for file uploads
         }
       );
 
@@ -166,16 +182,41 @@ export const applicationApi = {
     }
   },
 
-  // Download application document
-  downloadDocument: async (applicationId, documentName) => {
+  // Get application documents list
+  getDocuments: async (applicationId) => {
     try {
       const response = await fetchClient.get(
-        `${API_BASE_URL}/applications/${applicationId}/documents/${encodeURIComponent(
-          documentName
-        )}`,
-        { responseType: "blob" }
+        `${API_BASE_URL}/applications/${applicationId}/documents`
       );
-      return response.data;
+      return response.data.data;
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch documents";
+      throw new Error(message);
+    }
+  },
+
+  // Download application document
+  downloadDocument: async (applicationId, documentIndex) => {
+    try {
+      // Get document list first
+      const { documents } = await applicationApi.getDocuments(applicationId);
+
+      if (!documents || !documents[documentIndex]) {
+        throw new Error("Document not found");
+      }
+
+      const document = documents[documentIndex];
+      const filename =
+        document.originalName ||
+        document.fileName ||
+        `document-${documentIndex + 1}`;
+
+      // Download from Cloudinary URL
+      return await applicationApi.downloadFromUrl(document.url, filename);
     } catch (error) {
       console.error("Error downloading document:", error);
       const message =
@@ -183,6 +224,29 @@ export const applicationApi = {
         error.message ||
         "Failed to download document";
       throw new Error(message);
+    }
+  },
+
+  // Direct download from URL (for Cloudinary URLs)
+  downloadFromUrl: async (url, filename) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error downloading from URL:", error);
+      throw new Error("Failed to download file");
     }
   },
 

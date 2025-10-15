@@ -187,6 +187,15 @@ const ApplicationForm = () => {
       // Add other documents
       allDocuments.push(...documentFiles);
 
+      console.log("Submitting application with files:", {
+        totalFiles: allDocuments.length,
+        fileDetails: allDocuments.map((doc) => ({
+          name: doc.name,
+          type: doc.type,
+          hasFile: !!doc.file,
+        })),
+      });
+
       const applicationData = {
         documents: allDocuments,
         applicantId: user?.id,

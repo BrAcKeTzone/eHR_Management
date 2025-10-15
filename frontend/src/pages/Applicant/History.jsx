@@ -3,15 +3,29 @@ import { useApplicationStore } from "../../store/applicationStore";
 import DashboardCard from "../../components/DashboardCard";
 import Button from "../../components/Button";
 import { formatDate } from "../../utils/formatDate";
+import { applicationApi } from "../../api/applicationApi";
 
 const ApplicationHistory = () => {
   const { applicationHistory, getApplicationHistory, loading, error } =
     useApplicationStore();
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [downloadingDoc, setDownloadingDoc] = useState(null);
 
   useEffect(() => {
     getApplicationHistory();
   }, [getApplicationHistory]);
+
+  const downloadDocument = async (applicationId, documentIndex) => {
+    setDownloadingDoc(documentIndex);
+    try {
+      await applicationApi.downloadDocument(applicationId, documentIndex);
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      alert("Failed to download document. Please try again.");
+    } finally {
+      setDownloadingDoc(null);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -209,19 +223,6 @@ const ApplicationHistory = () => {
                       View Scores
                     </Button>
                   )}
-
-                  {application.documents &&
-                    application.documents.length > 0 && (
-                      <Button
-                        onClick={() =>
-                          (window.location.href = `/applicant/application/${application.id}/documents`)
-                        }
-                        variant="outline"
-                        size="sm"
-                      >
-                        Documents
-                      </Button>
-                    )}
                 </div>
               </div>
             </DashboardCard>
@@ -231,8 +232,8 @@ const ApplicationHistory = () => {
 
       {/* Application Detail Modal */}
       {selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -503,23 +504,118 @@ const ApplicationHistory = () => {
                 )}
 
                 {/* Documents */}
-                {selectedApplication.documents && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                      Submitted Documents
-                    </h3>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-sm text-gray-600">
-                        {typeof selectedApplication.documents === "string"
-                          ? "Documents submitted"
-                          : `${
-                              JSON.parse(selectedApplication.documents || "[]")
-                                .length
-                            } document(s) submitted`}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                {selectedApplication.documents &&
+                  (() => {
+                    try {
+                      const docs =
+                        typeof selectedApplication.documents === "string"
+                          ? JSON.parse(selectedApplication.documents)
+                          : selectedApplication.documents;
+
+                      if (Array.isArray(docs) && docs.length > 0) {
+                        return (
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                              Submitted Documents
+                            </h3>
+                            <div className="space-y-2">
+                              {docs.map((doc, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
+                                >
+                                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                                    <div className="flex-shrink-0">
+                                      <svg
+                                        className="w-8 h-8 text-blue-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth="2"
+                                          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                        />
+                                      </svg>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                        {doc.originalName ||
+                                          doc.fileName ||
+                                          `Document ${index + 1}`}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {doc.mimetype || "Unknown type"}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    onClick={() =>
+                                      downloadDocument(
+                                        selectedApplication.id,
+                                        index
+                                      )
+                                    }
+                                    variant="outline"
+                                    size="sm"
+                                    className="ml-2 flex-shrink-0"
+                                    disabled={downloadingDoc === index}
+                                  >
+                                    {downloadingDoc === index ? (
+                                      <>
+                                        <svg
+                                          className="animate-spin w-4 h-4 mr-1"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                          ></circle>
+                                          <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                          ></path>
+                                        </svg>
+                                        Downloading...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <svg
+                                          className="w-4 h-4 mr-1"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                          />
+                                        </svg>
+                                        Download
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                    } catch (e) {
+                      console.error("Error parsing documents:", e);
+                    }
+                    return null;
+                  })()}
               </div>
 
               <div className="mt-6 flex justify-end space-x-3 border-t pt-4">

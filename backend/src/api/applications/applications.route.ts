@@ -11,6 +11,8 @@ import {
   updateApplication,
   deleteApplication,
   completeApplication,
+  getApplicationDocuments,
+  downloadDocument,
 } from "./applications.controller";
 import authMiddleware from "../../middlewares/auth.middleware";
 import {
@@ -31,6 +33,8 @@ router.get("/my-active-application", getMyActiveApplication);
 // HR/Admin routes
 router.get("/", getAllApplications);
 router.get("/:id", getApplicationById);
+router.get("/:id/documents", getApplicationDocuments); // Get list of documents
+router.get("/:id/documents/:documentIndex/download", downloadDocument); // Download specific document
 router.put("/:id", updateApplication);
 router.delete("/:id", deleteApplication);
 

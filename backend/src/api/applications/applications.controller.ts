@@ -15,6 +15,11 @@ interface AuthenticatedRequest extends Request {
 
 export const createApplication = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
+    console.log("=== Create Application Request ===");
+    console.log("User:", req.user?.id, req.user?.role);
+    console.log("Body keys:", Object.keys(req.body));
+    console.log("Files received:", req.files ? (req.files as any[]).length : 0);
+
     const {
       program,
       documents: frontendDocuments,
@@ -26,28 +31,46 @@ export const createApplication = asyncHandler(
       throw new ApiError(403, "Only applicants can create applications");
     }
 
-    // Handle uploaded files
-    let documents: string[] = [];
+    // Handle uploaded files from Cloudinary
+    let documentsJson = "[]";
     if (req.files && Array.isArray(req.files)) {
-      documents = req.files.map((file: any) =>
-        JSON.stringify({
-          originalName: file.originalname,
-          fileName: file.filename,
-          url: file.path,
+      console.log("Processing", req.files.length, "files...");
+      const documents = req.files.map((file: any) => {
+        console.log("File object keys:", Object.keys(file));
+        console.log("File details:", {
+          originalname: file.originalname,
+          filename: file.filename,
+          public_id: file.public_id,
+          secure_url: file.secure_url,
+          path: file.path,
           size: file.size,
           mimetype: file.mimetype,
+          format: file.format,
+        });
+        return {
+          originalName: file.originalname,
+          fileName: file.filename || file.public_id || file.originalname, // Fallback chain
+          url: file.secure_url || file.path || file.url, // Cloudinary provides secure_url
+          publicId: file.public_id || "", // Cloudinary public ID for future operations
+          size: file.size || 0,
+          mimetype: file.mimetype || "application/octet-stream",
+          format: file.format || "",
           uploadedAt: new Date().toISOString(),
-        })
-      );
+        };
+      });
+      documentsJson = JSON.stringify(documents);
+      console.log("Documents JSON length:", documentsJson.length);
     }
 
+    console.log("Creating application with program:", program);
     const application = await applicationService.createApplication({
       program: program || "Teaching Application",
-      documents: JSON.stringify(documents),
+      documents: documentsJson,
       applicantId,
       ...applicationData,
     });
 
+    console.log("Application created successfully:", application.id);
     res
       .status(201)
       .json(
@@ -296,5 +319,100 @@ export const completeApplication = asyncHandler(
     res.json(
       new ApiResponse(200, application, "Application completed successfully")
     );
+  }
+);
+
+export const getApplicationDocuments = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+    const applicationId = parseInt(id);
+
+    // Get the application with documents
+    const application = await applicationService.getApplicationById(
+      applicationId
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    // Check authorization - applicants can only view their own, HR/Admin can view all
+    if (
+      req.user!.role === "APPLICANT" &&
+      application.applicantId !== req.user!.id
+    ) {
+      throw new ApiError(
+        403,
+        "You can only view documents from your own applications"
+      );
+    }
+
+    // Parse documents JSON
+    let documents = [];
+    try {
+      if (application.documents) {
+        documents = JSON.parse(application.documents);
+      }
+    } catch (error) {
+      console.error("Error parsing documents:", error);
+      documents = [];
+    }
+
+    res.json(
+      new ApiResponse(
+        200,
+        { documents, applicationId: application.id },
+        "Documents retrieved successfully"
+      )
+    );
+  }
+);
+
+export const downloadDocument = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { id, documentIndex } = req.params;
+    const applicationId = parseInt(id);
+    const docIndex = parseInt(documentIndex);
+
+    // Get the application
+    const application = await applicationService.getApplicationById(
+      applicationId
+    );
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    // Check authorization
+    if (
+      req.user!.role === "APPLICANT" &&
+      application.applicantId !== req.user!.id
+    ) {
+      throw new ApiError(
+        403,
+        "You can only download documents from your own applications"
+      );
+    }
+
+    // Parse documents
+    let documents = [];
+    try {
+      if (application.documents) {
+        documents = JSON.parse(application.documents);
+      }
+    } catch (error) {
+      throw new ApiError(500, "Error parsing application documents");
+    }
+
+    // Check if document exists
+    if (docIndex < 0 || docIndex >= documents.length) {
+      throw new ApiError(404, "Document not found");
+    }
+
+    const document = documents[docIndex];
+
+    // Redirect to Cloudinary URL
+    // Cloudinary URLs are already public and accessible
+    res.redirect(document.url);
   }
 );

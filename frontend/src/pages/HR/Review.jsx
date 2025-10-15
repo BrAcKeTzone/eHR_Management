@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useApplicationStore } from "../../store/applicationStore";
+import { applicationApi } from "../../api/applicationApi";
 import DashboardCard from "../../components/DashboardCard";
 import Button from "../../components/Button";
 import Table from "../../components/Table";
@@ -20,6 +21,7 @@ const ApplicationReview = () => {
   const [showDecisionModal, setShowDecisionModal] = useState(false);
   const [decision, setDecision] = useState("");
   const [reason, setReason] = useState("");
+  const [downloadingDoc, setDownloadingDoc] = useState(null); // Track which doc is downloading
   const [filters, setFilters] = useState({
     status: APPLICATION_STATUS.PENDING,
     program: "",
@@ -68,9 +70,16 @@ const ApplicationReview = () => {
     setShowDecisionModal(true);
   };
 
-  const downloadDocument = async (applicationId, documentName) => {
-    // Implementation for downloading documents
-    console.log("Download document:", applicationId, documentName);
+  const downloadDocument = async (applicationId, documentIndex) => {
+    setDownloadingDoc(documentIndex);
+    try {
+      await applicationApi.downloadDocument(applicationId, documentIndex);
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      alert("Failed to download document. Please try again.");
+    } finally {
+      setDownloadingDoc(null);
+    }
   };
 
   const filteredApplications =
@@ -614,14 +623,55 @@ const ApplicationReview = () => {
                                 onClick={() =>
                                   downloadDocument(
                                     selectedApplication.id,
-                                    doc.fileName || doc.originalName
+                                    index
                                   )
                                 }
                                 variant="outline"
                                 size="sm"
                                 className="ml-2 flex-shrink-0"
+                                disabled={downloadingDoc === index}
                               >
-                                Download
+                                {downloadingDoc === index ? (
+                                  <>
+                                    <svg
+                                      className="animate-spin w-4 h-4 mr-1"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                      ></circle>
+                                      <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                      ></path>
+                                    </svg>
+                                    Downloading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg
+                                      className="w-4 h-4 mr-1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                      />
+                                    </svg>
+                                    Download
+                                  </>
+                                )}
                               </Button>
                             </div>
                           ))}

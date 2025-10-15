@@ -5,16 +5,34 @@ import cloudinary from "../configs/cloudinary";
 // Configure Cloudinary storage
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: "hr-applications", // Folder in Cloudinary
-    allowed_formats: ["jpg", "png", "pdf", "doc", "docx", "txt"],
-    public_id: (req: any, file: any) => {
-      // Generate unique filename with timestamp and original name
-      const timestamp = Date.now();
-      const originalName = file.originalname.split(".")[0];
-      return `${timestamp}-${originalName}`;
-    },
-  } as any,
+  params: async (req: any, file: any) => {
+    // Generate unique filename with timestamp and original name
+    const timestamp = Date.now();
+    const originalName = file.originalname
+      .split(".")[0]
+      .replace(/[^a-zA-Z0-9]/g, "_");
+
+    // Determine resource type based on mimetype
+    let resourceType: "image" | "video" | "raw" = "raw";
+    if (file.mimetype.startsWith("image/")) {
+      resourceType = "image";
+    } else if (file.mimetype.startsWith("video/")) {
+      resourceType = "video";
+    }
+
+    console.log("Uploading file:", {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      resourceType: resourceType,
+    });
+
+    return {
+      folder: "hr-applications", // Folder in Cloudinary
+      public_id: `${timestamp}-${originalName}`,
+      resource_type: resourceType, // Use determined resource type instead of auto
+      // Don't specify allowed_formats - let Cloudinary handle all formats for the resource type
+    };
+  },
 });
 
 // File filter to validate file types

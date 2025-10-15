@@ -51,7 +51,7 @@ model Application {
   attemptNumber  Int               @default(1)
   status         ApplicationStatus @default(PENDING)
   program        String            // Teaching program/subject
-  documents      String?           @db.Text // JSON string of uploaded file paths
+  documents      String?           @db.LongText // JSON string of uploaded file paths (supports up to 4GB)
   demoSchedule   DateTime?         // Teaching demo date/time
   demoLocation   String?           // Demo location/room
   demoDuration   Int?              // Duration in minutes
