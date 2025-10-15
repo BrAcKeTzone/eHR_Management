@@ -41,6 +41,11 @@ router.post(
 );
 router.post("/login", validate(authValidation.login), authController.login);
 router.post(
+  "/verify-login-otp",
+  validate(authValidation.verifyOtp),
+  authController.verifyLoginOtp
+);
+router.post(
   "/reset-password",
   validate(authValidation.resetPassword),
   authController.resetPassword

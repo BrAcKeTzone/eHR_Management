@@ -295,7 +295,7 @@ export const register = async (
 export const login = async (
   email: string,
   password: string
-): Promise<{ user: User; token: string }> => {
+): Promise<{ message: string; requiresOtp: boolean }> => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
@@ -306,6 +306,78 @@ export const login = async (
   if (!isValidPassword) {
     throw new AuthenticationError("Incorrect email or password");
   }
+
+  // Generate and send OTP for login verification
+  const otpOptions = {
+    upperCase: false,
+    specialChars: false,
+    digits: true,
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+  };
+  const otp = otpGenerator.generate(6, otpOptions);
+  const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  try {
+    await prisma.otp.create({
+      data: {
+        email,
+        otp,
+        createdAt: expires,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new ApiError(400, "Failed to create OTP record");
+    }
+    throw error;
+  }
+
+  try {
+    await sendEmail({
+      email,
+      subject: "Your OTP for BCFI Login Verification",
+      message: `Your OTP for login is: ${otp}. It will expire in 10 minutes.`,
+    });
+  } catch (error) {
+    console.error(error);
+    throw new ApiError(
+      500,
+      "There was an error sending the email. Please try again later."
+    );
+  }
+
+  return {
+    message: "OTP sent to your email. Please verify to complete login.",
+    requiresOtp: true,
+  };
+};
+
+export const verifyLoginOtp = async (
+  email: string,
+  otp: string
+): Promise<{ user: User; token: string }> => {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const otpRecord = await prisma.otp.findFirst({
+    where: {
+      email,
+      otp,
+      createdAt: {
+        gt: new Date(Date.now() - 10 * 60 * 1000), // Not expired
+      },
+    },
+  });
+
+  if (!otpRecord) {
+    throw new ApiError(400, "Invalid or expired OTP.");
+  }
+
+  // Delete the OTP after successful verification
+  await prisma.otp.delete({ where: { id: otpRecord.id } });
 
   const token = generateToken(user.id);
 

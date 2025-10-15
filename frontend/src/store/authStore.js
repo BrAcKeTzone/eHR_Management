@@ -13,6 +13,14 @@ export const useAuthStore = create(
       loading: false,
       error: null,
 
+      // Login OTP phase state
+      loginPhase: 1, // 1: Credentials, 2: OTP Verification
+      loginData: {
+        email: "",
+        password: "",
+        otp: "",
+      },
+
       // Signup phase state
       signupPhase: 1, // 1: Email, 2: OTP, 3: Personal Details, 4: Success
       signupData: {
@@ -39,10 +47,27 @@ export const useAuthStore = create(
         try {
           set({ loading: true, error: null });
 
-          // Call backend API
+          // Call backend API - this will now send OTP
           const response = await authApi.login(credentials);
 
-          // Extract user and token from response
+          // Check if OTP is required
+          if (response.data?.requiresOtp) {
+            set({
+              loading: false,
+              error: null,
+              loginPhase: 2,
+              loginData: {
+                email: credentials.email,
+                password: credentials.password,
+                otp: "",
+              },
+            });
+
+            return { requiresOtp: true, email: credentials.email };
+          }
+
+          // Fallback in case backend doesn't return requiresOtp flag
+          // (shouldn't happen with updated backend)
           const { user, token } = response.data;
 
           set({
@@ -51,6 +76,7 @@ export const useAuthStore = create(
             isAuthenticated: true,
             loading: false,
             error: null,
+            loginPhase: 1,
           });
 
           // Store token in localStorage
@@ -68,6 +94,65 @@ export const useAuthStore = create(
           });
           throw error;
         }
+      },
+
+      // Verify login OTP and complete authentication
+      verifyLoginOtp: async (otp) => {
+        try {
+          set({ loading: true, error: null });
+
+          const { loginData } = get();
+
+          // Call backend API to verify OTP
+          const response = await authApi.verifyLoginOtp(loginData.email, otp);
+
+          // Extract user and token from response
+          const { user, token } = response.data;
+
+          set({
+            user,
+            token,
+            isAuthenticated: true,
+            loading: false,
+            error: null,
+            loginPhase: 1,
+            loginData: {
+              email: "",
+              password: "",
+              otp: "",
+            },
+          });
+
+          // Store token in localStorage
+          localStorage.setItem("authToken", token);
+
+          return { user, token };
+        } catch (error) {
+          // Handle API error response
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "OTP verification failed";
+
+          set({
+            loading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
+
+      // Reset login process
+      resetLogin: () => {
+        set({
+          loginPhase: 1,
+          loginData: {
+            email: "",
+            password: "",
+            otp: "",
+          },
+          error: null,
+        });
       },
 
       register: async (userData) => {

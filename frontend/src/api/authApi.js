@@ -29,6 +29,15 @@ export const authApi = {
     return response.data;
   },
 
+  // Verify Login OTP
+  verifyLoginOtp: async (email, otp) => {
+    const response = await fetchClient.post(`${API_BASE}/verify-login-otp`, {
+      email,
+      otp,
+    });
+    return response.data;
+  },
+
   // Password Reset
   sendOtpForReset: async (email) => {
     const response = await fetchClient.post(`${API_BASE}/send-otp-reset`, {

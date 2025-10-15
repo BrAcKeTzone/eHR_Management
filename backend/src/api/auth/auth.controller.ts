@@ -12,7 +12,9 @@ export const sendOtp = asyncHandler(async (req: Request, res: Response) => {
 export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
   const result = await authService.verifyOtp(email, otp);
-  res.status(200).json(new ApiResponse(200, result, "Email verified successfully"));
+  res
+    .status(200)
+    .json(new ApiResponse(200, result, "Email verified successfully"));
 });
 
 export const verifyOtpForReset = asyncHandler(
@@ -57,8 +59,16 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const result = await authService.login(email, password);
-  res.status(200).json(new ApiResponse(200, result, "Login successful"));
+  res.status(200).json(new ApiResponse(200, result, "OTP sent to your email"));
 });
+
+export const verifyLoginOtp = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email, otp } = req.body;
+    const result = await authService.verifyLoginOtp(email, otp);
+    res.status(200).json(new ApiResponse(200, result, "Login successful"));
+  }
+);
 
 export const resetPassword = asyncHandler(
   async (req: Request, res: Response) => {
