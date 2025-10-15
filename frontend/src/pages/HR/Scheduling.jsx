@@ -139,6 +139,9 @@ const Scheduling = () => {
             <div>
               <p className="font-medium text-green-600">Scheduled</p>
               <p className="text-gray-600">{formatDate(row.demoSchedule)}</p>
+              {row.demoTime && (
+                <p className="text-gray-600 font-medium">{row.demoTime}</p>
+              )}
             </div>
           ) : (
             <span className="text-yellow-600 font-medium">Pending</span>
@@ -265,6 +268,11 @@ const Scheduling = () => {
                           <p className="text-gray-600">
                             {formatDate(app.demoSchedule)}
                           </p>
+                          {app.demoTime && (
+                            <p className="text-gray-600 font-medium">
+                              {app.demoTime}
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <p className="text-yellow-600 font-medium">Pending</p>
@@ -422,6 +430,11 @@ const Scheduling = () => {
                   <p className="break-words">
                     Date: {formatDate(selectedApplication.demoSchedule)}
                   </p>
+                  {selectedApplication.demoTime && (
+                    <p className="break-words">
+                      Time: {selectedApplication.demoTime}
+                    </p>
+                  )}
                 </div>
               </div>
             )}

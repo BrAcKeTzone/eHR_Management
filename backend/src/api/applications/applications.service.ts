@@ -49,14 +49,18 @@ export interface ApplicationWithApplicant extends Application {
 function formatApplicationForFrontend(app: any) {
   let formattedApp: any = { ...app };
 
-  // Format demoSchedule to include separate time string
+  // Format demoSchedule to include separate time string in 12-hour format
   if (app.demoSchedule) {
     // Convert to local timezone and extract time
     const demoDate = new Date(app.demoSchedule);
-    // Get local hours and minutes (this accounts for the timezone offset)
-    const hours = demoDate.getHours().toString().padStart(2, "0");
+    let hours = demoDate.getHours();
     const minutes = demoDate.getMinutes().toString().padStart(2, "0");
-    formattedApp.demoTime = `${hours}:${minutes}`;
+
+    // Convert to 12-hour format
+    const period = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12; // Convert 0 to 12 for midnight, 13-23 to 1-11
+
+    formattedApp.demoTime = `${hours}:${minutes} ${period}`;
   }
 
   return formattedApp;
