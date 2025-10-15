@@ -4,6 +4,49 @@
 
 This project is an **Automated HR Filing & Email Notification System** designed for Blancia College Foundation Inc. (BCFI). It streamlines the teacher application process by providing an efficient digital platform for applicants to submit applications and for HR to manage reviews, scheduling, and evaluations.
 
+---
+
+## Features
+
+### **Authentication & User Management**
+
+- **Secure Registration**: Applicants can self-register with email verification
+- **Role-Based Access Control**: Separate access for APPLICANT, HR, and ADMIN roles
+- **JWT Authentication**: Secure token-based authentication system
+
+### **Applicant Features**
+
+- **Application Submission**: Upload documents and submit teacher applications
+- **Single Active Application**: Only one active application allowed at a time
+- **Status Tracking**: Real-time tracking of application status (Pending, Approved, Rejected, Completed)
+- **Demo Schedule Viewing**: View teaching demonstration date and time when approved
+- **Score & Results**: View rubric scores and pass/fail results after evaluation
+- **Application History**: Access to all previous application attempts
+
+### **HR/Admin Features**
+
+- **Application Review**: Review applicant documents and details
+- **Approval/Rejection**: Approve or reject applications with HR notes
+- **Demo Scheduling**: Schedule teaching demonstrations for approved applicants
+- **Rubric Scoring**: Input scores based on configurable rubric criteria
+- **Applicant Tracking**: View and filter all applications by status
+- **Score Calculation**: Automatic calculation of final scores and pass/fail determination
+
+### **Automated Notifications**
+
+- **Email Alerts**: Automated emails for submission, approval, rejection, scheduling, and results
+- **HR Notifications**: Immediate alerts to HR when new applications are submitted
+- **Status Updates**: Real-time notifications for all application status changes
+
+### **Scoring System**
+
+- **Configurable Rubrics**: Create and manage scoring criteria with weights
+- **Detailed Scoring**: Input scores per criteria with comments
+- **Automatic Calculation**: Auto-compute total scores and pass/fail results
+- **Score History**: Track all scoring data for reporting and analysis
+
+---
+
 ## Technologies Used
 
 - **TypeScript**: A strongly typed programming language that builds on JavaScript.
@@ -12,6 +55,8 @@ This project is an **Automated HR Filing & Email Notification System** designed 
 - **MySQL**: A relational database management system used to store application data.
 - **JWT**: JSON Web Tokens for secure authentication and authorization.
 - **Nodemailer**: For sending automated email notifications throughout the application process.
+
+---
 
 ## Project Structure
 
@@ -60,90 +105,15 @@ backend/
 └── README.md               # This file
 ```
 
-## Features
-
-### **Authentication & User Management**
-
-- **Secure Registration**: Applicants can self-register with email verification
-- **Role-Based Access Control**: Separate access for APPLICANT, HR, and ADMIN roles
-- **JWT Authentication**: Secure token-based authentication system
-
-### **Applicant Features**
-
-- **Application Submission**: Upload documents and submit teacher applications
-- **Single Active Application**: Only one active application allowed at a time
-- **Status Tracking**: Real-time tracking of application status (Pending, Approved, Rejected, Completed)
-- **Demo Schedule Viewing**: View teaching demonstration date and time when approved
-- **Score & Results**: View rubric scores and pass/fail results after evaluation
-- **Application History**: Access to all previous application attempts
-
-### **HR/Admin Features**
-
-- **Application Review**: Review applicant documents and details
-- **Approval/Rejection**: Approve or reject applications with HR notes
-- **Demo Scheduling**: Schedule teaching demonstrations for approved applicants
-- **Rubric Scoring**: Input scores based on configurable rubric criteria
-- **Applicant Tracking**: View and filter all applications by status
-- **Score Calculation**: Automatic calculation of final scores and pass/fail determination
-
-### **Automated Notifications**
-
-- **Email Alerts**: Automated emails for submission, approval, rejection, scheduling, and results
-- **HR Notifications**: Immediate alerts to HR when new applications are submitted
-- **Status Updates**: Real-time notifications for all application status changes
-
-### **Scoring System**
-
-- **Configurable Rubrics**: Create and manage scoring criteria with weights
-- **Detailed Scoring**: Input scores per criteria with comments
-- **Automatic Calculation**: Auto-compute total scores and pass/fail results
-- **Score History**: Track all scoring data for reporting and analysis
-
-## API Endpoints
-
-### Authentication
-
-- `POST /api/auth/register` - User registration with OTP verification
-- `POST /api/auth/login` - User login
-- `POST /api/auth/send-otp` - Send OTP for email verification
-
-### Applications
-
-- `POST /api/applications` - Create new application (Applicants)
-- `GET /api/applications/my-applications` - Get applicant's applications
-- `GET /api/applications/my-active-application` - Get active application
-- `GET /api/applications` - Get all applications (HR/Admin)
-- `GET /api/applications/:id` - Get specific application
-- `PUT /api/applications/:id/approve` - Approve application (HR/Admin)
-- `PUT /api/applications/:id/reject` - Reject application (HR/Admin)
-- `PUT /api/applications/:id/schedule` - Schedule demo (HR/Admin)
-
-### Scoring & Rubrics
-
-- `POST /api/scoring/rubrics` - Create rubric criteria (HR/Admin)
-- `GET /api/scoring/rubrics` - Get all rubrics
-- `POST /api/scoring/scores` - Input scores (HR/Admin)
-- `GET /api/scoring/applications/:id/scores` - Get application scores
-- `POST /api/scoring/applications/:id/complete` - Complete scoring (HR/Admin)
-- `GET /api/scoring/applications/:id/summary` - Get score summary
-
-## Database Schema
-
-### Key Models
-
-- **User**: Applicants, HR, and Admin users with role-based access
-- **Application**: Teacher applications with status tracking and attempt numbers
-- **Rubric**: Configurable scoring criteria with weights
-- **Score**: Individual rubric scores for each application
-- **Notification**: Email notification audit trail
+---
 
 ## Setup and Installation
 
 1. **Clone the repository**:
 
    ```bash
-   git clone <repository-url>
-   cd BCFI_web_app_for_hr_applicant/eHR_Management/backend
+   git clone https://github.com/BrAcKeTzone/eHR_Management.git
+   cd eHR_Management/backend
    ```
 
 2. **Install dependencies**:
@@ -189,6 +159,40 @@ backend/
    npm run dev
    ```
 
+The server will run at `http://localhost:3000` by default.
+
+---
+
+## API Endpoints
+
+### Authentication
+
+- `POST /api/auth/register` - User registration with OTP verification
+- `POST /api/auth/login` - User login
+- `POST /api/auth/send-otp` - Send OTP for email verification
+
+### Applications
+
+- `POST /api/applications` - Create new application (Applicants)
+- `GET /api/applications/my-applications` - Get applicant's applications
+- `GET /api/applications/my-active-application` - Get active application
+- `GET /api/applications` - Get all applications (HR/Admin)
+- `GET /api/applications/:id` - Get specific application
+- `PUT /api/applications/:id/approve` - Approve application (HR/Admin)
+- `PUT /api/applications/:id/reject` - Reject application (HR/Admin)
+- `PUT /api/applications/:id/schedule` - Schedule demo (HR/Admin)
+
+### Scoring & Rubrics
+
+- `POST /api/scoring/rubrics` - Create rubric criteria (HR/Admin)
+- `GET /api/scoring/rubrics` - Get all rubrics
+- `POST /api/scoring/scores` - Input scores (HR/Admin)
+- `GET /api/scoring/applications/:id/scores` - Get application scores
+- `POST /api/scoring/applications/:id/complete` - Complete scoring (HR/Admin)
+- `GET /api/scoring/applications/:id/summary` - Get score summary
+
+---
+
 ## System Workflow
 
 ### Applicant Journey
@@ -208,6 +212,8 @@ backend/
 4. **Demo Evaluation** → Score using rubric criteria
 5. **Results** → Calculate final score and notify applicant
 
+---
+
 ## Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -216,6 +222,8 @@ Contributions are welcome! Please follow these steps:
 2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
+
+---
 
 ## License
 
