@@ -5,6 +5,7 @@ import Input from "../../components/Input";
 import PasswordInput from "../../components/PasswordInput";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import privacyPolicyData from "../../data/privacyPolicy.json";
 
 const SignupForm = () => {
   const navigate = useNavigate();
@@ -401,7 +402,9 @@ const SignupForm = () => {
         <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900">Privacy Policy</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {privacyPolicyData.title}
+            </h2>
             <button
               onClick={() => setShowPrivacyPolicyModal(false)}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -426,164 +429,44 @@ const SignupForm = () => {
           <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-140px)]">
             <div className="prose prose-sm max-w-none">
               <p className="text-gray-600 mb-4">
-                <strong>Effective Date:</strong> October 16, 2025
+                <strong>Effective Date:</strong>{" "}
+                {privacyPolicyData.effectiveDate}
               </p>
 
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                1. Introduction
-              </h3>
-              <p className="text-gray-700 mb-4">
-                Welcome to the Blancia College Foundation Inc. (BCFI) HR
-                Application System. We are committed to protecting your personal
-                information and your right to privacy. This Privacy Policy
-                explains how we collect, use, disclose, and safeguard your
-                information when you use our HR application system.
-              </p>
+              {privacyPolicyData.sections.map((section) => (
+                <div key={section.number}>
+                  <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
+                    {section.number}. {section.title}
+                  </h3>
+                  <p className="text-gray-700 mb-2">{section.content}</p>
 
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                2. Information We Collect
-              </h3>
-              <p className="text-gray-700 mb-2">
-                We collect the following types of information:
-              </p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>
-                  Personal identification information (name, email address,
-                  phone number)
-                </li>
-                <li>
-                  Application documents (resume, cover letter, certificates)
-                </li>
-                <li>Educational and professional background information</li>
-                <li>Account credentials (encrypted passwords)</li>
-                <li>Application status and evaluation records</li>
-              </ul>
+                  {/* Render items list if they exist */}
+                  {section.items && (
+                    <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
+                      {section.items.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  )}
 
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                3. How We Use Your Information
-              </h3>
-              <p className="text-gray-700 mb-2">
-                Your information is used for the following purposes:
-              </p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>Processing and evaluating your teacher application</li>
-                <li>Communicating with you about your application status</li>
-                <li>Scheduling teaching demonstrations and interviews</li>
-                <li>
-                  Maintaining records for compliance and auditing purposes
-                </li>
-                <li>
-                  Improving our application process and system functionality
-                </li>
-              </ul>
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                4. Information Sharing and Disclosure
-              </h3>
-              <p className="text-gray-700 mb-4">
-                We do not sell, trade, or rent your personal information to
-                third parties. Your information may be shared only with:
-              </p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>
-                  BCFI HR staff and authorized personnel for application review
-                </li>
-                <li>
-                  Educational administrators involved in the hiring process
-                </li>
-                <li>Legal authorities when required by law</li>
-              </ul>
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                5. Data Security
-              </h3>
-              <p className="text-gray-700 mb-4">
-                We implement industry-standard security measures to protect your
-                information:
-              </p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>Encrypted data transmission using HTTPS/SSL</li>
-                <li>Secure password hashing and storage</li>
-                <li>Two-factor authentication for login</li>
-                <li>Regular security audits and updates</li>
-                <li>Access controls and role-based permissions</li>
-              </ul>
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                6. Data Retention
-              </h3>
-              <p className="text-gray-700 mb-4">
-                We retain your application information for the duration
-                necessary to fulfill the purposes outlined in this policy,
-                including legal, accounting, or reporting requirements.
-                Application records are typically maintained for a minimum of
-                one year after the application process concludes.
-              </p>
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                7. Your Rights
-              </h3>
-              <p className="text-gray-700 mb-2">You have the right to:</p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>Access your personal information</li>
-                <li>Request correction of inaccurate data</li>
-                <li>
-                  Request deletion of your data (subject to legal requirements)
-                </li>
-                <li>Withdraw your application at any time</li>
-                <li>Object to processing of your personal data</li>
-              </ul>
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                8. Cookies and Tracking
-              </h3>
-              <p className="text-gray-700 mb-4">
-                Our system uses essential cookies for authentication and session
-                management. We do not use tracking cookies or third-party
-                analytics that collect personal information without your
-                consent.
-              </p>
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                9. Changes to This Policy
-              </h3>
-              <p className="text-gray-700 mb-4">
-                We may update this Privacy Policy from time to time. We will
-                notify you of any significant changes by email or through a
-                notice on our system. Your continued use of the system after
-                such modifications constitutes your acknowledgment and
-                acceptance of the updated policy.
-              </p>
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                10. Contact Information
-              </h3>
-              <p className="text-gray-700 mb-4">
-                If you have questions or concerns about this Privacy Policy or
-                our data practices, please contact us at:
-              </p>
-              <div className="bg-gray-50 p-4 rounded-md mb-4">
-                <p className="text-gray-700">
-                  <strong>Blancia College Foundation Inc.</strong>
-                  <br />
-                  HR Department
-                  <br />
-                  Email: hr@bcfi.edu.ph
-                  <br />
-                  Phone: [Contact Number]
-                  <br />
-                  Address: [BCFI Address]
-                </p>
-              </div>
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-3">
-                11. Consent
-              </h3>
-              <p className="text-gray-700 mb-4">
-                By creating an account and using our HR Application System, you
-                acknowledge that you have read, understood, and agree to be
-                bound by this Privacy Policy.
-              </p>
+                  {/* Render contact info if it exists */}
+                  {section.contactInfo && (
+                    <div className="bg-gray-50 p-4 rounded-md mb-4">
+                      <p className="text-gray-700">
+                        <strong>{section.contactInfo.organization}</strong>
+                        <br />
+                        {section.contactInfo.department}
+                        <br />
+                        Email: {section.contactInfo.email}
+                        <br />
+                        Phone: {section.contactInfo.phone}
+                        <br />
+                        Address: {section.contactInfo.address}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
