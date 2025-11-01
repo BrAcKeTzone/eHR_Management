@@ -321,6 +321,28 @@ class ApplicationService {
       );
     }
 
+    // Validate demo date is at least 1 day in the future
+    const demoDate = new Date(demoSchedule);
+    const today = new Date();
+    // Set time to start of day for comparison
+    today.setHours(0, 0, 0, 0);
+    demoDate.setHours(0, 0, 0, 0);
+
+    // Calculate the difference in days
+    const timeDifference = demoDate.getTime() - today.getTime();
+    const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+
+    if (daysDifference < 1) {
+      throw new ApiError(
+        400,
+        `Demo date must be at least 1 day in the future. Please select a date starting from ${
+          new Date(today.getTime() + 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0]
+        }`
+      );
+    }
+
     const updatedApplication = await this.updateApplication(id, {
       demoSchedule,
       demoLocation,

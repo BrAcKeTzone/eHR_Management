@@ -38,6 +38,13 @@ const Scheduling = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
 
+  // Calculate minimum date (tomorrow)
+  const getMinimumDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  };
+
   useEffect(() => {
     // Load approved applications that need scheduling
     getAllApplications({ status: APPLICATION_STATUS.APPROVED });
@@ -69,6 +76,17 @@ const Scheduling = () => {
   const handleSubmitSchedule = async () => {
     if (!selectedApplication || !scheduleData.date || !scheduleData.time)
       return;
+
+    // Validate demo date is at least 1 day in the future
+    const selectedDateObj = new Date(scheduleData.date);
+    const minimumDate = new Date(getMinimumDate());
+
+    if (selectedDateObj < minimumDate) {
+      alert(
+        `Demo date must be at least 1 day in the future. Please select a date starting from ${getMinimumDate()}`
+      );
+      return;
+    }
 
     try {
       if (selectedApplication.demoSchedule) {
@@ -343,7 +361,7 @@ const Scheduling = () => {
                     setSelectedDate(e.target.value);
                   }}
                   required
-                  min={new Date().toISOString().split("T")[0]}
+                  min={getMinimumDate()}
                 />
               </div>
 
