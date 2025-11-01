@@ -372,18 +372,6 @@ const ProfilePage = () => {
                   Change
                 </Button>
               </div>
-
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                <div>
-                  <h4 className="font-medium text-gray-900">Account Status</h4>
-                  <p className="text-sm text-gray-600">
-                    Your account is active and verified
-                  </p>
-                </div>
-                <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                  Active
-                </span>
-              </div>
             </div>
           </DashboardCard>
         </div>
