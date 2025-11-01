@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApplicationStore } from "../../store/applicationStore";
 import { useAuthStore } from "../../store/authStore";
@@ -8,9 +8,13 @@ import Modal from "../../components/Modal";
 const ApplicationForm = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { createApplication, loading, error } = useApplicationStore();
+  const { createApplication, loading, error, getCurrentApplication } =
+    useApplicationStore();
 
-  const [currentStep, setCurrentStep] = useState(0); // 0: Resume, 1: Application Letter, 2: Documents
+  const [hasPendingApplication, setHasPendingApplication] = useState(false);
+  const [pendingApplicationData, setPendingApplicationData] = useState(null);
+  const [isCheckingPending, setIsCheckingPending] = useState(true);
+
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
 
@@ -20,6 +24,35 @@ const ApplicationForm = () => {
   const [documentFiles, setDocumentFiles] = useState([]);
 
   const [formErrors, setFormErrors] = useState({});
+  const [currentStep, setCurrentStep] = useState(0); // 0: Resume, 1: Application Letter, 2: Documents
+
+  // Check for pending application on component mount
+  useEffect(() => {
+    const checkPendingApplication = async () => {
+      try {
+        setIsCheckingPending(true);
+        const result = await getCurrentApplication();
+
+        if (result.application) {
+          const applicationStatus = result.application.status?.toUpperCase();
+          // Check if application is PENDING or APPROVED
+          if (
+            applicationStatus === "PENDING" ||
+            applicationStatus === "APPROVED"
+          ) {
+            setHasPendingApplication(true);
+            setPendingApplicationData(result.application);
+          }
+        }
+      } catch (err) {
+        console.error("Error checking pending application:", err);
+      } finally {
+        setIsCheckingPending(false);
+      }
+    };
+
+    checkPendingApplication();
+  }, [getCurrentApplication]);
 
   const requiredDocuments = [
     { type: "diploma", label: "Diploma/Degree Certificate", required: true },
@@ -630,70 +663,161 @@ const ApplicationForm = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">
-            New Teaching Application
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Step {currentStep + 1} of 3:{" "}
-            {currentStep === 0
-              ? "Resume Upload"
-              : currentStep === 1
-              ? "Application Letter Upload"
-              : "Required Documents"}
-          </p>
-        </div>
-
-        {/* Error Display */}
-        {error && (
-          <div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            {error}
+      {/* Loading pending application check */}
+      {isCheckingPending && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">
+              Checking for pending applications...
+            </p>
           </div>
-        )}
-
-        <div className="p-6">
-          {renderStepIndicator()}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {currentStep === 0 && renderResumeUpload()}
-            {currentStep === 1 && renderApplicationLetter()}
-            {currentStep === 2 && renderDocuments()}
-
-            {/* Form Actions */}
-            <div className="flex justify-between pt-6 border-t border-gray-200">
-              <div>
-                {currentStep > 0 && (
-                  <Button type="button" onClick={prevStep} variant="outline">
-                    Previous
-                  </Button>
-                )}
-              </div>
-
-              <div className="flex space-x-4">
-                <Button
-                  type="button"
-                  onClick={() => navigate("/applicant/dashboard")}
-                  variant="outline"
-                >
-                  Cancel
-                </Button>
-
-                {currentStep < 2 ? (
-                  <Button type="button" onClick={nextStep} variant="primary">
-                    Next
-                  </Button>
-                ) : (
-                  <Button type="submit" variant="primary" disabled={loading}>
-                    {loading ? "Submitting..." : "Submit Application"}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </form>
         </div>
-      </div>
+      )}
+
+      {/* Pending Application Alert */}
+      {!isCheckingPending && hasPendingApplication && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-8 text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-amber-100 mb-4">
+              <svg
+                className="h-8 w-8 text-amber-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4v2m0 4v2m-6-9h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z"
+                />
+              </svg>
+            </div>
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              You Have a Pending Application
+            </h2>
+
+            <p className="text-gray-600 mb-4">
+              You already have an active application that is currently being
+              reviewed. You cannot file a new application until your current
+              application is completed or rejected.
+            </p>
+
+            {pendingApplicationData && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
+                <h3 className="font-medium text-blue-900 mb-2">
+                  Current Application Details:
+                </h3>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>
+                    <strong>Status:</strong> {pendingApplicationData.status}
+                  </li>
+                  <li>
+                    <strong>Submitted:</strong>{" "}
+                    {new Date(
+                      pendingApplicationData.createdAt
+                    ).toLocaleDateString()}
+                  </li>
+                  <li>
+                    <strong>Attempt:</strong> #
+                    {pendingApplicationData.attemptNumber}
+                  </li>
+                </ul>
+              </div>
+            )}
+
+            <p className="text-gray-600 mb-6">
+              Please check your email for updates on your application status or
+              contact the HR department for more information.
+            </p>
+
+            <div className="flex gap-4 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/applicant/dashboard")}
+              >
+                Back to Dashboard
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => navigate("/applicant/application-history")}
+              >
+                View Application History
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Normal Application Form (only show if no pending application) */}
+      {!isCheckingPending && !hasPendingApplication && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-900">
+              New Teaching Application
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Step {currentStep + 1} of 3:{" "}
+              {currentStep === 0
+                ? "Resume Upload"
+                : currentStep === 1
+                ? "Application Letter Upload"
+                : "Required Documents"}
+            </p>
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              {error}
+            </div>
+          )}
+
+          <div className="p-6">
+            {renderStepIndicator()}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {currentStep === 0 && renderResumeUpload()}
+              {currentStep === 1 && renderApplicationLetter()}
+              {currentStep === 2 && renderDocuments()}
+
+              {/* Form Actions */}
+              <div className="flex justify-between pt-6 border-t border-gray-200">
+                <div>
+                  {currentStep > 0 && (
+                    <Button type="button" onClick={prevStep} variant="outline">
+                      Previous
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex space-x-4">
+                  <Button
+                    type="button"
+                    onClick={() => navigate("/applicant/dashboard")}
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+
+                  {currentStep < 2 ? (
+                    <Button type="button" onClick={nextStep} variant="primary">
+                      Next
+                    </Button>
+                  ) : (
+                    <Button type="submit" variant="primary" disabled={loading}>
+                      {loading ? "Submitting..." : "Submit Application"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
