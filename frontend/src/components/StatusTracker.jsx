@@ -2,16 +2,15 @@ import React from "react";
 
 const StatusTracker = ({
   currentStatus,
-  stages = ["Submitted", "Under Review", "Demo Scheduled", "Completed"],
+  stages = ["Submitted", "Demo Scheduled", "Completed"],
   timestamps = {},
   className = "",
 }) => {
   const getStageIndex = (status) => {
     const statusMapping = {
       pending: 0,
-      "under review": 1,
-      approved: 2,
-      completed: 3,
+      approved: 1,
+      completed: 2,
       rejected: -1, // Special case for rejected
     };
 

@@ -141,33 +141,29 @@ const ApplicationsManagement = () => {
       ),
     },
     {
-      header: "Status",
+      header: "Status / Result",
       accessor: "status",
       cell: (row) => (
-        <span
-          className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-            row.status
-          )}`}
-        >
-          {row.status?.toUpperCase()}
-        </span>
-      ),
-    },
-    {
-      header: "Result",
-      accessor: "result",
-      cell: (row) => (
-        <div className="text-sm">
-          {row.result ? (
+        <div className="space-y-1">
+          <div>
             <span
-              className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                row.result
+              className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                row.status
               )}`}
             >
-              {row.result?.toUpperCase()}
+              {row.status?.toUpperCase()}
             </span>
-          ) : (
-            <span className="text-gray-400">-</span>
+          </div>
+          {row.result && (
+            <div>
+              <span
+                className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                  row.result
+                )}`}
+              >
+                {row.result?.toUpperCase()}
+              </span>
+            </div>
           )}
         </div>
       ),
@@ -190,27 +186,6 @@ const ApplicationsManagement = () => {
       accessor: "createdAt",
       cell: (row) => (
         <div className="text-sm text-gray-600">{formatDate(row.createdAt)}</div>
-      ),
-    },
-    {
-      header: "Demo Schedule",
-      accessor: "demoSchedule",
-      cell: (row) => (
-        <div className="text-sm">
-          {row.demoSchedule ? (
-            <div>
-              <p className="text-gray-900">{formatDate(row.demoSchedule)}</p>
-              <p className="text-xs text-gray-600">
-                {row.demoTime || "Time not set"}
-              </p>
-              {row.demoLocation && (
-                <p className="text-xs text-gray-500">{row.demoLocation}</p>
-              )}
-            </div>
-          ) : (
-            <span className="text-gray-400">Not scheduled</span>
-          )}
-        </div>
       ),
     },
     {
@@ -265,7 +240,7 @@ const ApplicationsManagement = () => {
       )}
 
       {/* Statistics */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {[
           {
             title: "Total",
@@ -311,7 +286,7 @@ const ApplicationsManagement = () => {
 
       {/* Filters */}
       <DashboardCard title="Filter Applications" className="mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Status
