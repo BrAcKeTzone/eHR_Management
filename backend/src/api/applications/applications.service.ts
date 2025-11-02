@@ -42,7 +42,7 @@ export interface UpdateApplicationData {
 }
 
 export interface ApplicationWithApplicant extends Application {
-  applicant: Pick<User, "id" | "name" | "email" | "phone">;
+  applicant: Pick<User, "id" | "firstName" | "lastName" | "email" | "phone">;
 }
 
 // Helper function to format application for frontend
@@ -144,7 +144,8 @@ class ApplicationService {
         applicant: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
             phone: true,
           },
@@ -203,7 +204,11 @@ class ApplicationService {
       ...(result && { result }),
       ...(search && {
         applicant: {
-          OR: [{ name: { contains: search } }, { email: { contains: search } }],
+          OR: [
+            { firstName: { contains: search } },
+            { lastName: { contains: search } },
+            { email: { contains: search } },
+          ],
         },
       }),
     };
@@ -215,7 +220,8 @@ class ApplicationService {
           applicant: {
             select: {
               id: true,
-              name: true,
+              firstName: true,
+              lastName: true,
               email: true,
               phone: true,
             },

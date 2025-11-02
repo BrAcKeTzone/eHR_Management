@@ -7,14 +7,16 @@ const prisma = new PrismaClient();
 interface CreateUserData {
   email: string;
   password: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   phone?: string;
   role?: UserRole;
 }
 
 interface UpdateUserData {
   email?: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
   role?: UserRole;
 }
@@ -90,7 +92,8 @@ export const getAllUsers = async (
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         phone: true,
         role: true,
         createdAt: true,
@@ -120,7 +123,8 @@ export const getUserById = async (
     select: {
       id: true,
       email: true,
-      name: true,
+      firstName: true,
+      lastName: true,
       phone: true,
       role: true,
       createdAt: true,
@@ -139,7 +143,14 @@ export const getUserById = async (
 export const createUser = async (
   userData: CreateUserData
 ): Promise<Omit<User, "password">> => {
-  const { email, password, name, phone, role = UserRole.APPLICANT } = userData;
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    phone,
+    role = UserRole.APPLICANT,
+  } = userData;
 
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -158,14 +169,16 @@ export const createUser = async (
     data: {
       email,
       password: hashedPassword,
-      name,
+      firstName,
+      lastName,
       phone: phone || null,
       role,
     },
     select: {
       id: true,
       email: true,
-      name: true,
+      firstName: true,
+      lastName: true,
       phone: true,
       role: true,
       createdAt: true,
@@ -183,7 +196,7 @@ export const updateUser = async (
   requestingUserId?: number,
   requestingUserRole?: UserRole
 ): Promise<Omit<User, "password">> => {
-  const { email, name, phone, role } = userData;
+  const { email, firstName, lastName, phone, role } = userData;
 
   // Check if user exists
   const existingUser = await prisma.user.findUnique({
@@ -227,7 +240,10 @@ export const updateUser = async (
   // Prepare update data
   const updateData: any = {};
   if (email && email !== existingUser.email) updateData.email = email;
-  if (name && name !== existingUser.name) updateData.name = name;
+  if (firstName && firstName !== existingUser.firstName)
+    updateData.firstName = firstName;
+  if (lastName && lastName !== existingUser.lastName)
+    updateData.lastName = lastName;
   if (phone !== undefined) updateData.phone = phone || null;
   if (role && role !== existingUser.role) updateData.role = role;
 
@@ -245,7 +261,8 @@ export const updateUser = async (
     select: {
       id: true,
       email: true,
-      name: true,
+      firstName: true,
+      lastName: true,
       phone: true,
       role: true,
       createdAt: true,

@@ -259,7 +259,8 @@ export const useAuthStore = create(
           const registrationData = {
             email: signupData.email,
             password: personalData.password,
-            name: personalData.name,
+            firstName: personalData.firstName,
+            lastName: personalData.lastName,
             phone: personalData.phone,
           };
 
@@ -480,7 +481,8 @@ export const useAuthStore = create(
 
           // Call the backend API to update the current user
           const response = await userApi.updateCurrentUser({
-            name: profileData.name,
+            firstName: profileData.firstName,
+            lastName: profileData.lastName,
             email: profileData.email,
             phone: profileData.phone,
           });

@@ -127,7 +127,9 @@ const Scheduling = () => {
       accessor: "applicant",
       cell: (row) => (
         <div>
-          <p className="font-medium text-gray-900">{row.applicant?.name}</p>
+          <p className="font-medium text-gray-900">
+            {row.applicant?.firstName} {row.applicant?.lastName}
+          </p>
           <p className="text-sm text-gray-500">{row.applicant?.email}</p>
         </div>
       ),
@@ -251,7 +253,7 @@ const Scheduling = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 break-words">
-                        {app.applicant?.name}
+                        {app.applicant?.firstName} {app.applicant?.lastName}
                       </h3>
                       <p className="text-sm text-gray-500 break-all">
                         {app.applicant?.email}
@@ -312,7 +314,7 @@ const Scheduling = () => {
         <Modal
           isOpen={true}
           onClose={() => setShowScheduleModal(false)}
-          title={`Schedule Demo - ${selectedApplication.applicant?.name}`}
+          title={`Schedule Demo - ${selectedApplication.applicant?.firstName} ${selectedApplication.applicant?.lastName}`}
           size="large"
         >
           <div className="space-y-4 sm:space-y-6">

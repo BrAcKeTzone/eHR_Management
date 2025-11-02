@@ -217,7 +217,8 @@ export const verifyOtp = async (
 interface RegisterData {
   email: string;
   password: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   phone?: string;
   role?: "APPLICANT" | "HR";
 }
@@ -225,7 +226,14 @@ interface RegisterData {
 export const register = async (
   userData: RegisterData
 ): Promise<{ user: User; token: string; message: string }> => {
-  const { email, password, name, phone, role = "APPLICANT" } = userData;
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    phone,
+    role = "APPLICANT",
+  } = userData;
 
   // Check if OTP has been verified for this email
   const otpRecord = await prisma.otp.findFirst({
@@ -263,7 +271,8 @@ export const register = async (
       data: {
         email,
         password: hashedPassword,
-        name,
+        firstName,
+        lastName,
         phone,
         role: assignedRole,
       },

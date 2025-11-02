@@ -490,7 +490,8 @@ const Reports = () => {
                 >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">
-                      {app.applicant?.name || "N/A"}
+                      {app.applicant?.firstName}{" "}
+                      {app.applicant?.lastName || "N/A"}
                     </p>
                     <p className="text-xs text-gray-500">
                       Status changed to {app.status} on{" "}

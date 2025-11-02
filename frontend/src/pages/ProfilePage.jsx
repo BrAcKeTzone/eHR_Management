@@ -59,7 +59,8 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user) {
       setProfileData({
-        name: user.name || "",
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
         email: user.email || "",
         phone: user.phone || "",
       });
@@ -83,7 +84,11 @@ const ProfilePage = () => {
     clearError(); // Clear any existing errors
 
     // Basic validation
-    if (!profileData.name.trim()) {
+    if (!profileData.firstName.trim()) {
+      return;
+    }
+
+    if (!profileData.lastName.trim()) {
       return;
     }
 
@@ -175,7 +180,8 @@ const ProfilePage = () => {
     // Reset profile data to original values
     if (user) {
       setProfileData({
-        name: user.name || "",
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
         email: user.email || "",
         phone: user.phone || "",
       });
@@ -213,19 +219,35 @@ const ProfilePage = () => {
         <div className="lg:col-span-2">
           <DashboardCard title="Personal Information" className="h-fit">
             <div className="grid grid-cols-1 gap-4 sm:gap-6">
-              <Input
-                label="Full Name"
-                value={profileData.name}
-                onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    name: e.target.value,
-                  })
-                }
-                disabled={!isEditing}
-                required
-                placeholder="Enter your full name"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label="First Name"
+                  value={profileData.firstName}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      firstName: e.target.value,
+                    })
+                  }
+                  disabled={!isEditing}
+                  required
+                  placeholder="Enter your first name"
+                />
+
+                <Input
+                  label="Last Name"
+                  value={profileData.lastName}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      lastName: e.target.value,
+                    })
+                  }
+                  disabled={!isEditing}
+                  required
+                  placeholder="Enter your last name"
+                />
+              </div>
 
               <Input
                 label="Email Address"
@@ -300,18 +322,18 @@ const ProfilePage = () => {
                     user?.role === "HR" ? "bg-blue-600" : "bg-green-600"
                   }`}
                 >
-                  {user?.name
-                    ? user.name
-                        .split(" ")
-                        .map((word) => word.charAt(0).toUpperCase())
-                        .slice(0, 2)
-                        .join("")
+                  {user?.firstName && user?.lastName
+                    ? `${user.firstName.charAt(0).toUpperCase()}${user.lastName
+                        .charAt(0)
+                        .toUpperCase()}`
                     : "U"}
                 </div>
               </div>
 
               <div className="text-center">
-                <h3 className="font-medium text-gray-900">{user?.name}</h3>
+                <h3 className="font-medium text-gray-900">
+                  {user?.firstName} {user?.lastName}
+                </h3>
                 <p className="text-sm text-gray-500 break-all">{user?.email}</p>
                 <span
                   className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${

@@ -31,7 +31,8 @@ export const sendOtpChange = Joi.object().keys({
 export const register = Joi.object().keys({
   email: Joi.string().email().required(),
   password: Joi.string().required().min(8),
-  name: Joi.string().required(),
+  firstName: Joi.string().required(),
+  lastName: Joi.string().required(),
   phone: Joi.string().optional(),
   role: Joi.string().valid("APPLICANT", "HR", "ADMIN").optional(),
 });

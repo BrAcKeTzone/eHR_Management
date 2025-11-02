@@ -98,11 +98,12 @@ const HRDashboard = () => {
   const recentApplicationsColumns = [
     {
       header: "Applicant",
-      accessor: "applicant.name",
+      accessor: (row) =>
+        `${row.applicant?.firstName} ${row.applicant?.lastName}`,
       cell: (row) => (
         <div>
           <p className="font-medium text-gray-900">
-            {row.applicant?.name || "N/A"}
+            {row.applicant?.firstName} {row.applicant?.lastName || "N/A"}
           </p>
           <p className="text-sm text-gray-500">
             {row.applicant?.email || "N/A"}
@@ -161,8 +162,8 @@ const HRDashboard = () => {
           HR Dashboard
         </h1>
         <p className="text-gray-600">
-          Welcome back, {user?.name}! Here's an overview of application
-          activities.
+          Welcome back, {user?.firstName} {user?.lastName}! Here's an overview
+          of application activities.
         </p>
       </div>
 
@@ -383,7 +384,8 @@ const HRDashboard = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 break-words">
-                        {app.applicant?.name || "N/A"}
+                        {app.applicant?.firstName}{" "}
+                        {app.applicant?.lastName || "N/A"}
                       </h3>
                       <p className="text-sm text-gray-500 break-all">
                         {app.applicant?.email || "N/A"}
@@ -445,7 +447,8 @@ const HRDashboard = () => {
                 <div>
                   <p className="text-sm text-gray-600">Name</p>
                   <p className="font-medium">
-                    {selectedApplication.applicant?.name || "N/A"}
+                    {selectedApplication.applicant?.firstName}{" "}
+                    {selectedApplication.applicant?.lastName || "N/A"}
                   </p>
                 </div>
                 <div>

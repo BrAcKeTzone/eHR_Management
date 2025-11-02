@@ -58,7 +58,8 @@ class ReportsService {
         applicant: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
             phone: true,
           },
@@ -97,7 +98,8 @@ class ReportsService {
         applicant: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
             phone: true,
           },
@@ -238,7 +240,7 @@ class ReportsService {
       ].join("; ");
 
       return [
-        user.name,
+        `${user.firstName} ${user.lastName}`,
         user.email,
         user.phone || "",
         applications.length,

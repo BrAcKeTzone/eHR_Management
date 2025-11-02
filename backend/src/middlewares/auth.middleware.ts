@@ -13,7 +13,8 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: number;
     email: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   };
 }
@@ -42,7 +43,8 @@ const authMiddleware = async (
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         role: true,
       },
     });

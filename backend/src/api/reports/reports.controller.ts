@@ -202,7 +202,9 @@ export const generateApplicationsPDF = asyncHandler(
     applications.forEach((app, index) => {
       doc.fontSize(10);
       doc.text(
-        `${index + 1}. ${app.applicant.name} (Attempt #${app.attemptNumber})`
+        `${index + 1}. ${app.applicant.firstName} ${
+          app.applicant.lastName
+        } (Attempt #${app.attemptNumber})`
       );
       doc.text(`   Status: ${app.status} | Result: ${app.result || "N/A"}`, {
         indent: 20,
@@ -290,7 +292,9 @@ export const generateScoringPDF = asyncHandler(
 
     applications.forEach((app, index) => {
       doc.fontSize(10);
-      doc.text(`${index + 1}. ${app.applicant.name}`);
+      doc.text(
+        `${index + 1}. ${app.applicant.firstName} ${app.applicant.lastName}`
+      );
       doc.text(`   Total Score: ${app.totalScore}% - ${app.result}`, {
         indent: 20,
       });
@@ -373,7 +377,9 @@ export const generateApplicantsPDF = asyncHandler(
       const latestApp = user.applications[0];
 
       doc.fontSize(10);
-      doc.text(`${index + 1}. ${user.name} (${user.email})`);
+      doc.text(
+        `${index + 1}. ${user.firstName} ${user.lastName} (${user.email})`
+      );
       doc.text(`   Total Applications: ${user.applications.length}`, {
         indent: 20,
       });

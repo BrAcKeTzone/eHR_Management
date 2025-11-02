@@ -86,9 +86,14 @@ const ApplicationReview = () => {
       return (
         (!filters.status || app.status === filters.status) &&
         (!filters.search ||
-          app.applicant?.name
-            ?.toLowerCase()
-            .includes(filters.search.toLowerCase()) ||
+          (app.applicant?.firstName &&
+            app.applicant.firstName
+              ?.toLowerCase()
+              .includes(filters.search.toLowerCase())) ||
+          (app.applicant?.lastName &&
+            app.applicant.lastName
+              ?.toLowerCase()
+              .includes(filters.search.toLowerCase())) ||
           app.applicant?.email
             ?.toLowerCase()
             .includes(filters.search.toLowerCase()))
@@ -98,10 +103,13 @@ const ApplicationReview = () => {
   const applicationsColumns = [
     {
       header: "Applicant",
-      accessor: "applicant.name",
+      accessor: (row) =>
+        `${row.applicant?.firstName} ${row.applicant?.lastName}`,
       cell: (row) => (
         <div>
-          <p className="font-medium text-gray-900">{row.applicant?.name}</p>
+          <p className="font-medium text-gray-900">
+            {row.applicant?.firstName} {row.applicant?.lastName}
+          </p>
           <p className="text-sm text-gray-500">{row.applicant?.email}</p>
           <p className="text-xs text-gray-400">Attempt #{row.attemptNumber}</p>
         </div>
@@ -225,7 +233,7 @@ const ApplicationReview = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-medium text-gray-900">
-                        {app.applicant?.name}
+                        {app.applicant?.firstName} {app.applicant?.lastName}
                       </h3>
                       <p className="text-sm text-gray-500">
                         {app.applicant?.email}
@@ -314,7 +322,7 @@ const ApplicationReview = () => {
         <Modal
           isOpen={true}
           onClose={() => setSelectedApplication(null)}
-          title={`Application Details - ${selectedApplication.applicant?.name}`}
+          title={`Application Details - ${selectedApplication.applicant?.firstName} ${selectedApplication.applicant?.lastName}`}
           size="large"
         >
           <div className="space-y-6 max-h-96 sm:max-h-none overflow-y-auto">
@@ -370,7 +378,8 @@ const ApplicationReview = () => {
                 <div>
                   <p className="text-sm text-gray-500">Name</p>
                   <p className="mt-1 font-medium">
-                    {selectedApplication.applicant?.name}
+                    {selectedApplication.applicant?.firstName}{" "}
+                    {selectedApplication.applicant?.lastName}
                   </p>
                 </div>
                 <div>
@@ -645,7 +654,8 @@ const ApplicationReview = () => {
           <div className="space-y-4">
             <p className="text-gray-600">
               Are you sure you want to {decision.toLowerCase()} the application
-              from {selectedApplication?.applicant?.name}?
+              from {selectedApplication?.applicant?.firstName}{" "}
+              {selectedApplication?.applicant?.lastName}?
             </p>
 
             {decision === APPLICATION_STATUS.REJECTED && (
