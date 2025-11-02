@@ -133,15 +133,6 @@ const Scheduling = () => {
       ),
     },
     {
-      header: "Program",
-      accessor: "program",
-      cell: (row) => (
-        <div className="text-sm">
-          <p className="font-medium">{row.program}</p>
-        </div>
-      ),
-    },
-    {
       header: "Approved Date",
       accessor: "updatedAt",
       cell: (row) => (
@@ -265,9 +256,6 @@ const Scheduling = () => {
                       <p className="text-sm text-gray-500 break-all">
                         {app.applicant?.email}
                       </p>
-                      <p className="text-sm font-medium break-words">
-                        {app.program}
-                      </p>
                     </div>
                   </div>
 
@@ -331,15 +319,9 @@ const Scheduling = () => {
             {/* Application Info */}
             <div className="bg-gray-50 p-3 sm:p-4 rounded-md">
               <h4 className="font-medium text-gray-900 mb-2">
-                Application Details
+                Applicant Details
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Program:</span>
-                  <span className="ml-2 font-medium break-words">
-                    {selectedApplication.program}
-                  </span>
-                </div>
                 <div>
                   <span className="text-gray-500">Email:</span>
                   <span className="ml-2 break-all">

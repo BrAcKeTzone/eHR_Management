@@ -24,7 +24,6 @@ const ApplicationReview = () => {
   const [downloadingDoc, setDownloadingDoc] = useState(null); // Track which doc is downloading
   const [filters, setFilters] = useState({
     status: APPLICATION_STATUS.PENDING,
-    program: "",
     search: "",
   });
 
@@ -86,8 +85,6 @@ const ApplicationReview = () => {
     applications?.filter((app) => {
       return (
         (!filters.status || app.status === filters.status) &&
-        (!filters.program ||
-          app.program.toLowerCase().includes(filters.program.toLowerCase())) &&
         (!filters.search ||
           app.applicant?.name
             ?.toLowerCase()
@@ -107,15 +104,6 @@ const ApplicationReview = () => {
           <p className="font-medium text-gray-900">{row.applicant?.name}</p>
           <p className="text-sm text-gray-500">{row.applicant?.email}</p>
           <p className="text-xs text-gray-400">Attempt #{row.attemptNumber}</p>
-        </div>
-      ),
-    },
-    {
-      header: "Program",
-      accessor: "program",
-      cell: (row) => (
-        <div className="text-sm">
-          <p className="font-medium">{row.program}</p>
         </div>
       ),
     },
@@ -239,21 +227,6 @@ const ApplicationReview = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Program
-            </label>
-            <input
-              type="text"
-              value={filters.program}
-              onChange={(e) =>
-                setFilters({ ...filters, program: e.target.value })
-              }
-              placeholder="Filter by program"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
               Search
             </label>
             <input
@@ -269,9 +242,7 @@ const ApplicationReview = () => {
 
           <div className="flex items-end">
             <Button
-              onClick={() =>
-                setFilters({ status: "", program: "", search: "" })
-              }
+              onClick={() => setFilters({ status: "", search: "" })}
               variant="outline"
               className="w-full"
             >
@@ -322,10 +293,6 @@ const ApplicationReview = () => {
                   </div>
 
                   <div className="space-y-2 mb-4">
-                    <div>
-                      <span className="text-xs text-gray-500">Program:</span>
-                      <p className="text-sm font-medium">{app.program}</p>
-                    </div>
                     <div>
                       <span className="text-xs text-gray-500">Submitted:</span>
                       <p className="text-sm">{formatDate(app.createdAt)}</p>
@@ -465,12 +432,6 @@ const ApplicationReview = () => {
                   <p className="text-sm text-gray-500">Phone</p>
                   <p className="mt-1 font-medium">
                     {selectedApplication.applicant?.phone || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Program</p>
-                  <p className="mt-1 font-medium">
-                    {selectedApplication.program}
                   </p>
                 </div>
               </div>

@@ -24,7 +24,6 @@ const ApplicationsManagement = () => {
   const [applicationHistory, setApplicationHistory] = useState([]);
   const [filters, setFilters] = useState({
     status: "",
-    program: "",
     search: "",
     startDate: "",
     endDate: "",
@@ -63,9 +62,6 @@ const ApplicationsManagement = () => {
   const filteredApplications =
     applications?.filter((app) => {
       const matchesStatus = !filters.status || app.status === filters.status;
-      const matchesProgram =
-        !filters.program ||
-        app.program.toLowerCase().includes(filters.program.toLowerCase());
       const matchesSearch =
         !filters.search ||
         app.applicant?.name
@@ -84,7 +80,6 @@ const ApplicationsManagement = () => {
 
       return (
         matchesStatus &&
-        matchesProgram &&
         matchesSearch &&
         matchesStartDate &&
         matchesEndDate &&
@@ -128,15 +123,6 @@ const ApplicationsManagement = () => {
           <p className="font-medium text-gray-900">{row.applicant?.name}</p>
           <p className="text-sm text-gray-500">{row.applicant?.email}</p>
           <p className="text-xs text-gray-400">Attempt #{row.attemptNumber}</p>
-        </div>
-      ),
-    },
-    {
-      header: "Program",
-      accessor: "program",
-      cell: (row) => (
-        <div className="text-sm">
-          <p className="font-medium">{row.program}</p>
         </div>
       ),
     },
@@ -307,15 +293,6 @@ const ApplicationsManagement = () => {
           </div>
 
           <Input
-            label="Program"
-            value={filters.program}
-            onChange={(e) =>
-              setFilters({ ...filters, program: e.target.value })
-            }
-            placeholder="Filter by program"
-          />
-
-          <Input
             label="Search"
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
@@ -363,7 +340,6 @@ const ApplicationsManagement = () => {
             onClick={() =>
               setFilters({
                 status: "",
-                program: "",
                 search: "",
                 startDate: "",
                 endDate: "",
@@ -429,10 +405,6 @@ const ApplicationsManagement = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Program:</span>
-                      <p className="font-medium">{app.program}</p>
-                    </div>
                     <div>
                       <span className="text-gray-500">Score:</span>
                       <p className="font-medium">
@@ -558,12 +530,6 @@ const ApplicationsManagement = () => {
                   <p className="text-sm text-gray-500">Phone</p>
                   <p className="mt-1 font-medium">
                     {selectedApplication.applicant?.phone || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Program</p>
-                  <p className="mt-1 font-medium break-words">
-                    {selectedApplication.program}
                   </p>
                 </div>
               </div>
@@ -722,9 +688,6 @@ const ApplicationsManagement = () => {
                         <h4 className="font-medium text-gray-900">
                           Attempt #{app.attemptNumber}
                         </h4>
-                        <p className="text-sm text-gray-600 break-words">
-                          {app.program}
-                        </p>
                       </div>
                       <div className="flex flex-row sm:flex-col sm:text-right gap-2 sm:gap-1">
                         <span

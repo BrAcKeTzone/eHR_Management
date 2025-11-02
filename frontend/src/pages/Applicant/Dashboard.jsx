@@ -274,11 +274,8 @@ const ApplicantDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {currentApplication.program}
-                  </h3>
-                  <p className="text-sm text-gray-600">
                     {currentApplication.position}
-                  </p>
+                  </h3>
                 </div>
                 <StatusBadge
                   status={currentApplication.status}
@@ -295,12 +292,6 @@ const ApplicantDashboard = () => {
                   <p className="text-gray-600">Submitted:</p>
                   <p className="font-medium">
                     {formatDate(currentApplication.createdAt)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Program:</p>
-                  <p className="font-medium">
-                    {currentApplication.program || "N/A"}
                   </p>
                 </div>
                 <div>

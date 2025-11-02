@@ -93,7 +93,9 @@ const ApplicationHistory = () => {
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            {application.program}
+            {application.subject_specialization ||
+              application.subjectSpecialization ||
+              "Teaching Application"}
           </h3>
           <p className="text-sm text-gray-600">
             {application.subject_specialization ||
@@ -185,9 +187,6 @@ const ApplicationHistory = () => {
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div>
-          <div className="text-sm font-medium text-gray-900">
-            {application.program}
-          </div>
           <div className="text-sm text-gray-500">
             {application.subject_specialization ||
               application.subjectSpecialization ||
@@ -340,14 +339,6 @@ const ApplicationHistory = () => {
                     Application Information
                   </h3>
                   <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Program
-                      </label>
-                      <p className="text-sm text-gray-900">
-                        {selectedApplication.program}
-                      </p>
-                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Subject Specialization

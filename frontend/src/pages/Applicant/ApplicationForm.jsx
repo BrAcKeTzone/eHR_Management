@@ -232,7 +232,6 @@ const ApplicationForm = () => {
       const applicationData = {
         documents: allDocuments,
         applicantId: user?.id,
-        program: "Teaching Application", // You can make this configurable
       };
 
       await createApplication(applicationData);

@@ -143,10 +143,6 @@ const ApplicationHistory = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-500">Program:</p>
-                      <p className="font-medium">{application.program}</p>
-                    </div>
-                    <div>
                       <p className="text-gray-500">Submitted:</p>
                       <p className="font-medium">
                         {formatDate(application.createdAt)}
@@ -308,12 +304,6 @@ const ApplicationHistory = () => {
                       <p className="text-sm text-gray-500">Attempt Number</p>
                       <p className="mt-1 font-medium">
                         #{selectedApplication.attemptNumber}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Program</p>
-                      <p className="mt-1 font-medium">
-                        {selectedApplication.program}
                       </p>
                     </div>
                     <div>
