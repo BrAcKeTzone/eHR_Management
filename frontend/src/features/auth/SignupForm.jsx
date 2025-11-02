@@ -522,73 +522,83 @@ const SignupForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Join BCFI HR Application System
-          </p>
+    <div
+      className="min-h-screen w-full flex items-center justify-center"
+      style={{
+        backgroundImage: "url('/background.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
+    >
+      <div className="w-full h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8 bg-white bg-opacity-95 p-8 rounded-lg shadow-xl">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Create your account
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Join BCFI HR Application System
+            </p>
+          </div>
+
+          {/* Progress Indicator */}
+          {signupPhase < 4 && (
+            <div className="flex justify-center mb-8">
+              <div className="flex items-center space-x-2">
+                {[1, 2, 3].map((step) => (
+                  <React.Fragment key={step}>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        step <= signupPhase
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-600"
+                      }`}
+                    >
+                      {step}
+                    </div>
+                    {step < 3 && (
+                      <div
+                        className={`w-8 h-1 ${
+                          step < signupPhase ? "bg-blue-600" : "bg-gray-200"
+                        }`}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+              {error}
+            </div>
+          )}
+
+          {signupPhase === 1 && renderPhase1()}
+          {signupPhase === 2 && renderPhase2()}
+          {signupPhase === 3 && renderPhase3()}
+          {signupPhase === 4 && renderPhase4()}
+
+          {signupPhase < 4 && (
+            <div className="text-center">
+              <span className="text-sm text-gray-600">
+                Already have an account?{" "}
+                <Link
+                  to="/signin"
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
+                  Sign in here
+                </Link>
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Progress Indicator */}
-        {signupPhase < 4 && (
-          <div className="flex justify-center mb-8">
-            <div className="flex items-center space-x-2">
-              {[1, 2, 3].map((step) => (
-                <React.Fragment key={step}>
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step <= signupPhase
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-600"
-                    }`}
-                  >
-                    {step}
-                  </div>
-                  {step < 3 && (
-                    <div
-                      className={`w-8 h-1 ${
-                        step < signupPhase ? "bg-blue-600" : "bg-gray-200"
-                      }`}
-                    />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-            {error}
-          </div>
-        )}
-
-        {signupPhase === 1 && renderPhase1()}
-        {signupPhase === 2 && renderPhase2()}
-        {signupPhase === 3 && renderPhase3()}
-        {signupPhase === 4 && renderPhase4()}
-
-        {signupPhase < 4 && (
-          <div className="text-center">
-            <span className="text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link
-                to="/signin"
-                className="font-medium text-blue-600 hover:text-blue-500"
-              >
-                Sign in here
-              </Link>
-            </span>
-          </div>
-        )}
+        {/* Privacy Policy Modal */}
+        {renderPrivacyPolicyModal()}
       </div>
-
-      {/* Privacy Policy Modal */}
-      {renderPrivacyPolicyModal()}
     </div>
   );
 };
