@@ -12,7 +12,6 @@ export interface ReportFilters {
   endDate?: string;
   status?: ApplicationStatus;
   result?: ApplicationResult;
-  program?: string;
 }
 
 export interface ReportStatistics {
@@ -26,7 +25,6 @@ export interface ReportStatistics {
     rejected: number;
     completed: number;
   };
-  programBreakdown: Record<string, number>;
   averageProcessingTime: number;
   passRate: number;
 }
@@ -52,10 +50,6 @@ class ReportsService {
 
     if (filters?.result) {
       whereClause.result = filters.result;
-    }
-
-    if (filters?.program) {
-      whereClause.program = { contains: filters.program };
     }
 
     const applications = await prisma.application.findMany({
@@ -95,10 +89,6 @@ class ReportsService {
 
     if (filters?.result) {
       whereClause.result = filters.result;
-    }
-
-    if (filters?.program) {
-      whereClause.program = { contains: filters.program };
     }
 
     const applications = await prisma.application.findMany({
@@ -337,9 +327,14 @@ class ReportsService {
         },
       }),
       prisma.application.findMany({
-        where: whereClause,
+        where: {
+          ...whereClause,
+          status: ApplicationStatus.COMPLETED,
+        },
         select: {
-          program: true,
+          createdAt: true,
+          updatedAt: true,
+          result: true,
         },
       }),
     ]);
@@ -359,12 +354,6 @@ class ReportsService {
       rejected: statusCounts[2],
       completed: statusCounts[3],
     };
-
-    // Calculate program breakdown
-    const programBreakdown: Record<string, number> = {};
-    allApplications.forEach((app) => {
-      programBreakdown[app.program] = (programBreakdown[app.program] || 0) + 1;
-    });
 
     // Calculate average processing time (days from creation to completion)
     let averageProcessingTime = 0;
@@ -397,7 +386,6 @@ class ReportsService {
       lastMonth,
       growth: Math.round(growth * 10) / 10,
       statusBreakdown,
-      programBreakdown,
       averageProcessingTime,
       passRate: Math.round(passRate * 10) / 10,
     };
@@ -429,15 +417,8 @@ class ReportsService {
       });
     }
 
-    // Get top programs
-    const topPrograms = Object.entries(stats.programBreakdown)
-      .sort(([, a], [, b]) => (b as number) - (a as number))
-      .slice(0, 5)
-      .map(([name, count]) => ({ name, count }));
-
     return {
       ...stats,
-      topPrograms,
       monthlyTrend,
     };
   }

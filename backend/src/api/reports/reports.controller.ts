@@ -56,14 +56,13 @@ export const exportApplicationsCSV = asyncHandler(
       throw new ApiError(403, "Only HR and Admin can export reports");
     }
 
-    const { startDate, endDate, status, result, program } = req.query;
+    const { startDate, endDate, status, result } = req.query;
 
     const applications = await reportsService.getApplicationsData({
       startDate: startDate as string,
       endDate: endDate as string,
       status: status as any,
       result: result as any,
-      program: program as string,
     });
 
     const csv = reportsService.generateApplicationsCSV(applications);
@@ -86,13 +85,12 @@ export const exportScoringCSV = asyncHandler(
       throw new ApiError(403, "Only HR and Admin can export reports");
     }
 
-    const { startDate, endDate, result, program } = req.query;
+    const { startDate, endDate, result } = req.query;
 
     const applications = await reportsService.getScoringData({
       startDate: startDate as string,
       endDate: endDate as string,
       result: result as any,
-      program: program as string,
     });
 
     const csv = reportsService.generateScoringCSV(applications);
@@ -142,14 +140,13 @@ export const generateApplicationsPDF = asyncHandler(
       throw new ApiError(403, "Only HR and Admin can generate reports");
     }
 
-    const { startDate, endDate, status, result, program } = req.query;
+    const { startDate, endDate, status, result } = req.query;
 
     const applications = await reportsService.getApplicationsData({
       startDate: startDate as string,
       endDate: endDate as string,
       status: status as any,
       result: result as any,
-      program: program as string,
     });
 
     const statistics = await reportsService.getReportStatistics({
@@ -178,11 +175,9 @@ export const generateApplicationsPDF = asyncHandler(
       .text("BLANCIA COLLEGE FOUNDATION INC.", { align: "center" });
     doc.fontSize(16).text("APPLICATIONS REPORT", { align: "center" });
     doc.moveDown();
-    doc
-      .fontSize(10)
-      .text(`Generated on: ${new Date().toLocaleString()}`, {
-        align: "center",
-      });
+    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, {
+      align: "center",
+    });
     doc.moveDown(2);
 
     // Summary Section
@@ -209,7 +204,6 @@ export const generateApplicationsPDF = asyncHandler(
       doc.text(
         `${index + 1}. ${app.applicant.name} (Attempt #${app.attemptNumber})`
       );
-      doc.text(`   Program: ${app.program}`, { indent: 20 });
       doc.text(`   Status: ${app.status} | Result: ${app.result || "N/A"}`, {
         indent: 20,
       });
@@ -224,17 +218,6 @@ export const generateApplicationsPDF = asyncHandler(
 
     doc.moveDown();
 
-    // Statistics Section
-    doc.fontSize(14).text("PROGRAM STATISTICS", { underline: true });
-    doc.moveDown();
-    doc.fontSize(10);
-    Object.entries(statistics.programBreakdown).forEach(([program, count]) => {
-      const percentage = ((count / statistics.totalApplications) * 100).toFixed(
-        1
-      );
-      doc.text(`${program}: ${count} (${percentage}%)`);
-    });
-
     // Finalize PDF
     doc.end();
   }
@@ -247,13 +230,12 @@ export const generateScoringPDF = asyncHandler(
       throw new ApiError(403, "Only HR and Admin can generate reports");
     }
 
-    const { startDate, endDate, result, program } = req.query;
+    const { startDate, endDate, result } = req.query;
 
     const applications = await reportsService.getScoringData({
       startDate: startDate as string,
       endDate: endDate as string,
       result: result as any,
-      program: program as string,
     });
 
     // Calculate statistics
@@ -287,11 +269,9 @@ export const generateScoringPDF = asyncHandler(
       .text("BLANCIA COLLEGE FOUNDATION INC.", { align: "center" });
     doc.fontSize(16).text("SCORING REPORT", { align: "center" });
     doc.moveDown();
-    doc
-      .fontSize(10)
-      .text(`Generated on: ${new Date().toLocaleString()}`, {
-        align: "center",
-      });
+    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, {
+      align: "center",
+    });
     doc.moveDown(2);
 
     // Overall Statistics
@@ -310,7 +290,7 @@ export const generateScoringPDF = asyncHandler(
 
     applications.forEach((app, index) => {
       doc.fontSize(10);
-      doc.text(`${index + 1}. ${app.applicant.name} - ${app.program}`);
+      doc.text(`${index + 1}. ${app.applicant.name}`);
       doc.text(`   Total Score: ${app.totalScore}% - ${app.result}`, {
         indent: 20,
       });
@@ -371,11 +351,9 @@ export const generateApplicantsPDF = asyncHandler(
       .text("BLANCIA COLLEGE FOUNDATION INC.", { align: "center" });
     doc.fontSize(16).text("APPLICANT REPORT", { align: "center" });
     doc.moveDown();
-    doc
-      .fontSize(10)
-      .text(`Generated on: ${new Date().toLocaleString()}`, {
-        align: "center",
-      });
+    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, {
+      align: "center",
+    });
     doc.moveDown(2);
 
     // Applicant Summary
@@ -393,16 +371,12 @@ export const generateApplicantsPDF = asyncHandler(
 
     users.forEach((user, index) => {
       const latestApp = user.applications[0];
-      const programs = [
-        ...new Set(user.applications.map((app) => app.program)),
-      ].join(", ");
 
       doc.fontSize(10);
       doc.text(`${index + 1}. ${user.name} (${user.email})`);
       doc.text(`   Total Applications: ${user.applications.length}`, {
         indent: 20,
       });
-      doc.text(`   Programs: ${programs}`, { indent: 20 });
       if (latestApp) {
         doc.text(`   Latest Status: ${latestApp.status}`, { indent: 20 });
         if (latestApp.result) {
