@@ -62,9 +62,7 @@ export const createApplication = asyncHandler(
       console.log("Documents JSON length:", documentsJson.length);
     }
 
-    console.log("Creating application with program:", program);
     const application = await applicationService.createApplication({
-      program: program || "Teaching Application",
       documents: documentsJson,
       applicantId,
       ...applicationData,

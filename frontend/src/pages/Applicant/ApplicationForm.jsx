@@ -741,7 +741,7 @@ const ApplicationForm = () => {
               </Button>
               <Button
                 variant="primary"
-                onClick={() => navigate("/applicant/application-history")}
+                onClick={() => navigate("/applicant/history")}
               >
                 View Application History
               </Button>
