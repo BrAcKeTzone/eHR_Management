@@ -234,7 +234,7 @@ const ProfilePage = () => {
                 onChange={(e) =>
                   setProfileData({ ...profileData, email: e.target.value })
                 }
-                disabled={!isEditing}
+                disabled={true}
                 required
               />
 
