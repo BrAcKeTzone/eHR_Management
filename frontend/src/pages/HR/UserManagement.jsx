@@ -21,14 +21,12 @@ const UserManagement = () => {
     getAllUsers,
     deleteUser,
     addUser,
-    updateUser,
     getUserStats,
     loading,
     error,
   } = useUserManagementStore();
 
   const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userStats, setUserStats] = useState({
@@ -61,16 +59,7 @@ const UserManagement = () => {
     confirmPassword: "",
   });
 
-  const [editUserData, setEditUserData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
-    role: "APPLICANT",
-  });
-
   const [addUserError, setAddUserError] = useState("");
-  const [editUserError, setEditUserError] = useState("");
 
   // Load initial data
   useEffect(() => {
@@ -164,54 +153,6 @@ const UserManagement = () => {
       } catch (error) {
         console.error("Failed to delete user:", error);
       }
-    }
-  };
-
-  const handleEditUser = (user) => {
-    if (user.id === currentUser?.id) {
-      alert("You cannot edit your own account from this page");
-      return;
-    }
-    setSelectedUser(user);
-    // Use firstName and lastName directly
-    setEditUserData({
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-      email: user.email,
-      phoneNumber: user.phone || "",
-      role: user.role,
-    });
-    setEditUserError("");
-    setShowEditUserModal(true);
-  };
-
-  const handleUpdateUser = async (e) => {
-    e.preventDefault();
-    setEditUserError("");
-
-    try {
-      await updateUser(selectedUser.id, {
-        firstName: editUserData.firstName,
-        lastName: editUserData.lastName,
-        phoneNumber: editUserData.phoneNumber,
-        role: editUserData.role,
-      });
-
-      setShowEditUserModal(false);
-      setSelectedUser(null);
-      setEditUserData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phoneNumber: "",
-        role: "APPLICANT",
-      });
-
-      // Refresh users list and stats
-      await loadUsers();
-      await loadStats();
-    } catch (error) {
-      setEditUserError(error.message || "Failed to update user");
     }
   };
 
@@ -329,23 +270,14 @@ const UserManagement = () => {
       cell: (row) => (
         <div className="flex space-x-2">
           {row.role === "APPLICANT" && row.id !== currentUser?.id && (
-            <>
-              <Button
-                onClick={() => handleEditUser(row)}
-                variant="outline"
-                size="sm"
-              >
-                Edit
-              </Button>
-              <Button
-                onClick={() => handleDeleteUser(row)}
-                variant="outline"
-                size="sm"
-                className="text-red-600 border-red-300 hover:bg-red-50"
-              >
-                Delete
-              </Button>
-            </>
+            <Button
+              onClick={() => handleDeleteUser(row)}
+              variant="outline"
+              size="sm"
+              className="text-red-600 border-red-300 hover:bg-red-50"
+            >
+              Delete
+            </Button>
           )}
           {row.id === currentUser?.id && (
             <span className="text-xs text-gray-500">Current User</span>
@@ -759,119 +691,6 @@ const UserManagement = () => {
               className="w-full sm:w-auto"
             >
               {loading ? "Adding..." : "Add User"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Edit User Modal */}
-      <Modal
-        isOpen={showEditUserModal}
-        onClose={() => {
-          setShowEditUserModal(false);
-          setEditUserError("");
-          setEditUserData({
-            firstName: "",
-            lastName: "",
-            email: "",
-            phoneNumber: "",
-            role: "APPLICANT",
-          });
-        }}
-        title="Edit User"
-        size="large"
-      >
-        <form onSubmit={handleUpdateUser} className="space-y-4 sm:space-y-6">
-          {editUserError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {editUserError}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="First Name"
-              value={editUserData.firstName}
-              onChange={(e) =>
-                setEditUserData({ ...editUserData, firstName: e.target.value })
-              }
-              required
-            />
-
-            <Input
-              label="Last Name"
-              value={editUserData.lastName}
-              onChange={(e) =>
-                setEditUserData({ ...editUserData, lastName: e.target.value })
-              }
-              required
-            />
-
-            <div className="sm:col-span-2">
-              <Input
-                label="Email Address"
-                type="email"
-                value={editUserData.email}
-                disabled
-              />
-            </div>
-
-            <Input
-              label="Phone Number"
-              value={editUserData.phoneNumber}
-              onChange={(e) =>
-                setEditUserData({
-                  ...editUserData,
-                  phoneNumber: e.target.value,
-                })
-              }
-              placeholder="Enter phone number"
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Role
-              </label>
-              <select
-                value={editUserData.role}
-                onChange={(e) =>
-                  setEditUserData({ ...editUserData, role: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="APPLICANT">Applicant</option>
-                <option value="HR">Human Resources</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setShowEditUserModal(false);
-                setEditUserError("");
-                setEditUserData({
-                  firstName: "",
-                  lastName: "",
-                  email: "",
-                  phoneNumber: "",
-                  role: "APPLICANT",
-                });
-              }}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading}
-              className="w-full sm:w-auto"
-            >
-              {loading ? "Updating..." : "Update User"}
             </Button>
           </div>
         </form>
