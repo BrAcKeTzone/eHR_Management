@@ -25,7 +25,7 @@ const Navbar = ({ onMenuClick }) => {
   const getRoleDisplayName = (role) => {
     switch (role) {
       case "HR":
-        return "HR Manager";
+        return "Human Resources";
       case "APPLICANT":
         return "Applicant";
       default:

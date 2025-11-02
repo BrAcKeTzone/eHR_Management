@@ -203,7 +203,7 @@ const UserManagement = () => {
   const getRoleDisplayName = (role) => {
     switch (role) {
       case "HR":
-        return "HR Manager";
+        return "Human Resources";
       case "APPLICANT":
         return "Applicant";
       default:
@@ -326,7 +326,7 @@ const UserManagement = () => {
           </div>
         </DashboardCard>
 
-        <DashboardCard title="HR Managers" className="text-center">
+        <DashboardCard title="Human Resources" className="text-center">
           <div className="text-2xl sm:text-3xl font-bold text-purple-600">
             {displayStats.hr}
           </div>
@@ -365,7 +365,7 @@ const UserManagement = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Roles</option>
-              <option value="HR">HR Manager</option>
+              <option value="HR">Human Resources</option>
               <option value="APPLICANT">Applicant</option>
             </select>
           </div>
@@ -631,7 +631,7 @@ const UserManagement = () => {
                 required
               >
                 <option value="APPLICANT">Applicant</option>
-                <option value="HR">HR Manager</option>
+                <option value="HR">Human Resources</option>
               </select>
             </div>
 
