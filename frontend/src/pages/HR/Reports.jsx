@@ -32,7 +32,6 @@ const Reports = () => {
     startDate: "",
     endDate: "",
     status: "",
-    program: "",
     result: "",
   });
 
@@ -328,7 +327,7 @@ const Reports = () => {
         {/* Filters */}
         <div className="mb-6">
           <h4 className="font-medium text-gray-900 mb-4">Report Filters</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <Input
               label="Start Date"
               type="date"
@@ -365,15 +364,6 @@ const Reports = () => {
                 <option value="completed">Completed</option>
               </select>
             </div>
-
-            <Input
-              label="Program"
-              value={filters.program}
-              onChange={(e) =>
-                setFilters({ ...filters, program: e.target.value })
-              }
-              placeholder="Filter by program"
-            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -500,7 +490,7 @@ const Reports = () => {
                 >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">
-                      {app.applicant?.name || "N/A"} - {app.program}
+                      {app.applicant?.name || "N/A"}
                     </p>
                     <p className="text-xs text-gray-500">
                       Status changed to {app.status} on{" "}

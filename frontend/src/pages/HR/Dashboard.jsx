@@ -111,15 +111,6 @@ const HRDashboard = () => {
       ),
     },
     {
-      header: "Program",
-      accessor: "program",
-      cell: (row) => (
-        <div className="text-sm">
-          <p className="font-medium">{row.program}</p>
-        </div>
-      ),
-    },
-    {
       header: "Status",
       accessor: "status",
       cell: (row) => (
@@ -397,9 +388,6 @@ const HRDashboard = () => {
                       <p className="text-sm text-gray-500 break-all">
                         {app.applicant?.email || "N/A"}
                       </p>
-                      <p className="text-sm font-medium break-words mt-1">
-                        {app.program}
-                      </p>
                     </div>
                     <span
                       className={`ml-2 px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ${getStatusColor(
@@ -490,10 +478,6 @@ const HRDashboard = () => {
                   <p className="font-medium">
                     {selectedApplication.attemptNumber}
                   </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Program</p>
-                  <p className="font-medium">{selectedApplication.program}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Status</p>

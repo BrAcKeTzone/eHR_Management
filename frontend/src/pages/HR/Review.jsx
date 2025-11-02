@@ -203,55 +203,6 @@ const ApplicationReview = () => {
         </div>
       )}
 
-      {/* Filters */}
-      <DashboardCard title="Filter Applications" className="mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) =>
-                setFilters({ ...filters, status: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Statuses</option>
-              <option value={APPLICATION_STATUS.PENDING}>Pending</option>
-              <option value={APPLICATION_STATUS.APPROVED}>Approved</option>
-              <option value={APPLICATION_STATUS.REJECTED}>Rejected</option>
-              <option value={APPLICATION_STATUS.COMPLETED}>Completed</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search
-            </label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) =>
-                setFilters({ ...filters, search: e.target.value })
-              }
-              placeholder="Search by name or email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex items-end">
-            <Button
-              onClick={() => setFilters({ status: "", search: "" })}
-              variant="outline"
-              className="w-full"
-            >
-              Clear Filters
-            </Button>
-          </div>
-        </div>
-      </DashboardCard>
-
       {/* Applications Table */}
       <DashboardCard title={`Applications (${filteredApplications.length})`}>
         {filteredApplications.length > 0 ? (
