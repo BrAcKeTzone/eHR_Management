@@ -265,7 +265,8 @@ const SignupForm = () => {
                 type="tel"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="+63-9123456789 (optional)"
+                required
+                placeholder="09123456789"
               />
               {validationErrors.phone && (
                 <p className="mt-1 text-sm text-red-600">
