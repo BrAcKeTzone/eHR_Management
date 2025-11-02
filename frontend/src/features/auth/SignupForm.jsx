@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import Input from "../../components/Input";
 import PasswordInput from "../../components/PasswordInput";
+import OTPInput from "../../components/OTPInput";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import privacyPolicyData from "../../data/privacyPolicy.json";
@@ -203,15 +204,16 @@ const SignupForm = () => {
           We've sent a 6-digit code to <strong>{signupData.email}</strong>.
           Please check your email and enter the code below.
         </p>
-        <Input
+        <OTPInput
           label="Enter OTP"
-          name="otp"
-          type="text"
           value={formData.otp}
-          onChange={handleChange}
-          required
-          placeholder="Enter 6-digit code"
-          maxLength={6}
+          onChange={(otp) =>
+            setFormData({
+              ...formData,
+              otp: otp,
+            })
+          }
+          length={6}
         />
         {validationErrors.otp && (
           <p className="mt-1 text-sm text-red-600">{validationErrors.otp}</p>

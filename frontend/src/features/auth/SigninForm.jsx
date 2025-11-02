@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import Input from "../../components/Input";
 import PasswordInput from "../../components/PasswordInput";
+import OTPInput from "../../components/OTPInput";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
@@ -36,11 +37,6 @@ const SigninForm = () => {
     if (error) clearError();
   };
 
-  const handleOtpChange = (e) => {
-    setOtp(e.target.value);
-    if (error) clearError();
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -61,6 +57,11 @@ const SigninForm = () => {
     } catch (err) {
       console.error("Login failed:", err);
     }
+  };
+
+  const handleOtpChange = (newOtp) => {
+    setOtp(newOtp);
+    if (error) clearError();
   };
 
   const handleOtpSubmit = async (e) => {
@@ -186,16 +187,11 @@ const SigninForm = () => {
             </div>
 
             <div className="space-y-4">
-              <Input
+              <OTPInput
                 label="Enter OTP"
-                name="otp"
-                type="text"
                 value={otp}
                 onChange={handleOtpChange}
-                required
-                placeholder="Enter 6-digit OTP"
-                maxLength={6}
-                pattern="[0-9]{6}"
+                length={6}
               />
             </div>
 

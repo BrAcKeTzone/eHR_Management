@@ -4,6 +4,7 @@ import DashboardCard from "../components/DashboardCard";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import PasswordInput from "../components/PasswordInput";
+import OTPInput from "../components/OTPInput";
 import Modal from "../components/Modal";
 import { formatDate } from "../utils/formatDate";
 
@@ -509,20 +510,16 @@ const ProfilePage = () => {
               </div>
             )}
 
-            <Input
+            <OTPInput
               label="Enter OTP Code"
-              name="otp"
-              type="text"
               value={passwordData.otp}
-              onChange={(e) =>
+              onChange={(otp) =>
                 setPasswordData({
                   ...passwordData,
-                  otp: e.target.value,
+                  otp: otp,
                 })
               }
-              required
-              placeholder="Enter 6-digit OTP"
-              maxLength={6}
+              length={6}
             />
 
             <PasswordInput
