@@ -6,6 +6,7 @@ import { useAuthStore } from "../store/authStore";
 import SignupPage from "../pages/SignupPage";
 import SigninPage from "../pages/SigninPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import LandingPage from "../pages/LandingPage";
 
 // Applicant pages
 import ApplicantDashboard from "../pages/Applicant/Dashboard";
@@ -31,7 +32,7 @@ import AdminLayout from "../layouts/AdminLayout";
 // Dashboard Redirect Component
 const DashboardRedirect = () => {
   const { user } = useAuthStore();
-  
+
   if (user?.role === "HR") {
     return <Navigate to="/hr/dashboard" replace />;
   } else {
@@ -42,7 +43,7 @@ const DashboardRedirect = () => {
 // Profile Redirect Component
 const ProfileRedirect = () => {
   const { user } = useAuthStore();
-  
+
   if (user?.role === "HR") {
     return <Navigate to="/hr/profile" replace />;
   } else {
@@ -87,18 +88,27 @@ const PublicRoute = ({ children }) => {
 };
 
 const AppRoutes = () => {
+  const { isAuthenticated, user } = useAuthStore();
+
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* Root Route - Landing Page for unauthenticated, Dashboard for authenticated */}
       <Route
         path="/"
         element={
-          <PublicRoute>
-            <Navigate to="/signin" replace />
-          </PublicRoute>
+          isAuthenticated ? (
+            user?.role === "HR" ? (
+              <Navigate to="/hr/dashboard" replace />
+            ) : (
+              <Navigate to="/applicant/dashboard" replace />
+            )
+          ) : (
+            <LandingPage />
+          )
         }
       />
 
+      {/* Public Routes */}
       <Route
         path="/signup"
         element={
