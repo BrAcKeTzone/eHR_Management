@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import Button from "./Button";
+import Modal from "./Modal";
 
 const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -17,9 +20,25 @@ const Navbar = ({ onMenuClick }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/signin");
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setShowLogoutModal(false);
+      setIsMenuOpen(false);
+      navigate("/signin");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const getRoleDisplayName = (role) => {
@@ -201,8 +220,8 @@ const Navbar = ({ onMenuClick }) => {
                     <hr className="border-gray-200" />
 
                     <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={handleLogoutClick}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                     >
                       Sign out
                     </button>
@@ -234,6 +253,41 @@ const Navbar = ({ onMenuClick }) => {
           onClick={() => setIsMenuOpen(false)}
         ></div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        isOpen={showLogoutModal}
+        onClose={handleCancelLogout}
+        title="Confirm Sign Out"
+        size="sm"
+      >
+        <div className="space-y-6">
+          <div>
+            <p className="text-gray-600">
+              Are you sure you want to sign out? You'll need to log in again to
+              access your account.
+            </p>
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="outline"
+              onClick={handleCancelLogout}
+              disabled={isLoggingOut}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleConfirmLogout}
+              disabled={isLoggingOut}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isLoggingOut ? "Signing out..." : "Sign Out"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </nav>
   );
 };
