@@ -49,11 +49,12 @@ export const useUserManagementStore = create(
       addUser: async (userData) => {
         set({ loading: true, error: null });
         try {
-          // Map frontend field names to backend field names
+          // Send the data with correct field names for backend
           const mappedUserData = {
             email: userData.email,
             password: userData.password,
-            name: `${userData.firstName} ${userData.lastName}`,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
             phone: userData.phoneNumber || "",
             role: userData.role,
           };

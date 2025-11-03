@@ -71,6 +71,24 @@ export const userApi = {
     const response = await fetchClient.delete(`${API_BASE}/${userId}`);
     return response.data;
   },
+
+  // Send OTP for HR deletion
+  sendOtpForHrDeletion: async () => {
+    const response = await fetchClient.post(
+      `${API_BASE}/hr-deletion/send-otp`,
+      {}
+    );
+    return response.data;
+  },
+
+  // Verify OTP and delete HR user
+  verifyOtpAndDeleteHr: async (userId, otp) => {
+    const response = await fetchClient.post(
+      `${API_BASE}/${userId}/verify-and-delete-hr`,
+      { otp }
+    );
+    return response.data;
+  },
 };
 
 export default userApi;

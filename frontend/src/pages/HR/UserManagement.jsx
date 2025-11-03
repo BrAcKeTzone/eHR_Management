@@ -7,8 +7,10 @@ import Table from "../../components/Table";
 import Modal from "../../components/Modal";
 import Input from "../../components/Input";
 import PasswordInput from "../../components/PasswordInput";
+import OTPInput from "../../components/OTPInput";
 import Pagination from "../../components/Pagination";
 import { formatDate } from "../../utils/formatDate";
+import userApi from "../../api/userApi";
 
 const UserManagement = () => {
   const { user: currentUser } = useAuthStore();
@@ -28,7 +30,12 @@ const UserManagement = () => {
 
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [deleteOtp, setDeleteOtp] = useState("");
+  const [deleteOtpError, setDeleteOtpError] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const [userStats, setUserStats] = useState({
     total: 0,
     hr: 0,
@@ -138,7 +145,57 @@ const UserManagement = () => {
       return;
     }
     setSelectedUser(user);
-    setShowDeleteModal(true);
+
+    // If user is HR, show OTP flow
+    if (user.role === "HR") {
+      setShowOtpModal(true);
+      setOtpSent(false);
+      setDeleteOtp("");
+      setDeleteOtpError("");
+      // Send OTP immediately for HR deletion
+      handleSendOtpForHrDeletion();
+    } else {
+      // For non-HR users, show standard delete modal
+      setShowDeleteModal(true);
+    }
+  };
+
+  const handleSendOtpForHrDeletion = async () => {
+    setOtpLoading(true);
+    setDeleteOtpError("");
+    try {
+      await userApi.sendOtpForHrDeletion();
+      setOtpSent(true);
+    } catch (error) {
+      setDeleteOtpError(error.message || "Failed to send OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleConfirmHrDeletion = async () => {
+    if (!deleteOtp || deleteOtp.length !== 6) {
+      setDeleteOtpError("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    setOtpLoading(true);
+    setDeleteOtpError("");
+    try {
+      await userApi.verifyOtpAndDeleteHr(selectedUser.id, deleteOtp);
+
+      setShowOtpModal(false);
+      setSelectedUser(null);
+      setDeleteOtp("");
+      setOtpSent(false);
+      // Refresh users list and stats
+      await loadUsers();
+      await loadStats();
+    } catch (error) {
+      setDeleteOtpError(error.message || "Failed to delete HR user");
+    } finally {
+      setOtpLoading(false);
+    }
   };
 
   const confirmDeleteUser = async () => {
@@ -269,16 +326,17 @@ const UserManagement = () => {
       accessor: "actions",
       cell: (row) => (
         <div className="flex space-x-2">
-          {row.role === "APPLICANT" && row.id !== currentUser?.id && (
-            <Button
-              onClick={() => handleDeleteUser(row)}
-              variant="outline"
-              size="sm"
-              className="text-red-600 border-red-300 hover:bg-red-50"
-            >
-              Delete
-            </Button>
-          )}
+          {(row.role === "APPLICANT" || row.role === "HR") &&
+            row.id !== currentUser?.id && (
+              <Button
+                onClick={() => handleDeleteUser(row)}
+                variant="outline"
+                size="sm"
+                className="text-red-600 border-red-300 hover:bg-red-50"
+              >
+                Delete
+              </Button>
+            )}
           {row.id === currentUser?.id && (
             <span className="text-xs text-gray-500">Current User</span>
           )}
@@ -487,7 +545,7 @@ const UserManagement = () => {
                       Created: {formatDate(user.createdAt)}
                     </span>
                     <div className="flex space-x-2">
-                      {user.role === "APPLICANT" &&
+                      {(user.role === "APPLICANT" || user.role === "HR") &&
                         user.id !== currentUser?.id && (
                           <Button
                             onClick={() => handleDeleteUser(user)}
@@ -735,6 +793,100 @@ const UserManagement = () => {
             >
               {loading ? "Deleting..." : "Delete User"}
             </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* OTP Verification Modal for HR Deletion */}
+      <Modal
+        isOpen={showOtpModal}
+        onClose={() => {
+          setShowOtpModal(false);
+          setSelectedUser(null);
+          setDeleteOtp("");
+          setOtpSent(false);
+          setDeleteOtpError("");
+        }}
+        title="Delete HR User - Verify with OTP"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            You are about to delete{" "}
+            <strong>
+              {selectedUser?.firstName} {selectedUser?.lastName}
+            </strong>
+            , an HR user. For security, please verify with an OTP sent to your
+            email.
+          </p>
+
+          {deleteOtpError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              {deleteOtpError}
+            </div>
+          )}
+
+          {!otpSent ? (
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded">
+              <p className="text-sm">
+                Click "Send OTP" to receive a verification code at your email
+                address.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+                <p className="text-sm">
+                  ✓ OTP has been sent to your email. Please enter it below.
+                </p>
+              </div>
+
+              <OTPInput
+                label="Enter OTP"
+                value={deleteOtp}
+                onChange={setDeleteOtp}
+                length={6}
+              />
+            </>
+          )}
+
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowOtpModal(false);
+                setSelectedUser(null);
+                setDeleteOtp("");
+                setOtpSent(false);
+                setDeleteOtpError("");
+              }}
+              className="w-full sm:w-auto"
+              disabled={otpLoading}
+            >
+              Cancel
+            </Button>
+
+            {!otpSent ? (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleSendOtpForHrDeletion}
+                disabled={otpLoading}
+                className="w-full sm:w-auto"
+              >
+                {otpLoading ? "Sending..." : "Send OTP"}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleConfirmHrDeletion}
+                disabled={otpLoading || !deleteOtp || deleteOtp.length !== 6}
+                className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
+              >
+                {otpLoading ? "Verifying..." : "Verify & Delete"}
+              </Button>
+            )}
           </div>
         </div>
       </Modal>

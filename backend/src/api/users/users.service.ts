@@ -1,6 +1,9 @@
 import { PrismaClient, User, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import ApiError from "../../utils/ApiError";
+import otpGenerator from "otp-generator";
+import sendEmail from "../../utils/email";
+import { Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -361,4 +364,134 @@ export const getUserStats = async (): Promise<{
   });
 
   return { total, hr, applicants, recent };
+};
+
+// Send OTP for HR deletion confirmation
+export const sendOtpForHrDeletion = async (
+  hrEmail: string
+): Promise<{ message: string }> => {
+  // Verify HR user exists
+  const hrUser = await prisma.user.findUnique({
+    where: { email: hrEmail },
+  });
+
+  if (!hrUser || hrUser.role !== UserRole.HR) {
+    throw new ApiError(403, "Only HR users can delete other HR users");
+  }
+
+  // Generate OTP
+  const otpOptions = {
+    upperCase: false,
+    specialChars: false,
+    digits: true,
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+  };
+  const otp = otpGenerator.generate(6, otpOptions);
+  const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  try {
+    // Store OTP in database
+    await prisma.otp.create({
+      data: {
+        email: hrEmail,
+        otp,
+        createdAt: expires,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new ApiError(400, "Failed to create OTP record");
+    }
+    throw error;
+  }
+
+  try {
+    // Send OTP via email
+    await sendEmail({
+      email: hrEmail,
+      subject: "OTP for HR User Deletion Confirmation",
+      message: `Your OTP for deleting an HR user is: ${otp}. It will expire in 10 minutes. Do not share this OTP with anyone.`,
+    });
+  } catch (error) {
+    console.error(error);
+    throw new ApiError(
+      500,
+      "There was an error sending the email. Please try again later."
+    );
+  }
+
+  return { message: "OTP sent to your email for HR deletion confirmation" };
+};
+
+// Verify OTP and delete HR user
+export const verifyOtpAndDeleteHr = async (
+  userToDeleteId: number,
+  requestingHrEmail: string,
+  otp: string,
+  requestingHrId: number,
+  requestingUserRole: UserRole
+): Promise<{ message: string }> => {
+  // Check if requesting user is HR
+  if (requestingUserRole !== UserRole.HR) {
+    throw new ApiError(403, "Only HR users can delete other HR users");
+  }
+
+  // Get the user to be deleted
+  const userToDelete = await prisma.user.findUnique({
+    where: { id: userToDeleteId },
+  });
+
+  if (!userToDelete) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Check if user to delete is HR
+  if (userToDelete.role !== UserRole.HR) {
+    throw new ApiError(
+      403,
+      "This user is not an HR. Use regular delete instead."
+    );
+  }
+
+  // Prevent HR from deleting themselves
+  if (userToDelete.id === requestingHrId) {
+    throw new ApiError(403, "You cannot delete your own account");
+  }
+
+  // Verify OTP
+  const otpRecord = await prisma.otp.findFirst({
+    where: {
+      email: requestingHrEmail,
+      otp: otp,
+    },
+  });
+
+  if (!otpRecord) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  // Check if OTP is expired
+  if (new Date() > otpRecord.createdAt) {
+    throw new ApiError(400, "OTP has expired");
+  }
+
+  try {
+    // Delete the HR user
+    await prisma.user.delete({
+      where: { id: userToDeleteId },
+    });
+
+    // Delete the OTP record after successful verification
+    await prisma.otp.delete({
+      where: { id: otpRecord.id },
+    });
+
+    return { message: "HR user deleted successfully" };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new ApiError(400, "Failed to delete user");
+    }
+    throw error;
+  }
 };

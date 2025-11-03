@@ -3,15 +3,20 @@ import Joi from "joi";
 export const createUser = Joi.object().keys({
   email: Joi.string().email().required(),
   password: Joi.string().required().min(8),
-  name: Joi.string().required(),
+  firstName: Joi.string().required(),
+  lastName: Joi.string().required(),
+  phoneNumber: Joi.string().optional().allow(""),
   phone: Joi.string().optional().allow(""),
   role: Joi.string().valid("APPLICANT", "HR").optional(),
 });
 
 export const updateUser = Joi.object().keys({
   email: Joi.string().email().optional(),
+  firstName: Joi.string().min(1).optional(),
+  lastName: Joi.string().min(1).optional(),
   name: Joi.string().min(1).optional(),
   phone: Joi.string().optional().allow("", null),
+  phoneNumber: Joi.string().optional().allow("", null),
   role: Joi.string().valid("APPLICANT", "HR").optional(),
 });
 
@@ -27,4 +32,8 @@ export const getUsersQuery = Joi.object().keys({
   search: Joi.string().optional(),
   sortBy: Joi.string().valid("name", "email", "role", "createdAt").optional(),
   sortOrder: Joi.string().valid("asc", "desc").optional(),
+});
+
+export const verifyOtpForDeletion = Joi.object().keys({
+  otp: Joi.string().length(6).pattern(/^\d+$/).required(),
 });

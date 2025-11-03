@@ -14,8 +14,18 @@ const router = express.Router();
 // All user routes require authentication
 router.use(auth);
 
-// GET /api/users/me - Get current user profile
+// GET /api/users/me - Get current user profile (must be before /:id)
 router.get("/me", usersController.getCurrentUser);
+
+// GET /api/users/stats - Get user statistics (HR only) (must be before /:id)
+router.get("/stats", requireHR, usersController.getUserStats);
+
+// POST /api/users/hr-deletion/send-otp - Send OTP for HR deletion (HR only) (must be before /:id)
+router.post(
+  "/hr-deletion/send-otp",
+  requireHR,
+  usersController.sendOtpForHrDeletion
+);
 
 // GET /api/users - Get all users with pagination and filtering (HR only)
 router.get(
@@ -24,9 +34,6 @@ router.get(
   validate(usersValidation.getUsersQuery, "query"),
   usersController.getAllUsers
 );
-
-// GET /api/users/stats - Get user statistics (HR only)
-router.get("/stats", requireHR, usersController.getUserStats);
 
 // GET /api/users/:id - Get user by ID (HR or own profile)
 router.get("/:id", requireOwnershipOrHR, usersController.getUserById);
@@ -64,5 +71,13 @@ router.put(
 
 // DELETE /api/users/:id - Delete user (HR only, cannot delete HR users)
 router.delete("/:id", requireHR, usersController.deleteUser);
+
+// POST /api/users/:id/verify-and-delete-hr - Verify OTP and delete HR user (HR only)
+router.post(
+  "/:id/verify-and-delete-hr",
+  requireHR,
+  validate(usersValidation.verifyOtpForDeletion),
+  usersController.verifyOtpAndDeleteHr
+);
 
 export default router;

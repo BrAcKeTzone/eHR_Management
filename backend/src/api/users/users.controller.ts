@@ -101,6 +101,51 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, result, "User deleted successfully"));
 });
 
+// Send OTP for deleting an HR user
+export const sendOtpForHrDeletion = asyncHandler(
+  async (req: Request, res: Response) => {
+    const requestingUser = (req as any).user;
+    const result = await usersService.sendOtpForHrDeletion(
+      requestingUser.email
+    );
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          result,
+          "OTP sent to your email for HR deletion confirmation"
+        )
+      );
+  }
+);
+
+// Verify OTP and delete HR user
+export const verifyOtpAndDeleteHr = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userToDeleteId = parseInt(req.params.id);
+    const requestingUser = (req as any).user;
+    const { otp } = req.body;
+
+    const result = await usersService.verifyOtpAndDeleteHr(
+      userToDeleteId,
+      requestingUser.email,
+      otp,
+      requestingUser.id,
+      requestingUser.role
+    );
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          result,
+          "HR user deleted successfully after OTP verification"
+        )
+      );
+  }
+);
+
 // Get user statistics
 export const getUserStats = asyncHandler(
   async (req: Request, res: Response) => {
