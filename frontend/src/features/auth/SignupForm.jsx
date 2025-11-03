@@ -7,6 +7,7 @@ import OTPInput from "../../components/OTPInput";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import privacyPolicyData from "../../data/privacyPolicy.json";
+import userApi from "../../api/userApi";
 
 const SignupForm = () => {
   const navigate = useNavigate();
@@ -59,12 +60,23 @@ const SignupForm = () => {
     }
   };
 
-  const validateEmail = () => {
+  const validateEmail = async () => {
     const errors = {};
     if (!formData.email.trim()) {
       errors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = "Please enter a valid email";
+    } else {
+      // Check if email already exists
+      try {
+        const response = await userApi.checkEmailExists(formData.email);
+        if (response.data?.exists) {
+          errors.email = "This email is already registered";
+        }
+      } catch (err) {
+        console.error("Error checking email:", err);
+        // Continue with signup even if email check fails
+      }
     }
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -110,7 +122,7 @@ const SignupForm = () => {
 
   const handlePhase1Submit = async (e) => {
     e.preventDefault();
-    if (!validateEmail()) return;
+    if (!(await validateEmail())) return;
 
     try {
       const result = await sendOtp(formData.email);

@@ -89,6 +89,14 @@ export const userApi = {
     );
     return response.data;
   },
+
+  // Check if email exists
+  checkEmailExists: async (email) => {
+    const response = await fetchClient.get(
+      `${API_BASE}/check-email?email=${encodeURIComponent(email)}`
+    );
+    return response.data;
+  },
 };
 
 export default userApi;

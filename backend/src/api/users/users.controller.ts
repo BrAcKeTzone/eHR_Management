@@ -146,6 +146,29 @@ export const verifyOtpAndDeleteHr = asyncHandler(
   }
 );
 
+// Check if email exists
+export const checkEmailExists = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email } = req.query;
+    if (!email) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "Email is required"));
+    }
+
+    const exists = await usersService.checkEmailExists(email as string);
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { exists },
+          exists ? "Email already exists" : "Email is available"
+        )
+      );
+  }
+);
+
 // Get user statistics
 export const getUserStats = asyncHandler(
   async (req: Request, res: Response) => {

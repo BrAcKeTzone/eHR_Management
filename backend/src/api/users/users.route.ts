@@ -11,6 +11,9 @@ import {
 
 const router = express.Router();
 
+// GET /api/users/check-email - Check if email exists (PUBLIC - no auth required)
+router.get("/check-email", usersController.checkEmailExists);
+
 // All user routes require authentication
 router.use(auth);
 

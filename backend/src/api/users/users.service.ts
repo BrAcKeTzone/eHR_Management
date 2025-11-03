@@ -495,3 +495,11 @@ export const verifyOtpAndDeleteHr = async (
     throw error;
   }
 };
+
+// Check if email exists
+export const checkEmailExists = async (email: string): Promise<boolean> => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+  return !!user;
+};

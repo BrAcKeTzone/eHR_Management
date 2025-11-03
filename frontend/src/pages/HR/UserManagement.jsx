@@ -217,6 +217,26 @@ const UserManagement = () => {
     e.preventDefault();
     setAddUserError("");
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUserData.email)) {
+      setAddUserError("Please enter a valid email address");
+      return;
+    }
+
+    // Check if email already exists
+    try {
+      const response = await userApi.checkEmailExists(newUserData.email);
+      if (response.data?.exists) {
+        setAddUserError("This email is already registered");
+        return;
+      }
+    } catch (err) {
+      console.error("Error checking email:", err);
+      setAddUserError("Error validating email. Please try again.");
+      return;
+    }
+
     // Validate passwords
     if (newUserData.password !== newUserData.confirmPassword) {
       setAddUserError("Passwords do not match");
