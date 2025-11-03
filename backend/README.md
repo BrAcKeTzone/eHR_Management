@@ -11,50 +11,68 @@ This is the backend service for the **BCFI HR Application System**, providing a 
 ### Authentication & Security
 
 - **JWT-based Authentication**
-  - Secure token management
-  - Role-based access control (RBAC)
-  - Email verification with OTP
-  - Password encryption
-  - Session management
+  - Secure token management with JWT tokens
+  - Role-based access control (RBAC) - APPLICANT and HR roles
+  - Email verification with 6-digit OTP (10-minute expiration)
+  - Password encryption with bcryptjs
+  - Multi-phase signup process (email verification → personal details)
+  - Login with OTP verification
+  - Password reset and change functionality
+
+### User Management
+
+- **HR User Management**
+  - Create, read, update, delete HR staff accounts
+  - OTP-based secure HR user deletion
+  - User statistics and analytics
+  - Email uniqueness validation
+  - Phone number storage and tracking
 
 ### Application Processing
 
 - **Document Management**
 
-  - Secure file uploads
-  - Document validation
-  - Cloud storage integration
-  - File type restrictions
+  - Secure file uploads with Cloudinary
+  - Document validation and restrictions
+  - Support for required and optional documents
+  - Public document IDs for secure access
+  - Automatic cloud storage integration
+  - Resume and certificate uploads
 
 - **Application Lifecycle**
-  - Status tracking
-  - Version control
-  - History management
-  - Automated state transitions
+  - Complete application status tracking
+  - Application version history
+  - Real-time status updates via notifications
+  - Document verification workflow
+  - Support for multiple application submissions
 
 ### HR Management Tools
 
 - **Application Review System**
 
-  - Document verification
-  - Applicant scoring
+  - Document verification and review
+  - Applicant scoring system with customizable rubrics
   - Teaching demo scheduling
-  - Automated notifications
+  - Interview scheduling with date validation
+  - Real-time applicant status tracking
+  - Automated status transitions
 
 - **Evaluation System**
-  - Customizable scoring rubrics
+  - Customizable scoring rubrics per position
   - Real-time score calculation
-  - Performance analytics
-  - Result generation
+  - Performance analytics and reports
+  - Result generation and PDF export
+  - Score history tracking
 
 ### Notification System
 
 - **Email Services**
-  - Application status updates
-  - Interview scheduling
-  - Document verification
-  - Result notifications
-  - HR alerts
+  - Application submission confirmations
+  - Interview scheduling notifications
+  - Document verification status updates
+  - OTP delivery for authentication
+  - HR account management notifications
+  - Automated email scheduling
 
 ---
 
@@ -223,41 +241,95 @@ npm run format       # Format code with Prettier
 
 ## API Documentation
 
-### Authentication Routes
+### Authentication Routes (`/api/auth`)
 
 ```typescript
-POST / api / auth / register; // Register new user
-POST / api / auth / login; // User login
-POST / api / auth / verify - email; // Verify email with OTP
-POST / api / auth / resend - otp; // Resend verification OTP
-POST / api / auth / forgot - password; // Request password reset
+POST / send - otp; // Send OTP to email for signup
+POST / verify - otp; // Verify email with OTP during signup
+POST / register; // Complete registration with personal details
+POST / login; // User login
+POST / verify - login - otp; // Verify OTP for login authentication
+POST / send - otp - reset; // Send OTP for password reset
+POST / verify - otp - reset; // Verify OTP for password reset
+POST / reset - password; // Reset password with OTP
+POST / send - otp - change; // Send OTP for password change
+POST / verify - otp - change; // Verify OTP for password change
+POST / change - password; // Change password (authenticated users)
 ```
 
-### Application Routes
+### User Management Routes (`/api/users`)
 
 ```typescript
-POST   /api/applications     // Submit new application
-GET    /api/applications     // List all applications (HR)
-GET    /api/applications/:id // Get application details
-PUT    /api/applications/:id // Update application
-DELETE /api/applications/:id // Delete application
+GET    /check-email             // Check if email already exists (PUBLIC)
+GET    /me                      // Get current user profile
+GET    /stats                   // Get user statistics (HR only)
+GET    /                        // List all users with pagination (HR only)
+GET    /:id                     // Get user by ID
+POST   /                        // Create new user (HR only)
+POST   /hr-deletion/send-otp    // Send OTP for HR deletion (HR only)
+POST   /:id/verify-and-delete-hr// Verify OTP and delete HR user (HR only)
+PUT    /me                      // Update current user profile
+PUT    /:id                     // Update user (HR or own profile)
+PUT    /:id/password            // Update user password
+DELETE /:id                     // Delete user (HR only, non-HR users)
 ```
 
-### Document Routes
+### Application Routes (`/api/applications`)
 
 ```typescript
-POST   /api/uploads         // Upload document
-DELETE /api/uploads/:id     // Delete document
-GET    /api/uploads/:id     // Download document
+GET    /                        // List applications with filtering (HR only)
+GET    /:id                     // Get application details
+POST   /                        // Submit new application (Applicants)
+PUT    /:id                     // Update application
+PUT    /:id/review              // Review application (HR only)
+PUT    /:id/status              // Update application status
+DELETE /:id                     // Delete application
 ```
 
-### HR Management Routes
+### Scoring & Evaluation Routes (`/api/scoring`)
 
 ```typescript
-PUT    /api/applications/:id/review   // Review application
-POST   /api/applications/:id/schedule // Schedule interview
-POST   /api/scoring/:id              // Submit evaluation
-GET    /api/reports/applications      // Generate reports
+GET    /                        // Get all scoring records
+GET    /:id                     // Get scoring details
+POST   /                        // Submit applicant evaluation
+PUT    /:id                     // Update scoring
+GET    /rubric/:positionId      // Get scoring rubric for position
+```
+
+### Scheduling Routes (`/api/schedules`)
+
+```typescript
+GET    /                        // List schedules
+GET    /:id                     // Get schedule details
+POST   /                        // Create interview schedule (HR only)
+PUT    /:id                     // Update schedule
+DELETE /:id                     // Delete schedule
+```
+
+### Notifications Routes (`/api/notifications`)
+
+```typescript
+GET    /                        // Get user notifications
+GET    /:id                     // Get notification details
+PUT    /:id/mark-read           // Mark notification as read
+DELETE /:id                     // Delete notification
+```
+
+### Reports Routes (`/api/reports`)
+
+```typescript
+GET    /applications            // Generate application report
+GET    /scoring/:positionId     // Generate scoring report
+GET    /pipeline                // Get application pipeline report
+POST   /export                  // Export reports to PDF/CSV
+```
+
+### Upload Routes (`/api/uploads`)
+
+```typescript
+POST   /                        // Upload document
+GET    /:id                     // Download/retrieve document
+DELETE /:id                     // Delete document
 ```
 
 ## Error Handling
