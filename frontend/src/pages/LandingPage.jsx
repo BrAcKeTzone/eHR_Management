@@ -1,174 +1,284 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import Button from "../components/Button";
-import Navbar from "../components/Navbar";
-import privacyPolicyData from "../data/privacyPolicy.json";
+import { Link } from "react-router-dom";
+import {
+  FiArrowRight,
+  FiCheckCircle,
+  FiUsers,
+  FiFileText,
+  FiCalendar,
+  FiBarChart,
+} from "react-icons/fi";
 
 const LandingPage = () => {
-  const navigate = useNavigate();
-  const contactInfo = privacyPolicyData.sections[9].contactInfo;
-
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <Navbar />
-
-      {/* Application Process */}
-      <section id="process" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Simple & Transparent Process
-            </h2>
-            <p className="text-lg text-gray-600">
-              Get from application to interview in just 4 simple steps
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Navigation */}
+      <nav className="bg-white dark:bg-gray-900 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="text-2xl font-bold text-indigo-600">
+            BCFI HR System
           </div>
+          <div className="space-x-4">
+            <Link
+              to="/signin"
+              className="px-6 py-2 text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/signup"
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition"
+            >
+              Sign Up
+            </Link>
+          </div>
+        </div>
+      </nav>
 
-          <div className="relative">
-            {/* Timeline line */}
-            <div className="hidden md:block absolute top-12 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
-
-            <div className="grid md:grid-cols-4 gap-8 relative z-10">
-              {[
-                {
-                  num: "01",
-                  title: "Create Account",
-                  desc: "Sign up with your email and secure OTP verification",
-                  icon: "📧",
-                },
-                {
-                  num: "02",
-                  title: "Personal Details",
-                  desc: "Share your background and professional information",
-                  icon: "👤",
-                },
-                {
-                  num: "03",
-                  title: "Upload Documents",
-                  desc: "Submit resume, certificates, and supporting documents",
-                  icon: "📄",
-                },
-                {
-                  num: "04",
-                  title: "Get Reviewed",
-                  desc: "Our team reviews and schedules your interview",
-                  icon: "✓",
-                },
-              ].map((step, idx) => (
-                <div key={idx} className="text-center">
-                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white mb-6 shadow-lg mx-auto">
-                    <span className="text-3xl">{step.icon}</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {step.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm">{step.desc}</p>
-                </div>
-              ))}
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
+              Streamline Your Hiring Process
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+              BCFI HR Application System simplifies recruitment with secure
+              applications, real-time tracking, and intelligent evaluation tools
+              for both applicants and HR teams.
+            </p>
+            <div className="flex gap-4">
+              <Link
+                to="/signup"
+                className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold flex items-center gap-2 transition"
+              >
+                Get Started <FiArrowRight />
+              </Link>
+              <Link
+                to="/signin"
+                className="px-8 py-3 border-2 border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-800 font-semibold transition"
+              >
+                Sign In
+              </Link>
             </div>
           </div>
-
-          {/* Process CTA */}
-          <div className="text-center mt-16">
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => navigate("/signup")}
-              className="shadow-lg hover:shadow-xl transition-all"
-            >
-              Begin Your Application
-            </Button>
+          <div className="relative">
+            <div className="bg-gradient-to-br from-indigo-400 to-purple-600 rounded-lg shadow-xl p-8 text-white">
+              <div className="text-center py-12">
+                <FiFileText className="w-20 h-20 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">Professional Application Management</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Requirements Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-50 to-indigo-50">
+      {/* Features Section */}
+      <section className="bg-white dark:bg-gray-800 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">
-                We're Looking For
-              </h2>
-              <ul className="space-y-4">
-                {[
-                  "Bachelor's degree in Education or relevant field",
-                  "Passion for teaching and student development",
-                  "Strong communication and interpersonal skills",
-                  "Commitment to professional excellence",
-                  "Ability to inspire and motivate students",
-                  "Experience with modern teaching methodologies",
-                ].map((req, idx) => (
-                  <li key={idx} className="flex items-start space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-600">
-                        <svg
-                          className="h-4 w-4 text-white"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <span className="text-gray-700 text-lg">{req}</span>
-                  </li>
-                ))}
-              </ul>
+          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">
+            Key Features
+          </h2>
+
+          {/* For Applicants */}
+          <div className="mb-16">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-2">
+              <FiUsers className="text-indigo-600" />
+              For Applicants
+            </h3>
+            <div className="grid md:grid-cols-3 gap-8">
+              <FeatureCard
+                icon={<FiFileText className="w-8 h-8" />}
+                title="Easy Application"
+                description="Submit comprehensive applications with required and optional documents in a streamlined interface."
+              />
+              <FeatureCard
+                icon={<FiCalendar className="w-8 h-8" />}
+                title="Interview Scheduling"
+                description="View, manage, and confirm your scheduled interviews and demonstrations in real-time."
+              />
+              <FeatureCard
+                icon={<FiBarChart3 className="w-8 h-8" />}
+                title="Track Progress"
+                description="Monitor your application status at every stage with detailed updates and notifications."
+              />
             </div>
+          </div>
 
-            <div className="bg-white rounded-3xl shadow-xl p-10 space-y-6">
-              <div className="text-center space-y-2">
-                <span className="text-5xl font-bold text-blue-600">Ready?</span>
-                <p className="text-gray-600">
-                  Start your journey with BCFI today
-                </p>
-              </div>
+          {/* For HR */}
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-2">
+              <FiUsers className="text-indigo-600" />
+              For HR Team
+            </h3>
+            <div className="grid md:grid-cols-3 gap-8">
+              <FeatureCard
+                icon={<FiFileText className="w-8 h-8" />}
+                title="Application Review"
+                description="Review applications, verify documents, and manage the complete applicant pipeline efficiently."
+              />
+              <FeatureCard
+                icon={<FiBarChart3 className="w-8 h-8" />}
+                title="Scoring & Evaluation"
+                description="Use customizable rubrics to score applicants and generate comprehensive evaluation reports."
+              />
+              <FeatureCard
+                icon={<FiCalendar className="w-8 h-8" />}
+                title="Schedule Management"
+                description="Schedule interviews and demos, manage user accounts, and automate notifications."
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-              <div className="space-y-3">
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <p className="text-sm text-blue-900">
-                    <span className="font-semibold">Estimated time:</span> 15-20
-                    minutes to complete
-                  </p>
-                </div>
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                  <p className="text-sm text-green-900">
-                    <span className="font-semibold">Response time:</span> 2-3
-                    weeks after submission
-                  </p>
-                </div>
-              </div>
+      {/* How It Works */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">
+            How It Works
+          </h2>
+          <div className="grid md:grid-cols-4 gap-8">
+            <StepCard
+              number="1"
+              title="Create Account"
+              description="Sign up with email verification and OTP confirmation"
+            />
+            <StepCard
+              number="2"
+              title="Submit Application"
+              description="Upload documents and provide your professional information"
+            />
+            <StepCard
+              number="3"
+              title="HR Review"
+              description="HR team reviews and scores your application"
+            />
+            <StepCard
+              number="4"
+              title="Interview"
+              description="Schedule and attend your interview or demo"
+            />
+          </div>
+        </div>
+      </section>
 
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => navigate("/signup")}
-                className="w-full shadow-lg"
-              >
-                Apply Now
-              </Button>
+      {/* CTA Section */}
+      <section className="bg-indigo-600 dark:bg-indigo-900 py-20">
+        <div className="max-w-4xl mx-auto text-center px-4">
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Ready to Get Started?
+          </h2>
+          <p className="text-xl text-indigo-100 mb-8">
+            Join BCFI and streamline your hiring experience today.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Link
+              to="/signup"
+              className="px-8 py-3 bg-white text-indigo-600 rounded-lg hover:bg-gray-100 font-semibold transition"
+            >
+              Create Account
+            </Link>
+            <Link
+              to="/signin"
+              className="px-8 py-3 border-2 border-white text-white rounded-lg hover:bg-indigo-700 font-semibold transition"
+            >
+              Sign In
+            </Link>
+          </div>
+        </div>
+      </section>
 
-              <p className="text-center text-sm text-gray-600">
-                Already have an account?{" "}
-                <button
-                  onClick={() => navigate("/signin")}
-                  className="text-blue-600 font-semibold hover:text-blue-700"
-                >
-                  Sign In
-                </button>
+      {/* Footer */}
+      <footer className="bg-gray-900 text-gray-300 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h4 className="text-white font-bold mb-4">About BCFI</h4>
+              <p className="text-sm">
+                Blancia College Foundation Inc. - Transforming HR Management
+                Through Technology
               </p>
             </div>
+            <div>
+              <h4 className="text-white font-bold mb-4">Quick Links</h4>
+              <ul className="text-sm space-y-2">
+                <li>
+                  <Link to="/signin" className="hover:text-white">
+                    Sign In
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/signup" className="hover:text-white">
+                    Sign Up
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-bold mb-4">Support</h4>
+              <ul className="text-sm space-y-2">
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Help Center
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Contact Us
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-bold mb-4">Legal</h4>
+              <ul className="text-sm space-y-2">
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Terms of Service
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-700 pt-8 text-sm text-center">
+            <p>
+              &copy; 2025 Blancia College Foundation Inc. All rights reserved.
+            </p>
           </div>
         </div>
-      </section>
+      </footer>
     </div>
   );
 };
+
+// Feature Card Component
+const FeatureCard = ({ icon, title, description }) => (
+  <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg hover:shadow-lg transition">
+    <div className="text-indigo-600 dark:text-indigo-400 mb-4">{icon}</div>
+    <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+      {title}
+    </h4>
+    <p className="text-gray-600 dark:text-gray-300">{description}</p>
+  </div>
+);
+
+// Step Card Component
+const StepCard = ({ number, title, description }) => (
+  <div className="text-center">
+    <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+      {number}
+    </div>
+    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+      {title}
+    </h3>
+    <p className="text-gray-600 dark:text-gray-300">{description}</p>
+  </div>
+);
 
 export default LandingPage;
