@@ -6,7 +6,6 @@ import { useAuthStore } from "../store/authStore";
 import SignupPage from "../pages/SignupPage";
 import SigninPage from "../pages/SigninPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
-import LandingPage from "../pages/LandingPage";
 
 // Applicant pages
 import ApplicantDashboard from "../pages/Applicant/Dashboard";
@@ -92,7 +91,7 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      {/* Root Route - Landing Page for unauthenticated, Dashboard for authenticated */}
+      {/* Root Route - Redirect to signin for unauthenticated, Dashboard for authenticated */}
       <Route
         path="/"
         element={
@@ -103,7 +102,7 @@ const AppRoutes = () => {
               <Navigate to="/applicant/dashboard" replace />
             )
           ) : (
-            <LandingPage />
+            <Navigate to="/signin" replace />
           )
         }
       />
