@@ -57,15 +57,15 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const result = await authService.login(email, password);
+  const { email, password, role } = req.body;
+  const result = await authService.login(email, password, role);
   res.status(200).json(new ApiResponse(200, result, "OTP sent to your email"));
 });
 
 export const verifyLoginOtp = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email, otp } = req.body;
-    const result = await authService.verifyLoginOtp(email, otp);
+    const { email, otp, role } = req.body;
+    const result = await authService.verifyLoginOtp(email, otp, role);
     res.status(200).json(new ApiResponse(200, result, "Login successful"));
   }
 );

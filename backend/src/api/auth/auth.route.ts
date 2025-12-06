@@ -42,7 +42,7 @@ router.post(
 router.post("/login", validate(authValidation.login), authController.login);
 router.post(
   "/verify-login-otp",
-  validate(authValidation.verifyOtp),
+  validate(authValidation.verifyLoginOtp),
   authController.verifyLoginOtp
 );
 router.post(

@@ -30,11 +30,13 @@ export const authApi = {
   },
 
   // Verify Login OTP
-  verifyLoginOtp: async (email, otp) => {
-    const response = await fetchClient.post(`${API_BASE}/verify-login-otp`, {
-      email,
-      otp,
-    });
+  verifyLoginOtp: async (email, otp, role) => {
+    const payload = { email, otp };
+    if (role) payload.role = role;
+    const response = await fetchClient.post(
+      `${API_BASE}/verify-login-otp`,
+      payload
+    );
     return response.data;
   },
 

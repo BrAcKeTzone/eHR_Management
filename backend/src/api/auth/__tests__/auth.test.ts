@@ -106,15 +106,18 @@ describe("Auth API", () => {
     await completeOTPVerification(testUser.email);
     await request(app).post("/api/auth/register").send(testUser);
 
-    // Then try to login
+    // Then try to login (now requires role to be provided and returns OTP)
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: testUser.email, password: testUser.password });
+      .send({
+        email: testUser.email,
+        password: testUser.password,
+        role: "APPLICANT",
+      });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toHaveProperty("user");
-    expect(res.body.data).toHaveProperty("token");
-    expect(res.body.data.user.email).toBe(testUser.email);
+    expect(res.body.data).toHaveProperty("requiresOtp");
+    expect(res.body.data.requiresOtp).toBe(true);
   });
 
   it("should not login with wrong password", async () => {
@@ -127,7 +130,11 @@ describe("Auth API", () => {
     // Then try to login with wrong password
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: testUser.email, password: "WrongPassword" });
+      .send({
+        email: testUser.email,
+        password: "WrongPassword",
+        role: "APPLICANT",
+      });
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe("Incorrect email or password");
@@ -136,7 +143,11 @@ describe("Auth API", () => {
   it("should not login with non-existent user", async () => {
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: "nonexistent@example.com", password: "password123" });
+      .send({
+        email: "nonexistent@example.com",
+        password: "password123",
+        role: "APPLICANT",
+      });
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe("Incorrect email or password");
@@ -168,5 +179,35 @@ describe("Auth API", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("User with this email already exists");
+  });
+
+  it("should verify login OTP and return token", async () => {
+    const testUser = createTestUser();
+
+    // Complete OTP verification and register user
+    await completeOTPVerification(testUser.email);
+    await request(app).post("/api/auth/register").send(testUser);
+
+    // Create OTP record to simulate login OTP being sent
+    await prisma.otp.create({
+      data: {
+        email: testUser.email,
+        otp: "123456",
+        createdAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
+    });
+
+    const resVerify = await request(app)
+      .post("/api/auth/verify-login-otp")
+      .send({
+        email: testUser.email,
+        otp: "123456",
+        role: "APPLICANT",
+      });
+
+    expect(resVerify.status).toBe(200);
+    expect(resVerify.body.data).toHaveProperty("user");
+    expect(resVerify.body.data).toHaveProperty("token");
+    expect(resVerify.body.data.user.email).toBe(testUser.email);
   });
 });

@@ -19,6 +19,7 @@ export const useAuthStore = create(
         email: "",
         password: "",
         otp: "",
+        role: "APPLICANT",
       },
 
       // Signup phase state
@@ -59,6 +60,7 @@ export const useAuthStore = create(
               loginData: {
                 email: credentials.email,
                 password: credentials.password,
+                role: credentials?.role || "APPLICANT",
                 otp: "",
               },
             });
@@ -85,8 +87,15 @@ export const useAuthStore = create(
           return { user, token };
         } catch (error) {
           // Handle API error response
-          const errorMessage =
+          let serverMsg =
             error.response?.data?.message || error.message || "Login failed";
+
+          // Map role mismatch messages to a generic user-facing text
+          let errorMessage = serverMsg;
+          if (serverMsg && serverMsg.toLowerCase().includes("role mismatch")) {
+            errorMessage =
+              "Unable to sign in with the selected role. Please verify your account type or try a different login.";
+          }
 
           set({
             loading: false,
@@ -97,14 +106,19 @@ export const useAuthStore = create(
       },
 
       // Verify login OTP and complete authentication
-      verifyLoginOtp: async (otp) => {
+      verifyLoginOtp: async (otp, role) => {
         try {
           set({ loading: true, error: null });
 
           const { loginData } = get();
 
           // Call backend API to verify OTP
-          const response = await authApi.verifyLoginOtp(loginData.email, otp);
+          const finalRole = role || loginData.role;
+          const response = await authApi.verifyLoginOtp(
+            loginData.email,
+            otp,
+            finalRole
+          );
 
           // Extract user and token from response
           const { user, token } = response.data;
@@ -129,10 +143,17 @@ export const useAuthStore = create(
           return { user, token };
         } catch (error) {
           // Handle API error response
-          const errorMessage =
+          let serverMsg =
             error.response?.data?.message ||
             error.message ||
             "OTP verification failed";
+
+          // Map role mismatch messages to a generic user-facing text
+          let errorMessage = serverMsg;
+          if (serverMsg && serverMsg.toLowerCase().includes("role mismatch")) {
+            errorMessage =
+              "Unable to sign in with the selected role. Please verify your account type or try a different login.";
+          }
 
           set({
             loading: false,
@@ -150,6 +171,7 @@ export const useAuthStore = create(
             email: "",
             password: "",
             otp: "",
+            role: "APPLICANT",
           },
           error: null,
         });

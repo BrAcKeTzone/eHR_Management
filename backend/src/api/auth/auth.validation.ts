@@ -9,6 +9,12 @@ export const verifyOtp = Joi.object().keys({
   otp: Joi.string().required(),
 });
 
+export const verifyLoginOtp = Joi.object().keys({
+  email: Joi.string().email().required(),
+  otp: Joi.string().required(),
+  role: Joi.string().valid("APPLICANT", "HR").required(),
+});
+
 export const verifyOtpForReset = Joi.object().keys({
   email: Joi.string().email().required(),
   otp: Joi.string().required(),
@@ -40,6 +46,7 @@ export const register = Joi.object().keys({
 export const login = Joi.object().keys({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
+  role: Joi.string().valid("APPLICANT", "HR").required(),
 });
 
 export const resetPassword = Joi.object().keys({

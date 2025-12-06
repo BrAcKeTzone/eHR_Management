@@ -23,6 +23,7 @@ const SigninForm = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    role: "APPLICANT", // default role selection
   });
 
   const [otp, setOtp] = useState("");
@@ -80,7 +81,7 @@ const SigninForm = () => {
   };
 
   const navigateToDashboard = (user) => {
-    if (user?.role === "HR") {
+    if (user?.role === "HR" || user?.role === "ADMIN") {
       navigate("/hr/dashboard");
     } else {
       navigate("/applicant/dashboard");
@@ -145,6 +146,21 @@ const SigninForm = () => {
                   required
                   placeholder="Enter your password"
                 />
+                {/* Role selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Role
+                  </label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="APPLICANT">Applicant</option>
+                    <option value="HR">HR</option>
+                  </select>
+                </div>
               </div>
 
               <Button

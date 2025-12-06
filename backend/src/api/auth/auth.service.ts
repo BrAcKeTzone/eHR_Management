@@ -303,7 +303,8 @@ export const register = async (
 
 export const login = async (
   email: string,
-  password: string
+  password: string,
+  role: "APPLICANT" | "HR" | string = "APPLICANT"
 ): Promise<{ message: string; requiresOtp: boolean }> => {
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -314,6 +315,17 @@ export const login = async (
   const isValidPassword = await bcrypt.compare(password, user.password);
   if (!isValidPassword) {
     throw new AuthenticationError("Incorrect email or password");
+  }
+
+  // Role check: ensure user has the selected role
+  if (role === "HR") {
+    if (!(user.role === "HR" || user.role === "ADMIN")) {
+      throw new AuthenticationError("User role mismatch: not an HR user");
+    }
+  } else if (role === "APPLICANT") {
+    if (user.role !== "APPLICANT") {
+      throw new AuthenticationError("User role mismatch: not an Applicant");
+    }
   }
 
   // Generate and send OTP for login verification
@@ -364,7 +376,8 @@ export const login = async (
 
 export const verifyLoginOtp = async (
   email: string,
-  otp: string
+  otp: string,
+  role: "APPLICANT" | "HR" | string = "APPLICANT"
 ): Promise<{ user: User; token: string }> => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -404,6 +417,17 @@ export const verifyLoginOtp = async (
 
   // Delete the OTP after successful verification
   await prisma.otp.delete({ where: { id: otpRecord.id } });
+
+  // Verify role matches as well (HR also matches ADMIN)
+  if (role === "HR") {
+    if (!(user.role === "HR" || user.role === "ADMIN")) {
+      throw new AuthenticationError("User role mismatch: not an HR user");
+    }
+  } else if (role === "APPLICANT") {
+    if (user.role !== "APPLICANT") {
+      throw new AuthenticationError("User role mismatch: not an Applicant");
+    }
+  }
 
   const token = generateToken(user.id);
 
