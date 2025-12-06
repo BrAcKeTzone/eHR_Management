@@ -186,7 +186,10 @@ export const validateApplicationForm = (formData) => {
 
   // Validate documents
   if (formData.documents && formData.documents.length > 0) {
-    const fileValidation = validateFiles(formData.documents);
+    const fileValidation = validateFiles(formData.documents, {
+      allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
+      maxFiles: 10,
+    });
     if (!fileValidation.isValid) {
       errors.documents = fileValidation.errors.concat(
         fileValidation.fileErrors.flat().filter(Boolean)

@@ -70,6 +70,34 @@ const upload = multer({
 // Middleware for multiple file uploads (up to 10 files)
 export const uploadDocuments = upload.array("documents", 10);
 
+// File filter specifically for applicant application documents (PDF, JPG/JPEG, PNG only)
+const applicationAllowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+const applicationFileFilter = (req: any, file: any, cb: any) => {
+  if (applicationAllowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error(
+        `File type ${file.mimetype} is not allowed. Only PDF, JPG and PNG files are permitted.`
+      ),
+      false
+    );
+  }
+};
+
+const applicationUpload = multer({
+  storage: storage,
+  fileFilter: applicationFileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+});
+
+export const uploadApplicationDocuments = applicationUpload.array(
+  "documents",
+  10
+);
+
 // Middleware for single file upload
 export const uploadSingle = upload.single("document");
 

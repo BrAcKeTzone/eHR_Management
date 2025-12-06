@@ -17,6 +17,7 @@ import {
 import authMiddleware from "../../middlewares/auth.middleware";
 import {
   uploadDocuments,
+  uploadApplicationDocuments,
   handleUploadError,
 } from "../../middlewares/upload.middleware";
 
@@ -26,7 +27,12 @@ const router = Router();
 router.use(authMiddleware);
 
 // Applicant routes
-router.post("/", uploadDocuments, handleUploadError, createApplication);
+router.post(
+  "/",
+  uploadApplicationDocuments,
+  handleUploadError,
+  createApplication
+);
 router.get("/my-applications", getMyApplications);
 router.get("/my-active-application", getMyActiveApplication);
 

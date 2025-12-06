@@ -24,7 +24,6 @@ const ApplicationForm = () => {
   const [documentFiles, setDocumentFiles] = useState([]);
 
   const [formErrors, setFormErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(0); // 0: Resume, 1: Application Letter, 2: Documents
 
   // Check for pending application on component mount
   useEffect(() => {
@@ -76,43 +75,47 @@ const ApplicationForm = () => {
     { type: "medical", label: "Medical Certificate", required: false },
   ];
 
-  const validateStep = (step) => {
+  const validateAll = () => {
     const errors = {};
 
-    if (step === 0) {
-      if (!resumeFile) {
-        errors.resume = "Please upload your resume";
-      }
+    if (!resumeFile) {
+      errors.resume = "Please upload your resume";
     }
 
-    if (step === 1) {
-      if (!applicationLetterFile) {
-        errors.applicationLetter = "Please upload your application letter";
-      }
+    if (!applicationLetterFile) {
+      errors.applicationLetter = "Please upload your application letter";
     }
 
-    if (step === 2) {
-      const requiredDocs = requiredDocuments.filter((doc) => doc.required);
-      const uploadedTypes = documentFiles.map((doc) => doc.type);
-      const missingRequired = requiredDocs.filter(
-        (doc) => !uploadedTypes.includes(doc.type)
-      );
+    const requiredDocs = requiredDocuments.filter((doc) => doc.required);
+    const uploadedTypes = documentFiles.map((doc) => doc.type);
+    const missingRequired = requiredDocs.filter(
+      (doc) => !uploadedTypes.includes(doc.type)
+    );
 
-      if (missingRequired.length > 0) {
-        errors.documents = `Missing required documents: ${missingRequired
-          .map((doc) => doc.label)
-          .join(", ")}`;
-      }
+    if (missingRequired.length > 0) {
+      errors.documents = `Missing required documents: ${missingRequired
+        .map((doc) => doc.label)
+        .join(", ")}`;
     }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
+  const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png"];
+
   // Handle resume upload
   const handleResumeUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      if (!ALLOWED_MIME.includes(file.type)) {
+        setFormErrors((prev) => ({
+          ...prev,
+          resume: "Invalid file type. Only PDF, JPG, PNG are allowed.",
+        }));
+        return;
+      }
       setResumeFile({
         name: file.name,
         size: (file.size / 1024 / 1024).toFixed(2) + " MB",
@@ -132,6 +135,15 @@ const ApplicationForm = () => {
   const handleApplicationLetterUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      if (!ALLOWED_MIME.includes(file.type)) {
+        setFormErrors((prev) => ({
+          ...prev,
+          applicationLetter:
+            "Invalid file type. Only PDF, JPG, PNG are allowed.",
+        }));
+        return;
+      }
       setApplicationLetterFile({
         name: file.name,
         size: (file.size / 1024 / 1024).toFixed(2) + " MB",
@@ -150,6 +162,17 @@ const ApplicationForm = () => {
   // Handle document upload
   const handleDocumentUpload = (e, documentType) => {
     const files = Array.from(e.target.files);
+
+    // Validate files - only allow PDF/JPG/PNG
+    const invalidFiles = files.filter((f) => !ALLOWED_MIME.includes(f.type));
+    if (invalidFiles.length > 0) {
+      setFormErrors((prev) => ({
+        ...prev,
+        documents:
+          "Some files have invalid types. Only PDF, JPG, PNG are allowed.",
+      }));
+      return;
+    }
 
     const newDocuments = files.map((file) => ({
       name: file.name,
@@ -179,20 +202,11 @@ const ApplicationForm = () => {
     }
   };
 
-  const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep((prev) => prev + 1);
-    }
-  };
-
-  const prevStep = () => {
-    setCurrentStep((prev) => prev - 1);
-  };
+  // Next/Prev were used for multi-step flow; replaced with single-page flow
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateStep(2)) {
+    if (!validateAll()) {
       return;
     }
 
@@ -245,45 +259,7 @@ const ApplicationForm = () => {
     }
   };
 
-  const renderStepIndicator = () => {
-    const steps = [
-      { number: 0, label: "Resume Upload" },
-      { number: 1, label: "Application Letter" },
-      { number: 2, label: "Documents" },
-    ];
-
-    return (
-      <div className="flex items-center justify-center mb-8 overflow-x-auto">
-        <div className="flex items-center space-x-2 min-w-max">
-          {steps.map((step, index) => (
-            <div key={step.number} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step.number <= currentStep
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {step.number + 1}
-                </div>
-                <span className="text-xs mt-1 text-center text-gray-600 max-w-20">
-                  {step.label}
-                </span>
-              </div>
-              {index < steps.length - 1 && (
-                <div
-                  className={`w-12 h-1 mx-2 ${
-                    step.number < currentStep ? "bg-blue-600" : "bg-gray-200"
-                  }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  // Step indicator removed for single-page layout
 
   const renderResumeUpload = () => (
     <div className="space-y-6">
@@ -315,7 +291,7 @@ const ApplicationForm = () => {
           <input
             type="file"
             id="resume-upload"
-            accept=".pdf,.doc,.docx,.txt"
+            accept=".pdf,.jpg,.jpeg,.png"
             onChange={handleResumeUpload}
             className="hidden"
           />
@@ -344,7 +320,7 @@ const ApplicationForm = () => {
                 : "📄 Click to upload resume"}
             </span>
             <span className="text-sm text-gray-500">
-              PDF, DOC, DOCX, TXT files supported
+              Only PDF, JPG, PNG files supported (max 10MB)
             </span>
           </label>
         </div>
@@ -428,7 +404,7 @@ const ApplicationForm = () => {
           <input
             type="file"
             id="application-letter-upload"
-            accept=".pdf,.doc,.docx,.txt"
+            accept=".pdf,.jpg,.jpeg,.png"
             onChange={handleApplicationLetterUpload}
             className="hidden"
           />
@@ -457,7 +433,7 @@ const ApplicationForm = () => {
                 : "✉️ Click to upload application letter"}
             </span>
             <span className="text-sm text-gray-500">
-              PDF, DOC, DOCX, TXT files supported
+              Only PDF, JPG, PNG files supported (max 10MB)
             </span>
           </label>
         </div>
@@ -572,7 +548,7 @@ const ApplicationForm = () => {
               <input
                 type="file"
                 id={`doc-${docType.type}`}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                accept=".pdf,.jpg,.jpeg,.png"
                 onChange={(e) => handleDocumentUpload(e, docType.type)}
                 className="hidden"
                 multiple
@@ -598,7 +574,7 @@ const ApplicationForm = () => {
                   Click to upload {docType.label.toLowerCase()}
                 </span>
                 <span className="text-xs text-gray-500 mt-1">
-                  PDF, DOC, DOCX, JPG, PNG up to 10MB
+                  PDF, JPG, PNG up to 10MB
                 </span>
               </label>
             </div>
@@ -759,12 +735,8 @@ const ApplicationForm = () => {
               New Teaching Application
             </h1>
             <p className="text-gray-600 mt-1">
-              Step {currentStep + 1} of 3:{" "}
-              {currentStep === 0
-                ? "Resume Upload"
-                : currentStep === 1
-                ? "Application Letter Upload"
-                : "Required Documents"}
+              Please complete the sections below and submit your application
+              when you're finished.
             </p>
           </div>
 
@@ -776,22 +748,14 @@ const ApplicationForm = () => {
           )}
 
           <div className="p-6">
-            {renderStepIndicator()}
-
             <form onSubmit={handleSubmit} className="space-y-6">
-              {currentStep === 0 && renderResumeUpload()}
-              {currentStep === 1 && renderApplicationLetter()}
-              {currentStep === 2 && renderDocuments()}
+              {renderResumeUpload()}
+              {renderApplicationLetter()}
+              {renderDocuments()}
 
               {/* Form Actions */}
               <div className="flex justify-between pt-6 border-t border-gray-200">
-                <div>
-                  {currentStep > 0 && (
-                    <Button type="button" onClick={prevStep} variant="outline">
-                      Previous
-                    </Button>
-                  )}
-                </div>
+                <div />
 
                 <div className="flex space-x-4">
                   <Button
@@ -801,16 +765,9 @@ const ApplicationForm = () => {
                   >
                     Cancel
                   </Button>
-
-                  {currentStep < 2 ? (
-                    <Button type="button" onClick={nextStep} variant="primary">
-                      Next
-                    </Button>
-                  ) : (
-                    <Button type="submit" variant="primary" disabled={loading}>
-                      {loading ? "Submitting..." : "Submit Application"}
-                    </Button>
-                  )}
+                  <Button type="submit" variant="primary" disabled={loading}>
+                    {loading ? "Submitting..." : "Submit Application"}
+                  </Button>
                 </div>
               </div>
             </form>
