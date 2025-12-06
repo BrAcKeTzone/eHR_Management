@@ -54,25 +54,15 @@ const ApplicationForm = () => {
   }, [getCurrentApplication]);
 
   const requiredDocuments = [
-    { type: "diploma", label: "Diploma/Degree Certificate", required: true },
+    { type: "diploma", label: "Diploma / Degree Certificate", required: true },
     {
       type: "transcript",
-      label: "Official Transcript of Records",
-      required: true,
-    },
-    {
-      type: "license",
-      label: "Teaching License (if available)",
+      label: "Transcript of Records (TOR)",
       required: false,
     },
+    { type: "pds", label: "Personal Data Sheet (PDS)", required: true },
+    { type: "prc", label: "PRC License", required: true },
     { type: "certificates", label: "Training Certificates", required: false },
-    {
-      type: "recommendations",
-      label: "Letters of Recommendation",
-      required: false,
-    },
-    { type: "id", label: "Government ID", required: true },
-    { type: "medical", label: "Medical Certificate", required: false },
   ];
 
   const validateAll = () => {
