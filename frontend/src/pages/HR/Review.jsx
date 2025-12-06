@@ -321,7 +321,10 @@ const ApplicationReview = () => {
       {selectedApplication && !showDecisionModal && (
         <Modal
           isOpen={true}
-          onClose={() => setSelectedApplication(null)}
+          // Disable closing and hide close button to make this modal read-only
+          onClose={() => {}}
+          showCloseButton={false}
+          closeOnOverlayClick={false}
           title={`Application Details - ${selectedApplication.applicant?.firstName} ${selectedApplication.applicant?.lastName}`}
           size="large"
         >
@@ -606,38 +609,7 @@ const ApplicationReview = () => {
                 return null;
               })()}
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
-              <Button
-                onClick={() => setSelectedApplication(null)}
-                variant="outline"
-                className="w-full sm:w-auto"
-              >
-                Close
-              </Button>
-              {selectedApplication.status === APPLICATION_STATUS.PENDING && (
-                <>
-                  <Button
-                    onClick={() =>
-                      openDecisionModal(selectedApplication, "rejected")
-                    }
-                    variant="danger"
-                    className="w-full sm:w-auto"
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      openDecisionModal(selectedApplication, "approved")
-                    }
-                    variant="primary"
-                    className="w-full sm:w-auto"
-                  >
-                    Approve
-                  </Button>
-                </>
-              )}
-            </div>
+            {/* Actions removed: modal is read-only. Use row-level Approve/Reject buttons instead. */}
           </div>
         </Modal>
       )}
