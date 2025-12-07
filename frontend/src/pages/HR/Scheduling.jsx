@@ -98,6 +98,17 @@ const Scheduling = () => {
     [];
 
   const handleScheduleDemo = (application) => {
+    // If application already scheduled and reschedule count exceeded, prevent opening modal
+    if (
+      application.demoSchedule &&
+      (application.demoRescheduleCount || 0) >= 1
+    ) {
+      alert(
+        "This application has already been rescheduled once and cannot be rescheduled again."
+      );
+      return;
+    }
+
     setSelectedApplication(application);
     setShowScheduleModal(true);
     // Reset schedule data
@@ -138,6 +149,7 @@ const Scheduling = () => {
       getAllApplications({ status: APPLICATION_STATUS.APPROVED });
     } catch (error) {
       console.error("Failed to schedule demo:", error);
+      alert(error?.message || "Failed to schedule demo. Please try again.");
     }
   };
 
@@ -206,8 +218,13 @@ const Scheduling = () => {
             onClick={() => handleScheduleDemo(row)}
             variant={row.demoSchedule ? "outline" : "primary"}
             size="sm"
+            disabled={row.demoSchedule && (row.demoRescheduleCount || 0) >= 1}
           >
-            {row.demoSchedule ? "Reschedule" : "Schedule"}
+            {row.demoSchedule
+              ? row.demoRescheduleCount >= 1
+                ? "Rescheduled"
+                : "Reschedule"
+              : "Schedule"}
           </Button>
         </div>
       ),
@@ -331,8 +348,15 @@ const Scheduling = () => {
                       variant={app.demoSchedule ? "outline" : "primary"}
                       size="sm"
                       className="flex-1"
+                      disabled={
+                        app.demoSchedule && (app.demoRescheduleCount || 0) >= 1
+                      }
                     >
-                      {app.demoSchedule ? "Reschedule" : "Schedule"}
+                      {app.demoSchedule
+                        ? app.demoRescheduleCount >= 1
+                          ? "Rescheduled"
+                          : "Reschedule"
+                        : "Schedule"}
                     </Button>
                   </div>
                 </div>
@@ -479,7 +503,11 @@ const Scheduling = () => {
                 onClick={handleSubmitSchedule}
                 variant="primary"
                 disabled={
-                  !scheduleData.date || !scheduleData.time || scheduleLoading
+                  !scheduleData.date ||
+                  !scheduleData.time ||
+                  scheduleLoading ||
+                  (selectedApplication?.demoSchedule &&
+                    (selectedApplication?.demoRescheduleCount || 0) >= 1)
                 }
                 className="w-full sm:w-auto"
               >
@@ -490,6 +518,13 @@ const Scheduling = () => {
                   : "Schedule Demo"}
               </Button>
             </div>
+            {selectedApplication?.demoSchedule &&
+              (selectedApplication?.demoRescheduleCount || 0) >= 1 && (
+                <div className="mt-3 text-sm text-red-600">
+                  This application has already been rescheduled once and cannot
+                  be rescheduled again.
+                </div>
+              )}
           </div>
         </Modal>
       )}

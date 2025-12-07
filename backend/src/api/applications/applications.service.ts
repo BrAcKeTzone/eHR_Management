@@ -36,6 +36,7 @@ export interface UpdateApplicationData {
   demoLocation?: string;
   demoDuration?: number;
   demoNotes?: string;
+  demoRescheduleCount?: number;
   hrNotes?: string;
   totalScore?: number;
   result?: "PASS" | "FAIL";
@@ -351,12 +352,31 @@ class ApplicationService {
 
     // Enforce demo duration to 60 minutes
     const enforcedDuration = 60;
-    const updatedApplication = await this.updateApplication(id, {
+
+    // Determine whether this is an initial schedule or a reschedule
+    const isReschedule = !!application.demoSchedule;
+    const currentRescheduleCount = application.demoRescheduleCount || 0;
+
+    // If attempting to reschedule and reschedule count already reached 1, prevent further reschedules
+    if (isReschedule && currentRescheduleCount >= 1) {
+      throw new ApiError(
+        400,
+        "This application has already been rescheduled once and cannot be rescheduled again."
+      );
+    }
+
+    const updateData: any = {
       demoSchedule,
       demoLocation,
       demoDuration: enforcedDuration,
       demoNotes,
-    });
+    };
+
+    if (isReschedule) {
+      updateData.demoRescheduleCount = currentRescheduleCount + 1;
+    }
+
+    const updatedApplication = await this.updateApplication(id, updateData);
 
     // Get applicant details for notification
     const applicant = await prisma.user.findUnique({
