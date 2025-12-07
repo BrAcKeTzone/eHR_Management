@@ -4,6 +4,7 @@ import { useApplicationStore } from "../../store/applicationStore";
 import { useAuthStore } from "../../store/authStore";
 import Button from "../../components/Button";
 import Modal from "../../components/Modal";
+import UploadBox from "../../components/UploadBox";
 
 const ApplicationForm = () => {
   const navigate = useNavigate();
@@ -16,7 +17,6 @@ const ApplicationForm = () => {
   const [isCheckingPending, setIsCheckingPending] = useState(true);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState("");
 
   // File upload states
   const [resumeFile, setResumeFile] = useState(null);
@@ -111,8 +111,6 @@ const ApplicationForm = () => {
         size: (file.size / 1024 / 1024).toFixed(2) + " MB",
         file: file,
       });
-      setUploadStatus("Resume uploaded successfully!");
-      setTimeout(() => setUploadStatus(""), 3000);
 
       // Clear error
       if (formErrors.resume) {
@@ -139,8 +137,6 @@ const ApplicationForm = () => {
         size: (file.size / 1024 / 1024).toFixed(2) + " MB",
         file: file,
       });
-      setUploadStatus("Application letter uploaded successfully!");
-      setTimeout(() => setUploadStatus(""), 3000);
 
       // Clear error
       if (formErrors.applicationLetter) {
@@ -172,8 +168,6 @@ const ApplicationForm = () => {
     }));
 
     setDocumentFiles((prev) => [...prev, ...newDocuments]);
-    setUploadStatus(`${files.length} document(s) uploaded successfully!`);
-    setTimeout(() => setUploadStatus(""), 3000);
 
     // Clear error
     if (formErrors.documents) {
@@ -252,376 +246,154 @@ const ApplicationForm = () => {
   // Step indicator removed for single-page layout
 
   const renderResumeUpload = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">
           Upload Your Resume
         </h2>
-        <p className="text-gray-600">
+        <p className="text-sm text-gray-600 mt-1">
           Please upload your complete resume or CV
         </p>
       </div>
 
-      {/* Upload status */}
-      {uploadStatus && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-          <span className="text-sm font-medium">{uploadStatus}</span>
-        </div>
-      )}
-
       {/* Error display */}
       {formErrors.resume && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
           <span className="text-sm">{formErrors.resume}</span>
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto">
-        <div className="border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-lg p-8 text-center">
-          <input
-            type="file"
-            id="resume-upload"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={handleResumeUpload}
-            className="hidden"
-          />
-          <label
-            htmlFor="resume-upload"
-            className="cursor-pointer flex flex-col items-center"
-          >
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <svg
-                className="w-8 h-8 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <span className="text-lg text-gray-700 font-medium mb-2">
-              {resumeFile
-                ? "📄 Resume uploaded! Click to replace"
-                : "📄 Click to upload resume"}
-            </span>
-            <span className="text-sm text-gray-500">
-              Only PDF, JPG, PNG files supported (max 10MB)
-            </span>
-          </label>
-        </div>
-
-        {/* Show uploaded resume */}
-        {resumeFile && (
-          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 text-green-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {resumeFile.name}
-                  </p>
-                  <p className="text-xs text-gray-500">{resumeFile.size}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => removeFile("resume")}
-                className="text-red-500 hover:text-red-700"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      <UploadBox
+        id="resume-upload"
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={handleResumeUpload}
+        label="Click to upload resume"
+        subtitle="PDF, JPG, PNG up to 10MB"
+        file={resumeFile}
+        onRemove={() => removeFile("resume")}
+        statusBadge={formErrors.resume ? "Error" : resumeFile ? "Uploaded" : ""}
+        variant={formErrors.resume ? "error" : "neutral"}
+      />
     </div>
   );
 
   const renderApplicationLetter = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">
           Upload Application Letter
         </h2>
-        <p className="text-gray-600">
+        <p className="text-sm text-gray-600 mt-1">
           Please upload your application letter or cover letter
         </p>
       </div>
 
-      {/* Upload status */}
-      {uploadStatus && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-          <span className="text-sm font-medium">{uploadStatus}</span>
-        </div>
-      )}
-
       {/* Error display */}
       {formErrors.applicationLetter && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
           <span className="text-sm">{formErrors.applicationLetter}</span>
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto">
-        <div className="border-2 border-dashed border-green-300 bg-green-50/30 rounded-lg p-8 text-center">
-          <input
-            type="file"
-            id="application-letter-upload"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={handleApplicationLetterUpload}
-            className="hidden"
-          />
-          <label
-            htmlFor="application-letter-upload"
-            className="cursor-pointer flex flex-col items-center"
-          >
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <svg
-                className="w-8 h-8 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
-            </div>
-            <span className="text-lg text-gray-700 font-medium mb-2">
-              {applicationLetterFile
-                ? "✉️ Application letter uploaded! Click to replace"
-                : "✉️ Click to upload application letter"}
-            </span>
-            <span className="text-sm text-gray-500">
-              Only PDF, JPG, PNG files supported (max 10MB)
-            </span>
-          </label>
-        </div>
-
-        {/* Show uploaded application letter */}
-        {applicationLetterFile && (
-          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 text-green-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {applicationLetterFile.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {applicationLetterFile.size}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => removeFile("applicationLetter")}
-                className="text-red-500 hover:text-red-700"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      <UploadBox
+        id="application-letter-upload"
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={handleApplicationLetterUpload}
+        label="Click to upload application letter"
+        subtitle="PDF, JPG, PNG up to 10MB"
+        file={applicationLetterFile}
+        onRemove={() => removeFile("applicationLetter")}
+        statusBadge={
+          formErrors.applicationLetter
+            ? "Error"
+            : applicationLetterFile
+            ? "Uploaded"
+            : ""
+        }
+        variant={formErrors.applicationLetter ? "error" : "neutral"}
+      />
     </div>
   );
 
   const renderDocuments = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">
           Upload Required Documents
         </h2>
-        <p className="text-gray-600">
+        <p className="text-sm text-gray-600 mt-1">
           Please upload all required documents for your application
         </p>
       </div>
 
-      {/* Upload status */}
-      {uploadStatus && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-          <span className="text-sm font-medium">{uploadStatus}</span>
-        </div>
-      )}
-
       {/* Error display */}
       {formErrors.documents && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
           <span className="text-sm">{formErrors.documents}</span>
         </div>
       )}
 
       <div className="space-y-4">
-        {requiredDocuments.map((docType) => (
-          <div
-            key={docType.type}
-            className="border rounded-lg p-4 border-gray-200"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-gray-700 flex items-center space-x-2">
-                <span>
-                  {docType.label}{" "}
-                  {docType.required && <span className="text-red-500">*</span>}
-                </span>
-              </label>
-              <span
-                className={`text-xs px-2 py-1 rounded ${
-                  documentFiles.some((doc) => doc.type === docType.type)
-                    ? "bg-green-100 text-green-800"
-                    : docType.required
-                    ? "bg-red-100 text-red-800"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {documentFiles.some((doc) => doc.type === docType.type)
-                  ? "Uploaded"
-                  : docType.required
-                  ? "Required"
-                  : "Optional"}
-              </span>
-            </div>
+        {requiredDocuments.map((docType) => {
+          const uploadedCount = documentFiles.filter(
+            (doc) => doc.type === docType.type
+          ).length;
 
-            <div className="border-2 border-dashed rounded-lg p-4 text-center border-gray-300">
-              <input
-                type="file"
+          return (
+            <div key={docType.type}>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                  <span>
+                    {docType.label}
+                    {docType.required && (
+                      <span className="text-red-500">*</span>
+                    )}
+                  </span>
+                </label>
+                <span
+                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                    uploadedCount > 0
+                      ? "bg-green-100 text-green-800"
+                      : docType.required
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {uploadedCount > 0
+                    ? `Uploaded (${uploadedCount})`
+                    : docType.required
+                    ? "Required"
+                    : "Optional"}
+                </span>
+              </div>
+
+              <UploadBox
                 id={`doc-${docType.type}`}
                 accept=".pdf,.jpg,.jpeg,.png"
                 onChange={(e) => handleDocumentUpload(e, docType.type)}
-                className="hidden"
-                multiple
+                label={`Click to upload ${docType.label}`}
+                subtitle="PDF, JPG, PNG up to 10MB"
+                files={documentFiles.filter((doc) => doc.type === docType.type)}
+                onRemove={(index) => {
+                  const indices = documentFiles.reduce((acc, doc, i) => {
+                    if (doc.type === docType.type) acc.push(i);
+                    return acc;
+                  }, []);
+                  const toRemoveIndex = indices[index];
+                  removeFile("documents", toRemoveIndex);
+                }}
+                statusBadge={
+                  uploadedCount > 0
+                    ? "Uploaded"
+                    : docType.required
+                    ? "Required"
+                    : "Optional"
+                }
+                variant="neutral"
               />
-              <label
-                htmlFor={`doc-${docType.type}`}
-                className="cursor-pointer flex flex-col items-center"
-              >
-                <svg
-                  className="w-8 h-8 text-gray-400 mb-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
-                <span className="text-sm text-gray-600">
-                  Click to upload {docType.label.toLowerCase()}
-                </span>
-                <span className="text-xs text-gray-500 mt-1">
-                  PDF, JPG, PNG up to 10MB
-                </span>
-              </label>
             </div>
-
-            {/* Show uploaded files for this document type */}
-            {documentFiles
-              .filter((doc) => doc.type === docType.type)
-              .map((doc, index) => {
-                const globalIndex = documentFiles.indexOf(doc);
-                return (
-                  <div
-                    key={globalIndex}
-                    className="flex items-center justify-between bg-gray-50 p-3 rounded-md mt-2"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-green-600"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {doc.name}
-                        </p>
-                        <p className="text-xs text-gray-500">{doc.size}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile("documents", globalIndex)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                );
-              })}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
