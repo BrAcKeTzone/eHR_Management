@@ -22,6 +22,20 @@ export interface NotificationData {
 }
 
 class NotificationService {
+  // Helper to return applicant's full name
+  private getApplicantFullName(applicant: User) {
+    return `${applicant.firstName} ${applicant.lastName || ""}`.trim();
+  }
+
+  // Helper to return a program/name value for the application if present
+  private getApplicationProgram(application: any) {
+    return (
+      application?.program ||
+      application?.position ||
+      application?.subjectSpecialization ||
+      ""
+    );
+  }
   // Save notification to database for audit trail
   private async saveNotification(data: NotificationData): Promise<void> {
     try {
@@ -63,17 +77,17 @@ class NotificationService {
   ): Promise<void> {
     const subject =
       "Application Submitted Successfully - BCFI Teacher Application";
+    const applicantFullName = this.getApplicantFullName(applicant);
+    const programName = this.getApplicationProgram(application);
     const message = `
-Dear ${applicant.name},
+Dear ${applicantFullName},
 
-Thank you for submitting your teacher application for the ${
-      application.program
-    } program at Blancia College Foundation Inc.
+Thank you for submitting your teacher application for the ${programName} program at Blancia College Foundation Inc.
 
 Application Details:
 - Application ID: ${application.id}
 - Attempt Number: ${application.attemptNumber}
-- Program: ${application.program}
+- Program: ${programName}
 - Submission Date: ${application.createdAt.toLocaleDateString()}
 - Status: Pending Review
 
@@ -105,24 +119,26 @@ Blancia College Foundation Inc.
     const hrEmails = await this.getHREmails();
 
     const subject = "New Teacher Application Submitted - Action Required";
+    const applicantFullName = this.getApplicantFullName(applicant);
+    const programName = this.getApplicationProgram(application);
     const message = `
-A new teacher application has been submitted and requires your review.
+  A new teacher application has been submitted and requires your review.
 
-Applicant Details:
-- Name: ${applicant.name}
-- Email: ${applicant.email}
-- Phone: ${applicant.phone || "Not provided"}
+  Applicant Details:
+  - Name: ${applicantFullName}
+  - Email: ${applicant.email}
+  - Phone: ${applicant.phone || "Not provided"}
 
-Application Details:
-- Application ID: ${application.id}
-- Attempt Number: ${application.attemptNumber}
-- Program: ${application.program}
-- Submission Date: ${application.createdAt.toLocaleDateString()}
+  Application Details:
+  - Application ID: ${application.id}
+  - Attempt Number: ${application.attemptNumber}
+  - Program: ${programName}
+  - Submission Date: ${application.createdAt.toLocaleDateString()}
 
-Please log into the HR portal to review this application and take appropriate action.
+  Please log into the HR portal to review this application and take appropriate action.
 
-Best regards,
-BCFI Application System
+  Best regards,
+  BCFI Application System
     `;
 
     // Send to all HR users
@@ -143,16 +159,16 @@ BCFI Application System
     applicant: User
   ): Promise<void> {
     const subject = "Application Approved - Teaching Demo Scheduling - BCFI";
+    const applicantFullName = this.getApplicantFullName(applicant);
+    const programName = this.getApplicationProgram(application);
     const message = `
-Dear ${applicant.name},
+  Dear ${applicantFullName},
 
-Congratulations! Your teacher application for the ${
-      application.program
-    } program has been approved.
+  Congratulations! Your teacher application for the ${programName} program has been approved.
 
 Application Details:
 - Application ID: ${application.id}
-- Program: ${application.program}
+- Program: ${programName}
 - Approval Date: ${new Date().toLocaleDateString()}
 
 Next Steps:
@@ -184,18 +200,18 @@ Blancia College Foundation Inc.
     applicant: User
   ): Promise<void> {
     const subject = "Application Status Update - BCFI Teacher Application";
+    const applicantFullName = this.getApplicantFullName(applicant);
+    const programName = this.getApplicationProgram(application);
     const message = `
-Dear ${applicant.name},
+  Dear ${applicantFullName},
 
-Thank you for your interest in the teaching position for the ${
-      application.program
-    } program at Blancia College Foundation Inc.
+  Thank you for your interest in the teaching position for the ${programName} program at Blancia College Foundation Inc.
 
 After careful review of your application, we regret to inform you that we will not be moving forward with your application at this time.
 
 Application Details:
 - Application ID: ${application.id}
-- Program: ${application.program}
+- Program: ${programName}
 - Review Date: ${new Date().toLocaleDateString()}
 
 ${application.hrNotes ? `\nFeedback: ${application.hrNotes}` : ""}
@@ -233,15 +249,17 @@ Blancia College Foundation Inc.
     const demoTime = application.demoSchedule.toLocaleTimeString();
 
     const subject = "Teaching Demo Scheduled - BCFI Teacher Application";
+    const applicantFullName = this.getApplicantFullName(applicant);
+    const programName = this.getApplicationProgram(application);
     const message = `
-Dear ${applicant.name},
+  Dear ${applicantFullName},
 
-Your teaching demonstration has been scheduled for your ${application.program} program application.
+  Your teaching demonstration has been scheduled for your ${programName} program application.
 
 Demo Details:
 - Date: ${demoDate}
 - Time: ${demoTime}
-- Program: ${application.program}
+- Program: ${programName}
 - Application ID: ${application.id}
 
 Important Instructions:
@@ -280,6 +298,8 @@ Blancia College Foundation Inc.
     }
 
     const subject = `Teaching Demo Results - BCFI Teacher Application`;
+    const applicantFullName = this.getApplicantFullName(applicant);
+    const programName = this.getApplicationProgram(application);
     const resultText =
       application.result === "PASS"
         ? "Congratulations! You have passed"
@@ -298,11 +318,9 @@ Blancia College Foundation Inc.
     }
 
     const message = `
-Dear ${applicant.name},
+  Dear ${applicantFullName},
 
-Your teaching demonstration for the ${
-      application.program
-    } program has been evaluated.
+  Your teaching demonstration for the ${programName} program has been evaluated.
 
 ${resultText} the teaching demonstration evaluation.
 
