@@ -139,16 +139,25 @@ const Navbar = ({ onMenuClick }) => {
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className={`w-10 h-10 rounded-full text-white font-medium text-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
-                    user?.role === "HR"
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "bg-green-600 hover:bg-green-700"
+                  className={`w-10 h-10 rounded-full font-medium text-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 overflow-hidden ${
+                    !user?.profilePicture &&
+                    (user?.role === "HR"
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-green-600 hover:bg-green-700 text-white")
                   }`}
                   title={`${user?.firstName} ${
                     user?.lastName
                   } (${getRoleDisplayName(user?.role)})`}
                 >
-                  {getUserInitials(user?.firstName, user?.lastName)}
+                  {user?.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={`${user.firstName} ${user.lastName}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    getUserInitials(user?.firstName, user?.lastName)
+                  )}
                 </button>
                 {/* Online status indicator */}
                 <div className="absolute -bottom-0 -right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>

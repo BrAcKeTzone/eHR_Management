@@ -180,3 +180,40 @@ export const getUserStats = asyncHandler(
       );
   }
 );
+
+// Upload profile picture
+export const uploadProfilePicture = asyncHandler(
+  async (req: Request, res: Response) => {
+    const requestingUser = (req as any).user;
+    const file = (req as any).file;
+
+    if (!file) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "No file uploaded"));
+    }
+
+    const result = await usersService.updateProfilePicture(
+      requestingUser.id,
+      file
+    );
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, result, "Profile picture updated successfully")
+      );
+  }
+);
+
+// Delete profile picture
+export const deleteProfilePicture = asyncHandler(
+  async (req: Request, res: Response) => {
+    const requestingUser = (req as any).user;
+    const result = await usersService.deleteProfilePicture(requestingUser.id);
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, result, "Profile picture deleted successfully")
+      );
+  }
+);

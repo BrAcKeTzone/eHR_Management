@@ -130,6 +130,8 @@ export const getUserById = async (
       lastName: true,
       phone: true,
       role: true,
+      profilePicture: true,
+      profilePicturePublicId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -502,4 +504,97 @@ export const checkEmailExists = async (email: string): Promise<boolean> => {
     where: { email },
   });
   return !!user;
+};
+
+// Update profile picture
+export const updateProfilePicture = async (
+  userId: number,
+  file: any
+): Promise<Omit<User, "password">> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Delete old profile picture from Cloudinary if exists
+  if (user.profilePicturePublicId) {
+    try {
+      const cloudinary = (await import("../../../configs/cloudinary")).default;
+      await cloudinary.uploader.destroy(user.profilePicturePublicId);
+    } catch (error) {
+      console.error("Error deleting old profile picture:", error);
+    }
+  }
+
+  // Update user with new profile picture
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      profilePicture: file.path || file.url,
+      profilePicturePublicId: file.filename || file.public_id || "",
+    },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      role: true,
+      profilePicture: true,
+      profilePicturePublicId: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return updatedUser;
+};
+
+// Delete profile picture
+export const deleteProfilePicture = async (
+  userId: number
+): Promise<Omit<User, "password">> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Delete profile picture from Cloudinary if exists
+  if (user.profilePicturePublicId) {
+    try {
+      const cloudinary = (await import("../../../configs/cloudinary")).default;
+      await cloudinary.uploader.destroy(user.profilePicturePublicId);
+    } catch (error) {
+      console.error("Error deleting profile picture:", error);
+    }
+  }
+
+  // Update user to remove profile picture
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      profilePicture: null,
+      profilePicturePublicId: null,
+    },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      role: true,
+      profilePicture: true,
+      profilePicturePublicId: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return updatedUser;
 };

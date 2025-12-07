@@ -31,13 +31,15 @@ enum ApplicationResult {
 
 // AUTHENTICATION & USER MANAGEMENT
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  phone     String?
-  role      UserRole @default(APPLICANT)
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  password        String
+  firstName       String
+  lastName        String
+  phone           String?
+  role            UserRole @default(APPLICANT)
+  profilePicture  String?  // URL to profile picture
+  profilePicturePublicId String? // Cloudinary public ID for deletion
 
   // Applicant relations
   applications Application[]

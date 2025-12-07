@@ -97,6 +97,29 @@ export const userApi = {
     );
     return response.data;
   },
+
+  // Upload profile picture
+  uploadProfilePicture: async (file) => {
+    const formData = new FormData();
+    formData.append("profilePicture", file);
+
+    const response = await fetchClient.post(
+      `${API_BASE}/me/profile-picture`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
+
+  // Delete profile picture
+  deleteProfilePicture: async () => {
+    const response = await fetchClient.delete(`${API_BASE}/me/profile-picture`);
+    return response.data;
+  },
 };
 
 export default userApi;
