@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApplicationStore } from "../../store/applicationStore";
 import { applicationApi } from "../../api/applicationApi";
 import DashboardCard from "../../components/DashboardCard";
@@ -46,17 +47,33 @@ const ApplicationReview = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   const handleDecision = async () => {
     if (!selectedApplication || !decision) return;
 
     try {
-      await updateApplicationStatus(selectedApplication.id, decision, reason);
+      const res = await updateApplicationStatus(
+        selectedApplication.id,
+        decision,
+        reason
+      );
+
       setShowDecisionModal(false);
       setSelectedApplication(null);
       setDecision("");
       setReason("");
       // Refresh applications
       getAllApplications(filters);
+
+      // Navigate to scheduling page after approval - pass application id via query param
+      if (
+        decision === APPLICATION_STATUS.APPROVED ||
+        decision.toLowerCase() === "approved"
+      ) {
+        const appId = res?.application?.id || selectedApplication.id;
+        navigate(`/hr/scheduling?applicationId=${appId}`);
+      }
     } catch (error) {
       console.error("Failed to update application status:", error);
     }

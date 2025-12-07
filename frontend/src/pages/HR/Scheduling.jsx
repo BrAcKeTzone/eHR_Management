@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useApplicationStore } from "../../store/applicationStore";
 import { useScheduleStore } from "../../store/scheduleStore";
 import DashboardCard from "../../components/DashboardCard";
@@ -49,6 +50,23 @@ const Scheduling = () => {
     // Load approved applications that need scheduling
     getAllApplications({ status: APPLICATION_STATUS.APPROVED });
   }, [getAllApplications]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const applicationId = searchParams.get("applicationId");
+    if (!applicationId) return;
+
+    // If applications are loaded, find the application and open schedule modal
+    const app = applications?.find(
+      (a) => String(a.id) === String(applicationId)
+    );
+    if (app) {
+      handleScheduleDemo(app);
+      // Clear the query param after opening
+      setSearchParams({});
+    }
+  }, [applications, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (selectedDate) {
