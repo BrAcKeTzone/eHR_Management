@@ -102,17 +102,31 @@ export const useApplicationStore = create((set, get) => ({
         reason
       );
 
+      // If the API did not include applicant details, fetch the full application
+      // as getAll and getById endpoints return the applicant object.
+      let updatedApplication = result.application;
+      if (!updatedApplication.applicant) {
+        try {
+          const full = await applicationApi.getById(applicationId);
+          updatedApplication = full.application || updatedApplication;
+        } catch (e) {
+          // If it fails, fall back to the result from updateStatus
+          console.warn("Could not fetch full application after update:", e);
+          updatedApplication = result.application;
+        }
+      }
+
       // Update the applications array with the updated application
       const { applications } = get();
       const updatedApplications = applications.map((app) =>
-        app.id === applicationId ? result.application : app
+        app.id === applicationId ? updatedApplication : app
       );
 
       // Update current application if it matches
       const { currentApplication } = get();
       let updatedCurrentApp = currentApplication;
       if (currentApplication?.id === applicationId) {
-        updatedCurrentApp = result.application;
+        updatedCurrentApp = updatedApplication;
       }
 
       set({
@@ -122,7 +136,7 @@ export const useApplicationStore = create((set, get) => ({
         error: null,
       });
 
-      return { success: true, application: result.application };
+      return { success: true, application: updatedApplication };
     } catch (error) {
       console.error("updateApplicationStatus error:", error);
       set({

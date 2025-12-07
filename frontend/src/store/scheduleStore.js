@@ -28,9 +28,8 @@ export const useScheduleStore = create((set, get) => ({
       const response = await scheduleApi.setDemoSchedule(applicationId, {
         demoSchedule: demoScheduleDateTime,
         demoLocation: scheduleData.location || undefined,
-        demoDuration: scheduleData.duration
-          ? parseInt(scheduleData.duration)
-          : undefined,
+        // Enforce duration to 60 minutes
+        demoDuration: 60,
         demoNotes: scheduleData.notes || undefined,
       });
 
@@ -61,9 +60,8 @@ export const useScheduleStore = create((set, get) => ({
       const response = await scheduleApi.updateDemoSchedule(applicationId, {
         demoSchedule: demoScheduleDateTime,
         demoLocation: scheduleData.location || undefined,
-        demoDuration: scheduleData.duration
-          ? parseInt(scheduleData.duration)
-          : undefined,
+        // Enforce duration to 60 minutes
+        demoDuration: 60,
         demoNotes: scheduleData.notes || undefined,
       });
 

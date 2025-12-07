@@ -349,10 +349,12 @@ class ApplicationService {
       );
     }
 
+    // Enforce demo duration to 60 minutes
+    const enforcedDuration = 60;
     const updatedApplication = await this.updateApplication(id, {
       demoSchedule,
       demoLocation,
-      demoDuration,
+      demoDuration: enforcedDuration,
       demoNotes,
     });
 

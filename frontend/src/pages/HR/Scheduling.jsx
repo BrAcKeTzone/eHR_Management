@@ -14,6 +14,7 @@ const Scheduling = () => {
   const {
     applications,
     getAllApplications,
+    getApplicationById,
     loading: appLoading,
     error: appError,
   } = useApplicationStore();
@@ -62,9 +63,27 @@ const Scheduling = () => {
       (a) => String(a.id) === String(applicationId)
     );
     if (app) {
-      handleScheduleDemo(app);
-      // Clear the query param after opening
-      setSearchParams({});
+      // If applicant details missing, fetch by id for complete object
+      if (!app.applicant) {
+        getApplicationById(applicationId)
+          .then(({ application }) => {
+            if (application) {
+              handleScheduleDemo(application);
+            }
+          })
+          .catch((e) => {
+            console.warn("Failed to fetch application details:", e);
+            // Fallback to opening with provided app (may be partial)
+            handleScheduleDemo(app);
+          })
+          .finally(() => {
+            setSearchParams({});
+          });
+      } else {
+        handleScheduleDemo(app);
+        // Clear the query param after opening
+        setSearchParams({});
+      }
     }
   }, [applications, searchParams, setSearchParams]);
 
@@ -407,21 +426,9 @@ const Scheduling = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Duration (minutes)
                 </label>
-                <select
-                  value={scheduleData.duration}
-                  onChange={(e) =>
-                    setScheduleData({
-                      ...scheduleData,
-                      duration: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="30">30 minutes</option>
-                  <option value="45">45 minutes</option>
-                  <option value="60">60 minutes</option>
-                  <option value="90">90 minutes</option>
-                </select>
+                <p className="px-3 py-2 border border-gray-100 rounded-md text-sm text-gray-700">
+                  60 minutes
+                </p>
               </div>
             </div>
 
