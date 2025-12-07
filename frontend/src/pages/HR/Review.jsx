@@ -321,10 +321,10 @@ const ApplicationReview = () => {
       {selectedApplication && !showDecisionModal && (
         <Modal
           isOpen={true}
-          // Disable closing and hide close button to make this modal read-only
-          onClose={() => {}}
-          showCloseButton={false}
-          closeOnOverlayClick={false}
+          // Enable close button and overlay/Escape behavior to match other modals
+          onClose={() => setSelectedApplication(null)}
+          showCloseButton={true}
+          closeOnOverlayClick={true}
           title={`Application Details - ${selectedApplication.applicant?.firstName} ${selectedApplication.applicant?.lastName}`}
           size="large"
         >
