@@ -20,8 +20,12 @@ export const applicationApi = {
         }
       });
 
-      // Add document files
+      // Add document files with type metadata
       if (applicationData.documents && applicationData.documents.length > 0) {
+        // Create a mapping of document types
+        const documentTypes = applicationData.documents.map((doc) => doc.type);
+        formData.append("documentTypes", JSON.stringify(documentTypes));
+
         applicationData.documents.forEach((doc, index) => {
           if (doc.file) {
             console.log(
@@ -30,7 +34,7 @@ export const applicationApi = {
               "Size:",
               doc.file.size,
               "Type:",
-              doc.file.type
+              doc.type
             );
             formData.append("documents", doc.file);
           }
@@ -210,9 +214,10 @@ export const applicationApi = {
       }
 
       const document = documents[documentIndex];
+      // Use formatted fileName as primary, fallback to originalName if not available
       const filename =
-        document.originalName ||
         document.fileName ||
+        document.originalName ||
         `document-${documentIndex + 1}`;
 
       // Download from Cloudinary URL

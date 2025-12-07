@@ -551,8 +551,8 @@ const ApplicationReview = () => {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-medium text-gray-900 truncate">
-                                    {doc.originalName ||
-                                      doc.fileName ||
+                                    {doc.fileName ||
+                                      doc.originalName ||
                                       `Document ${index + 1}`}
                                   </p>
                                   <p className="text-xs text-gray-500">

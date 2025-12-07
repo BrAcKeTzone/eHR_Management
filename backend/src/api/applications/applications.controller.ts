@@ -23,6 +23,9 @@ export const createApplication = asyncHandler(
     const {
       program,
       documents: frontendDocuments,
+      documentTypes, // Exclude this - only used for upload middleware
+      applicantFirstName, // Exclude this - only used for upload middleware
+      applicantLastName, // Exclude this - only used for upload middleware
       ...applicationData
     } = req.body;
     const applicantId = req.user!.id;
@@ -40,21 +43,28 @@ export const createApplication = asyncHandler(
         console.log("File details:", {
           originalname: file.originalname,
           filename: file.filename,
-          public_id: file.public_id,
-          secure_url: file.secure_url,
           path: file.path,
           size: file.size,
           mimetype: file.mimetype,
-          format: file.format,
         });
+
+        // Extract the formatted filename from the path
+        // file.filename contains the full public_id like "hr-applications/Resume_ManiwangJohnPaul_2025-12-07T15-08-51-693Z"
+        const formattedFileName = file.filename
+          ? file.filename.split("/").pop() || file.originalname
+          : file.originalname;
+
+        // Get file extension from original filename
+        const extension = file.originalname.split(".").pop() || "pdf";
+        const fullFormattedName = `${formattedFileName}.${extension}`;
+
         return {
           originalName: file.originalname,
-          fileName: file.filename || file.public_id || file.originalname, // Fallback chain
-          url: file.secure_url || file.path || file.url, // Cloudinary provides secure_url
-          publicId: file.public_id || "", // Cloudinary public ID for future operations
+          fileName: fullFormattedName, // Use formatted name with extension
+          url: file.path || file.url, // Cloudinary URL
+          publicId: file.filename || "", // Full public_id for Cloudinary operations
           size: file.size || 0,
           mimetype: file.mimetype || "application/octet-stream",
-          format: file.format || "",
           uploadedAt: new Date().toISOString(),
         };
       });

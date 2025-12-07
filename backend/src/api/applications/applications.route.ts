@@ -18,6 +18,7 @@ import authMiddleware from "../../middlewares/auth.middleware";
 import {
   uploadDocuments,
   uploadApplicationDocuments,
+  injectApplicantInfo,
   handleUploadError,
 } from "../../middlewares/upload.middleware";
 
@@ -29,6 +30,7 @@ router.use(authMiddleware);
 // Applicant routes
 router.post(
   "/",
+  injectApplicantInfo,
   uploadApplicationDocuments,
   handleUploadError,
   createApplication
