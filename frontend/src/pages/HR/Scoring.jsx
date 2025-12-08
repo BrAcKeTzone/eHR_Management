@@ -123,15 +123,7 @@ const Scoring = () => {
         </div>
       ),
     },
-    {
-      header: "Program",
-      accessor: "program",
-      cell: (row) => (
-        <div className="text-sm">
-          <p className="font-medium">{row.program}</p>
-        </div>
-      ),
-    },
+
     {
       header: "Demo Schedule",
       accessor: "demoSchedule",
@@ -307,9 +299,6 @@ const Scoring = () => {
                       <p className="text-sm text-gray-500 break-all">
                         {app.applicant?.email}
                       </p>
-                      <p className="text-sm font-medium break-words">
-                        {app.program}
-                      </p>
                     </div>
                   </div>
 
@@ -400,12 +389,6 @@ const Scoring = () => {
                 DEMONSTRATION DETAILS
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Program:</span>
-                  <span className="ml-2 font-medium break-words">
-                    {selectedApplication.program}
-                  </span>
-                </div>
                 <div>
                   <span className="text-gray-500">Demo Date:</span>
                   <span className="ml-2 break-words">
