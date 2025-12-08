@@ -28,13 +28,13 @@ export const uploadFile = asyncHandler(
 
     // Determine the upload folder based on the request type
     const uploadType = (req.query.type as string) || "general";
-    let folder = "bcfi_hr/general";
+    let folder = "hr-applications/applicants-attachments";
     let resourceType: "image" | "raw" | "auto" = "auto";
 
     // Set the appropriate folder based on upload type
     switch (uploadType) {
       case "application":
-        folder = "bcfi_hr/applications";
+        folder = "hr-applications/applicants-attachments";
         resourceType = "auto";
         break;
       case "id":
@@ -42,11 +42,11 @@ export const uploadFile = asyncHandler(
         resourceType = "image";
         break;
       case "document":
-        folder = "bcfi_hr/documents";
+        folder = "hr-applications/applicants-attachments";
         resourceType = "raw";
         break;
       case "profile":
-        folder = "bcfi_hr/profiles";
+        folder = "hr-applications/profile-pictures";
         resourceType = "image";
         break;
       default:
@@ -107,16 +107,16 @@ export const uploadMultipleFiles = asyncHandler(
 
     // Determine the upload folder based on the request type
     const uploadType = (req.query.type as string) || "document";
-    let folder = "bcfi_hr/documents";
+    let folder = "hr-applications/applicants-attachments";
     let resourceType: "image" | "raw" | "auto" = "auto";
 
     switch (uploadType) {
       case "application":
-        folder = "bcfi_hr/applications";
+        folder = "hr-applications/applicants-attachments";
         resourceType = "auto";
         break;
       case "document":
-        folder = "bcfi_hr/documents";
+        folder = "hr-applications/applicants-attachments";
         resourceType = "raw";
         break;
       default:
@@ -210,11 +210,11 @@ export const uploadBase64Image = asyncHandler(
 
     // Determine the upload folder based on the request type
     const uploadType = (req.query.type as string) || "profile";
-    let folder = "bcfi_hr/profiles";
+    let folder = "hr-applications/profile-pictures";
 
     switch (uploadType) {
       case "profile":
-        folder = "bcfi_hr/profiles";
+        folder = "hr-applications/profile-pictures";
         break;
       case "id":
         folder = "bcfi_hr/valid_ids";

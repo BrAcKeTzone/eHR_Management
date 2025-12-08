@@ -21,7 +21,7 @@ const profilePictureStorage = new CloudinaryStorage({
     const timestamp = Date.now();
     const userId = req.user?.id || "unknown";
     return {
-      folder: "profile-pictures",
+      folder: "hr-applications/profile-pictures",
       public_id: `profile_${userId}_${timestamp}`,
       resource_type: "image",
       allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],

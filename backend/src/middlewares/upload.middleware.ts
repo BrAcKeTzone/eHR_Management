@@ -127,7 +127,7 @@ const storage = new CloudinaryStorage({
     });
 
     return {
-      folder: "hr-applications", // Folder in Cloudinary
+      folder: "hr-applications/applicants-attachments", // Folder in Cloudinary for applicant documents
       public_id: formattedName,
       resource_type: resourceType, // Use determined resource type instead of auto
       // Don't specify allowed_formats - let Cloudinary handle all formats for the resource type
