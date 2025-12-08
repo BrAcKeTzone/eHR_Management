@@ -18,6 +18,8 @@ import ApplicationReview from "../pages/HR/Review";
 import ApplicationsManagement from "../pages/HR/ApplicationsManagement";
 import Scheduling from "../pages/HR/Scheduling";
 import Scoring from "../pages/HR/Scoring";
+import InterviewScheduling from "../pages/HR/InterviewScheduling";
+import InterviewRating from "../pages/HR/InterviewRating";
 import Reports from "../pages/HR/Reports";
 import UserManagement from "../pages/HR/UserManagement";
 
@@ -164,6 +166,8 @@ const AppRoutes = () => {
         <Route path="applications" element={<ApplicationsManagement />} />
         <Route path="scheduling" element={<Scheduling />} />
         <Route path="scoring" element={<Scoring />} />
+        <Route path="interview-scheduling" element={<InterviewScheduling />} />
+        <Route path="interview-rating" element={<InterviewRating />} />
         <Route path="reports" element={<Reports />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="profile" element={<ProfilePage />} />
