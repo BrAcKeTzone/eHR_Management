@@ -41,6 +41,7 @@ export interface UpdateApplicationData {
   totalScore?: number;
   result?: "PASS" | "FAIL";
   interviewEligible?: boolean;
+  interviewSchedule?: Date;
 }
 
 export interface ApplicationWithApplicant extends Application {
@@ -63,6 +64,15 @@ function formatApplicationForFrontend(app: any) {
     hours = hours % 12 || 12; // Convert 0 to 12 for midnight, 13-23 to 1-11
 
     formattedApp.demoTime = `${hours}:${minutes} ${period}`;
+  }
+
+  if (app.interviewSchedule) {
+    const interviewDate = new Date(app.interviewSchedule);
+    let hours = interviewDate.getHours();
+    const minutes = interviewDate.getMinutes().toString().padStart(2, "0");
+    const period = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    formattedApp.interviewTime = `${hours}:${minutes} ${period}`;
   }
 
   return formattedApp;
@@ -418,6 +428,62 @@ class ApplicationService {
             console.error("Failed to send demo schedule notification:", error)
           );
       }
+    }
+
+    return updatedApplication;
+  }
+
+  async scheduleInterview(
+    id: number,
+    interviewSchedule: Date
+  ): Promise<Application> {
+    const application = await prisma.application.findUnique({ where: { id } });
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    // Require application to be interviewEligible or have passing score
+    const appAny = application as any;
+    const eligible =
+      appAny.interviewEligible ||
+      (typeof application.totalScore === "number" &&
+        application.totalScore >= 75);
+    if (!eligible) {
+      throw new ApiError(
+        400,
+        "Application is not eligible for interview scheduling"
+      );
+    }
+
+    const interviewDate = new Date(interviewSchedule);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    interviewDate.setHours(0, 0, 0, 0);
+
+    const timeDifference = interviewDate.getTime() - today.getTime();
+    const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+    if (daysDifference < 1) {
+      throw new ApiError(
+        400,
+        "Interview date must be at least 1 day in the future"
+      );
+    }
+
+    const updatedApplication = await this.updateApplication(id, {
+      interviewSchedule,
+    } as any);
+
+    // Notify applicant about interview schedule
+    const applicant = await prisma.user.findUnique({
+      where: { id: updatedApplication.applicantId },
+    });
+    if (applicant) {
+      notificationService
+        .sendInterviewScheduleNotification(updatedApplication, applicant)
+        .catch((err: any) =>
+          console.error("Failed to send interview schedule notification:", err)
+        );
     }
 
     return updatedApplication;

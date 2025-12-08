@@ -13,6 +13,7 @@ const ApplicationsManagement = () => {
     applications,
     getAllApplications,
     getApplicationHistory,
+    getApplicationById,
     updateApplicationStatus,
     loading,
     error,
@@ -99,8 +100,32 @@ const ApplicationsManagement = () => {
 
   const handleViewHistory = async (application) => {
     try {
-      const result = await getApplicationHistory(application.applicant?.email);
-      // Extract applications array from the result object
+      // Try getting the applicant email from the passed application if present
+      let applicantEmail = application?.applicant?.email;
+
+      // If email is missing, fetch the full application by ID to get applicant details
+      if (!applicantEmail) {
+        try {
+          const full = await getApplicationById(application.id);
+          applicantEmail = full?.application?.applicant?.email;
+        } catch (err) {
+          console.warn(
+            "Could not fetch full application to get applicant email:",
+            err
+          );
+        }
+      }
+
+      if (!applicantEmail) {
+        // If still no email, display an empty history and open the modal with no data
+        console.warn("Applicant email not available for this application");
+        setApplicationHistory([]);
+        setSelectedApplication(application);
+        setShowHistoryModal(true);
+        return;
+      }
+
+      const result = await getApplicationHistory(applicantEmail);
       setApplicationHistory(result?.applications || []);
       setSelectedApplication(application);
       setShowHistoryModal(true);

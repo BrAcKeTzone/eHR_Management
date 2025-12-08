@@ -23,9 +23,9 @@ export const createApplication = asyncHandler(
     const {
       program,
       documents: frontendDocuments,
-      documentTypes, // Exclude this - only used for upload middleware
-      applicantFirstName, // Exclude this - only used for upload middleware
-      applicantLastName, // Exclude this - only used for upload middleware
+      documentTypes,
+      applicantFirstName,
+      applicantLastName,
       ...applicationData
     } = req.body;
     const applicantId = req.user!.id;
@@ -33,7 +33,6 @@ export const createApplication = asyncHandler(
     if (req.user!.role !== "APPLICANT") {
       throw new ApiError(403, "Only applicants can create applications");
     }
-
     // Handle uploaded files from Cloudinary
     let documentsJson = "[]";
     if (req.files && Array.isArray(req.files)) {
@@ -416,6 +415,31 @@ export const getApplicationDocuments = asyncHandler(
         { documents, applicationId: application.id },
         "Documents retrieved successfully"
       )
+    );
+  }
+);
+
+export const scheduleInterview = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!["HR", "ADMIN"].includes(req.user!.role)) {
+      throw new ApiError(403, "Only HR and Admin can schedule interviews");
+    }
+
+    const { id } = req.params;
+    const { interviewSchedule } = req.body;
+    const applicationId = parseInt(id);
+
+    if (!interviewSchedule) {
+      throw new ApiError(400, "Interview schedule date is required");
+    }
+
+    const application = await applicationService.scheduleInterview(
+      applicationId,
+      new Date(interviewSchedule)
+    );
+
+    res.json(
+      new ApiResponse(200, application, "Interview scheduled successfully")
     );
   }
 );

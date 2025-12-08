@@ -8,6 +8,7 @@ import {
   approveApplication,
   rejectApplication,
   scheduleDemo,
+  scheduleInterview,
   updateApplication,
   deleteApplication,
   completeApplication,
@@ -50,6 +51,7 @@ router.delete("/:id", deleteApplication);
 router.put("/:id/approve", approveApplication);
 router.put("/:id/reject", rejectApplication);
 router.put("/:id/schedule", scheduleDemo);
+router.put("/:id/interview", scheduleInterview);
 router.put("/:id/complete", completeApplication);
 
 export default router;

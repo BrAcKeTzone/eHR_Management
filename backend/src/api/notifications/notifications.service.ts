@@ -282,6 +282,48 @@ Blancia College Foundation Inc.
     });
   }
 
+  // Interview schedule notification
+  async sendInterviewScheduleNotification(
+    application: Application,
+    applicant: User
+  ): Promise<void> {
+    const appAny = application as any;
+    if (!appAny.interviewSchedule) {
+      throw new Error("Interview schedule not set");
+    }
+
+    const interviewDate = appAny.interviewSchedule.toLocaleDateString();
+    const interviewTime = appAny.interviewSchedule.toLocaleTimeString();
+
+    const subject = "Interview Scheduled - BCFI Teacher Application";
+    const applicantFullName = this.getApplicantFullName(applicant);
+    const programName = this.getApplicationProgram(application);
+    const message = `
+Dear ${applicantFullName},
+
+Your application for the ${programName} position has been scheduled for an interview.
+
+INTERVIEW DETAILS:
+- Date: ${interviewDate}
+- Time: ${interviewTime}
+- Application ID: ${application.id}
+
+Please be prepared and on time. If you need to reschedule, contact our HR department.
+
+Best regards,
+BCFI HR Team
+Blancia College Foundation Inc.
+    `;
+
+    await this.sendAndSaveNotification({
+      email: applicant.email,
+      subject,
+      message,
+      type: "schedule",
+      applicationId: application.id,
+    });
+  }
+
   // Demo reschedule notification with reason-specific content
   async sendDemoRescheduleNotification(
     application: Application,

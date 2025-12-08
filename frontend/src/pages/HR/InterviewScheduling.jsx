@@ -7,6 +7,8 @@ import Modal from "../../components/Modal";
 import Input from "../../components/Input";
 import { formatDate } from "../../utils/formatDate";
 import { useApplicationStore } from "../../store/applicationStore";
+import { useScheduleStore } from "../../store/scheduleStore";
+import { applicationApi } from "../../api/applicationApi";
 
 const InterviewScheduling = () => {
   const navigate = useNavigate();
@@ -20,6 +22,17 @@ const InterviewScheduling = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const { getAvailableSlots } = useScheduleStore();
+  const [selectedDate, setSelectedDate] = useState("");
+  const [availableSlots, setAvailableSlots] = useState([]);
+
+  const getMinimumDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  };
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
   useEffect(() => {
     // Fetch only interview-eligible applications (passed the demo with score >= 75)
     getAllApplications({ interviewEligible: true });
@@ -36,6 +49,24 @@ const InterviewScheduling = () => {
       setSelectedApplication(app);
       setShowModal(true);
       setSearchParams({});
+      if (app.interviewSchedule) {
+        const dt = new Date(app.interviewSchedule);
+        const dateString = dt.toISOString().split("T")[0];
+        setScheduleDate(dateString);
+        setSelectedDate(dateString);
+        getAvailableSlots(dateString)
+          .then(setAvailableSlots)
+          .catch(console.warn);
+        setScheduleTime(
+          `${dt.getHours().toString().padStart(2, "0")}:${dt
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`
+        );
+      } else {
+        setScheduleDate("");
+        setScheduleTime("");
+      }
     } else {
       (async () => {
         try {
@@ -45,6 +76,24 @@ const InterviewScheduling = () => {
             setSelectedApplication(appFromApi);
             setShowModal(true);
             setSearchParams({});
+            if (appFromApi.interviewSchedule) {
+              const dt = new Date(appFromApi.interviewSchedule);
+              const dateString = dt.toISOString().split("T")[0];
+              setScheduleDate(dateString);
+              setSelectedDate(dateString);
+              getAvailableSlots(dateString)
+                .then(setAvailableSlots)
+                .catch(console.warn);
+              setScheduleTime(
+                `${dt.getHours().toString().padStart(2, "0")}:${dt
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")}`
+              );
+            } else {
+              setScheduleDate("");
+              setScheduleTime("");
+            }
           }
         } catch (e) {
           // ignore
@@ -56,6 +105,25 @@ const InterviewScheduling = () => {
   const openScheduleModal = (app) => {
     setSelectedApplication(app);
     setShowModal(true);
+    // preselect date and fetch available slots if interview already scheduled
+    if (app?.interviewSchedule) {
+      const dt = new Date(app.interviewSchedule);
+      const dateString = dt.toISOString().split("T")[0];
+      setScheduleDate(dateString);
+      setScheduleTime(
+        `${dt.getHours().toString().padStart(2, "0")}:${dt
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`
+      );
+      setSelectedDate(dateString);
+      getAvailableSlots(dateString).then(setAvailableSlots).catch(console.warn);
+    } else {
+      setScheduleDate("");
+      setScheduleTime("");
+      setSelectedDate("");
+      setAvailableSlots([]);
+    }
   };
 
   const columns = [
@@ -208,21 +276,80 @@ const InterviewScheduling = () => {
           size="large"
         >
           <div className="space-y-4 sm:space-y-6">
-            {/* Keep a basic form for now - functionality to be implemented */}
+            {/* Applicant Info */}
+            <div className="bg-gray-50 p-3 sm:p-4 rounded-md">
+              <h4 className="font-medium text-gray-900 mb-2">
+                Applicant Details
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Email:</span>
+                  <span className="ml-2 break-all">
+                    {selectedApplication.applicant?.email}
+                  </span>
+                </div>
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Interview Date"
-                type="date"
-                value={""}
-                onChange={() => {}}
-                min={new Date().toISOString().split("T")[0]}
-              />
-              <Input
-                label="Interview Time"
-                type="time"
-                value={""}
-                onChange={() => {}}
-              />
+              <div>
+                <Input
+                  label="Interview Date"
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(e) => {
+                    setScheduleDate(e.target.value);
+                    setSelectedDate(e.target.value);
+                    // reset time if date changed
+                    setScheduleTime("");
+                    if (e.target.value) {
+                      getAvailableSlots(e.target.value)
+                        .then(setAvailableSlots)
+                        .catch(console.warn);
+                    } else {
+                      setAvailableSlots([]);
+                    }
+                  }}
+                  required
+                  min={getMinimumDate()}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Interview Time <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Select a time</option>
+                  {(() => {
+                    const slots = [];
+                    for (let hour = 8; hour <= 17; hour++) {
+                      for (let minute = 0; minute < 60; minute += 30) {
+                        const time = `${hour
+                          .toString()
+                          .padStart(2, "0")}:${minute
+                          .toString()
+                          .padStart(2, "0")}`;
+                        slots.push(time);
+                      }
+                    }
+                    return slots.map((time) => (
+                      <option
+                        key={time}
+                        value={time}
+                        disabled={availableSlots.includes(time)}
+                      >
+                        {time}{" "}
+                        {availableSlots.includes(time) && "(Unavailable)"}
+                      </option>
+                    ));
+                  })()}
+                </select>
+              </div>
             </div>
 
             <div className="flex justify-end pt-4 border-t">
@@ -236,8 +363,22 @@ const InterviewScheduling = () => {
                 Cancel
               </Button>
               <Button
-                onClick={() => {
-                  /* TODO: call API to set interview schedule */
+                onClick={async () => {
+                  if (!scheduleDate || !scheduleTime) return;
+                  try {
+                    const isoString = `${scheduleDate}T${scheduleTime}:00.000`;
+                    await applicationApi.scheduleInterview(
+                      selectedApplication.id,
+                      isoString
+                    );
+                    setShowModal(false);
+                    setSelectedApplication(null);
+                    // Refresh interview-scheduling list
+                    getAllApplications({ interviewEligible: true });
+                  } catch (err) {
+                    console.error(err);
+                    alert(err.message || "Failed to schedule interview");
+                  }
                 }}
                 variant="primary"
               >

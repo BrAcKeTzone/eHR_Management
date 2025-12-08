@@ -274,6 +274,24 @@ export const applicationApi = {
     }
   },
 
+  // Schedule interview for application (HR only)
+  scheduleInterview: async (applicationId, interviewSchedule) => {
+    try {
+      const response = await fetchClient.put(
+        `${API_BASE_URL}/applications/${applicationId}/interview`,
+        { interviewSchedule }
+      );
+      return { application: response.data.data };
+    } catch (error) {
+      console.error("Error scheduling interview:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to schedule interview";
+      throw new Error(message);
+    }
+  },
+
   // Submit for review (change status from draft to pending)
   submit: async (applicationId) => {
     try {
