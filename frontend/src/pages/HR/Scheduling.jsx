@@ -191,10 +191,10 @@ const Scheduling = () => {
       ),
     },
     {
-      header: "Approved Date",
-      accessor: "updatedAt",
+      header: "Submitted",
+      accessor: "createdAt",
       cell: (row) => (
-        <div className="text-sm text-gray-600">{formatDate(row.updatedAt)}</div>
+        <div className="text-sm text-gray-600">{formatDate(row.createdAt)}</div>
       ),
     },
     {
@@ -334,8 +334,8 @@ const Scheduling = () => {
 
                   <div className="grid grid-cols-1 gap-3 mb-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Approved:</span>
-                      <p className="font-medium">{formatDate(app.updatedAt)}</p>
+                      <span className="text-gray-500">Submitted:</span>
+                      <p className="font-medium">{formatDate(app.createdAt)}</p>
                     </div>
                     <div>
                       <span className="text-gray-500">Demo Schedule:</span>
