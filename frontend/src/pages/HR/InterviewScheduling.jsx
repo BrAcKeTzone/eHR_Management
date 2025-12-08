@@ -31,6 +31,17 @@ const InterviewScheduling = () => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split("T")[0];
   };
+
+  const getEffectiveMinDate = () => {
+    const minDate = getMinimumDate();
+    if (selectedApplication?.demoSchedule) {
+      const demoDate = new Date(selectedApplication.demoSchedule);
+      demoDate.setHours(0, 0, 0, 0);
+      const demoDateStr = demoDate.toISOString().split("T")[0];
+      return demoDateStr >= minDate ? demoDateStr : minDate;
+    }
+    return minDate;
+  };
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   useEffect(() => {
@@ -148,6 +159,26 @@ const InterviewScheduling = () => {
       ),
     },
     {
+      header: "Demo Schedule",
+      accessor: "demoSchedule",
+      cell: (row) => (
+        <div className="text-sm">
+          {row.demoSchedule ? (
+            <div>
+              <p className="font-medium text-gray-700">
+                {formatDate(row.demoSchedule)}
+              </p>
+              {row.demoTime && (
+                <p className="text-gray-600 font-medium">{row.demoTime}</p>
+              )}
+            </div>
+          ) : (
+            <span className="text-yellow-600 font-medium">Pending</span>
+          )}
+        </div>
+      ),
+    },
+    {
       header: "Actions",
       accessor: "actions",
       cell: (row) => (
@@ -231,6 +262,24 @@ const InterviewScheduling = () => {
                 </div>
                 <div className="grid grid-cols-1 gap-3 mb-4 text-sm">
                   <div>
+                    <span className="text-gray-500">Demo Schedule:</span>
+                    {app.demoSchedule ? (
+                      <div className="mt-1">
+                        <p className="font-medium text-green-600">Scheduled</p>
+                        <p className="text-gray-600">
+                          {formatDate(app.demoSchedule)}
+                        </p>
+                        {app.demoTime && (
+                          <p className="text-gray-600 font-medium">
+                            {app.demoTime}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-yellow-600 font-medium">Pending</p>
+                    )}
+                  </div>
+                  <div>
                     <span className="text-gray-500">Submitted:</span>
                     <p className="font-medium">{formatDate(app.createdAt)}</p>
                   </div>
@@ -310,7 +359,7 @@ const InterviewScheduling = () => {
                     }
                   }}
                   required
-                  min={getMinimumDate()}
+                  min={getEffectiveMinDate()}
                 />
               </div>
 
@@ -366,6 +415,26 @@ const InterviewScheduling = () => {
                 onClick={async () => {
                   if (!scheduleDate || !scheduleTime) return;
                   try {
+                    // Validate interview date not earlier than demo schedule (if demo exists)
+                    if (selectedApplication?.demoSchedule) {
+                      const demoDate = new Date(
+                        selectedApplication.demoSchedule
+                      );
+                      demoDate.setHours(0, 0, 0, 0);
+                      const interviewDt = new Date(
+                        `${scheduleDate}T${scheduleTime}:00.000`
+                      );
+                      interviewDt.setHours(0, 0, 0, 0);
+                      if (interviewDt.getTime() < demoDate.getTime()) {
+                        alert(
+                          `Interview date must be on or after the demo scheduled on ${formatDate(
+                            selectedApplication.demoSchedule
+                          )}`
+                        );
+                        return;
+                      }
+                    }
+
                     const isoString = `${scheduleDate}T${scheduleTime}:00.000`;
                     await applicationApi.scheduleInterview(
                       selectedApplication.id,

@@ -42,6 +42,7 @@ export interface UpdateApplicationData {
   result?: "PASS" | "FAIL";
   interviewEligible?: boolean;
   interviewSchedule?: Date;
+  interviewRescheduleCount?: number;
 }
 
 export interface ApplicationWithApplicant extends Application {
@@ -470,9 +471,34 @@ class ApplicationService {
       );
     }
 
-    const updatedApplication = await this.updateApplication(id, {
-      interviewSchedule,
-    } as any);
+    // If a demo is scheduled, interview date must be on/after demo date (date-only)
+    if (application.demoSchedule) {
+      const demoDate = new Date(application.demoSchedule as any);
+      demoDate.setHours(0, 0, 0, 0);
+      if (interviewDate.getTime() < demoDate.getTime()) {
+        throw new ApiError(
+          400,
+          "Interview date must be on or after the demo schedule date"
+        );
+      }
+    }
+
+    // Check reschedule limits - only allow 1 reschedule
+    const isReschedule = !!application.interviewSchedule;
+    const currentRescheduleCount = (application as any).interviewRescheduleCount || 0;
+    if (isReschedule && currentRescheduleCount >= 1) {
+      throw new ApiError(
+        400,
+        "This application has already been rescheduled once and cannot be rescheduled again."
+      );
+    }
+
+    const updateData: any = { interviewSchedule };
+    if (isReschedule) {
+      updateData.interviewRescheduleCount = currentRescheduleCount + 1;
+    }
+
+    const updatedApplication = await this.updateApplication(id, updateData as any);
 
     // Notify applicant about interview schedule
     const applicant = await prisma.user.findUnique({
