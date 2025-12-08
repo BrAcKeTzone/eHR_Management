@@ -74,10 +74,18 @@ const HRDashboard = () => {
         navigate("/hr/review");
         break;
       case "schedule":
-        navigate("/hr/scheduling");
+        navigate(
+          applicationId
+            ? `/hr/scheduling?applicationId=${applicationId}`
+            : "/hr/scheduling"
+        );
         break;
       case "scoring":
-        navigate("/hr/scoring");
+        navigate(
+          applicationId
+            ? `/hr/scoring?applicationId=${applicationId}`
+            : "/hr/scoring"
+        );
         break;
       case "reports":
         navigate("/hr/reports");
@@ -145,6 +153,19 @@ const HRDashboard = () => {
       ),
     },
   ];
+
+  // Determine the next application to schedule or score for Priority Tasks quick access
+  const nextToSchedule =
+    applications?.find(
+      (app) => app.status?.toUpperCase() === "APPROVED" && !app.demoSchedule
+    ) || null;
+  const nextToScore =
+    applications?.find(
+      (app) =>
+        app.status?.toUpperCase() === "APPROVED" &&
+        app.demoSchedule &&
+        (app.totalScore === null || app.totalScore === undefined)
+    ) || null;
 
   if (loading) {
     return (
@@ -241,30 +262,28 @@ const HRDashboard = () => {
             </Button>
 
             <Button
-              onClick={() => handleQuickAction("schedule")}
+              onClick={() =>
+                handleQuickAction(
+                  "schedule",
+                  nextToSchedule ? nextToSchedule.id : null
+                )
+              }
               variant="outline"
               className="flex flex-col items-center p-2 sm:p-4 h-auto text-center"
+              disabled={!nextToSchedule}
             >
-              <svg
-                className="w-6 h-6 sm:w-8 sm:h-8 mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              <span className="text-xs sm:text-sm">Schedule</span>
+              {nextToSchedule ? "Schedule" : "No apps to schedule"}
             </Button>
-
             <Button
-              onClick={() => handleQuickAction("scoring")}
+              onClick={() =>
+                handleQuickAction(
+                  "scoring",
+                  nextToScore ? nextToScore.id : null
+                )
+              }
               variant="outline"
               className="flex flex-col items-center p-2 sm:p-4 h-auto text-center"
+              disabled={!nextToScore}
             >
               <svg
                 className="w-6 h-6 sm:w-8 sm:h-8 mb-2"
@@ -342,14 +361,36 @@ const HRDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <Button
-                  onClick={() => handleQuickAction("schedule")}
-                  variant="outline"
-                  size="sm"
-                  className="ml-2 flex-shrink-0"
-                >
-                  Schedule
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    onClick={() =>
+                      handleQuickAction(
+                        "schedule",
+                        nextToSchedule ? nextToSchedule.id : null
+                      )
+                    }
+                    variant="outline"
+                    size="sm"
+                    className="ml-2 flex-shrink-0"
+                    disabled={!nextToSchedule}
+                  >
+                    Schedule
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      handleQuickAction(
+                        "scoring",
+                        nextToScore ? nextToScore.id : null
+                      )
+                    }
+                    variant="outline"
+                    size="sm"
+                    className="ml-2 flex-shrink-0"
+                    disabled={!nextToScore}
+                  >
+                    Score
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -391,29 +432,44 @@ const HRDashboard = () => {
                         {app.applicant?.email || "N/A"}
                       </p>
                     </div>
-                    <span
-                      className={`ml-2 px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ${getStatusColor(
-                        app.status
-                      )}`}
-                    >
-                      {app.status?.toUpperCase()}
-                    </span>
                   </div>
 
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">
                       Submitted: {formatDate(app.createdAt)}
                     </span>
-                    <Button
-                      onClick={() =>
-                        handleQuickAction("view-application", app.id)
-                      }
-                      variant="outline"
-                      size="sm"
-                      className="ml-2 flex-shrink-0"
-                    >
-                      View
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        onClick={() =>
+                          handleQuickAction("view-application", app.id)
+                        }
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 flex-shrink-0"
+                      >
+                        View
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          navigate(`/hr/scheduling?applicationId=${app.id}`)
+                        }
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 flex-shrink-0"
+                      >
+                        Schedule
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          navigate(`/hr/scoring?applicationId=${app.id}`)
+                        }
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 flex-shrink-0"
+                      >
+                        Score
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
