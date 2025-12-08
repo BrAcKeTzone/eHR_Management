@@ -275,11 +275,15 @@ export const applicationApi = {
   },
 
   // Schedule interview for application (HR only)
-  scheduleInterview: async (applicationId, interviewSchedule) => {
+  scheduleInterview: async (
+    applicationId,
+    interviewSchedule,
+    rescheduleReason
+  ) => {
     try {
       const response = await fetchClient.put(
         `${API_BASE_URL}/applications/${applicationId}/interview`,
-        { interviewSchedule }
+        { interviewSchedule, rescheduleReason }
       );
       return { application: response.data.data };
     } catch (error) {

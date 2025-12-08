@@ -44,6 +44,7 @@ const InterviewScheduling = () => {
   };
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
+  const [rescheduleReason, setRescheduleReason] = useState("");
   useEffect(() => {
     // Fetch only interview-eligible applications (passed the demo with score >= 75)
     getAllApplications({ interviewEligible: true });
@@ -68,6 +69,7 @@ const InterviewScheduling = () => {
         getAvailableSlots(dateString)
           .then(setAvailableSlots)
           .catch(console.warn);
+        setRescheduleReason(app.interviewRescheduleReason || "");
         setScheduleTime(
           `${dt.getHours().toString().padStart(2, "0")}:${dt
             .getMinutes()
@@ -95,6 +97,7 @@ const InterviewScheduling = () => {
               getAvailableSlots(dateString)
                 .then(setAvailableSlots)
                 .catch(console.warn);
+              setRescheduleReason(appFromApi.interviewRescheduleReason || "");
               setScheduleTime(
                 `${dt.getHours().toString().padStart(2, "0")}:${dt
                   .getMinutes()
@@ -114,6 +117,13 @@ const InterviewScheduling = () => {
   }, [applications, searchParams, getApplicationById, setSearchParams]);
 
   const openScheduleModal = (app) => {
+    // Prevent rescheduling if already rescheduled once
+    if (app.interviewSchedule && (app.interviewRescheduleCount || 0) >= 1) {
+      alert(
+        "This application has already been rescheduled once and cannot be rescheduled again."
+      );
+      return;
+    }
     setSelectedApplication(app);
     setShowModal(true);
     // preselect date and fetch available slots if interview already scheduled
@@ -132,6 +142,7 @@ const InterviewScheduling = () => {
     } else {
       setScheduleDate("");
       setScheduleTime("");
+      setRescheduleReason("");
       setSelectedDate("");
       setAvailableSlots([]);
     }
@@ -179,6 +190,36 @@ const InterviewScheduling = () => {
       ),
     },
     {
+      header: "Interview Schedule",
+      accessor: "interviewSchedule",
+      cell: (row) => (
+        <div className="text-sm">
+          {row.interviewSchedule ? (
+            <div>
+              <p className="font-medium text-gray-700">
+                {formatDate(row.interviewSchedule)}
+              </p>
+              {row.interviewTime && (
+                <p className="text-gray-600 font-medium">{row.interviewTime}</p>
+              )}
+              {row.interviewRescheduleReason && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Reason:{" "}
+                  {row.interviewRescheduleReason === "APPLICANT_NO_SHOW"
+                    ? "Applicant did not appear"
+                    : row.interviewRescheduleReason === "SCHOOL"
+                    ? "Rescheduled by school"
+                    : row.interviewRescheduleReason}
+                </p>
+              )}
+            </div>
+          ) : (
+            <span className="text-yellow-600 font-medium">Pending</span>
+          )}
+        </div>
+      ),
+    },
+    {
       header: "Actions",
       accessor: "actions",
       cell: (row) => (
@@ -187,8 +228,15 @@ const InterviewScheduling = () => {
             onClick={() => openScheduleModal(row)}
             variant={row.interviewSchedule ? "outline" : "primary"}
             size="sm"
+            disabled={
+              row.interviewSchedule && (row.interviewRescheduleCount || 0) >= 1
+            }
           >
-            {row.interviewSchedule ? "Reschedule" : "Schedule"}
+            {row.interviewSchedule
+              ? (row.interviewRescheduleCount || 0) >= 1
+                ? "Rescheduled"
+                : "Reschedule"
+              : "Schedule"}
           </Button>
         </div>
       ),
@@ -291,6 +339,22 @@ const InterviewScheduling = () => {
                         <p className="text-gray-600">
                           {formatDate(app.interviewSchedule)}
                         </p>
+                        {app.interviewTime && (
+                          <p className="text-gray-600 font-medium">
+                            {app.interviewTime}
+                          </p>
+                        )}
+                        {app.interviewRescheduleReason && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Reason:{" "}
+                            {app.interviewRescheduleReason ===
+                            "APPLICANT_NO_SHOW"
+                              ? "Applicant did not appear"
+                              : app.interviewRescheduleReason === "SCHOOL"
+                              ? "Rescheduled by school"
+                              : app.interviewRescheduleReason}
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <p className="text-yellow-600 font-medium">Pending</p>
@@ -304,8 +368,16 @@ const InterviewScheduling = () => {
                     variant={app.interviewSchedule ? "outline" : "primary"}
                     size="sm"
                     className="flex-1"
+                    disabled={
+                      app.interviewSchedule &&
+                      (app.interviewRescheduleCount || 0) >= 1
+                    }
                   >
-                    {app.interviewSchedule ? "Reschedule" : "Schedule"}
+                    {app.interviewSchedule
+                      ? (app.interviewRescheduleCount || 0) >= 1
+                        ? "Rescheduled"
+                        : "Reschedule"
+                      : "Schedule"}
                   </Button>
                 </div>
               </div>
@@ -320,6 +392,11 @@ const InterviewScheduling = () => {
           onClose={() => {
             setShowModal(false);
             setSelectedApplication(null);
+            setRescheduleReason("");
+            setScheduleDate("");
+            setScheduleTime("");
+            setAvailableSlots([]);
+            setSelectedDate("");
           }}
           title={`Schedule Interview - ${selectedApplication.applicant?.firstName} ${selectedApplication.applicant?.lastName}`}
           size="large"
@@ -401,6 +478,26 @@ const InterviewScheduling = () => {
               </div>
             </div>
 
+            {/* Reschedule Reason (only shown when editing existing schedule) */}
+            {selectedApplication.interviewSchedule && (
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reschedule Reason <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={rescheduleReason}
+                  onChange={(e) => setRescheduleReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select reason</option>
+                  <option value="APPLICANT_NO_SHOW">
+                    Applicant did not appear
+                  </option>
+                  <option value="SCHOOL">Rescheduled by school</option>
+                </select>
+              </div>
+            )}
+
             <div className="flex justify-end pt-4 border-t">
               <Button
                 onClick={() => {
@@ -435,10 +532,21 @@ const InterviewScheduling = () => {
                       }
                     }
 
+                    // If updating an existing interview and rescheduling, require a reason
+                    if (selectedApplication?.interviewSchedule) {
+                      if (!rescheduleReason) {
+                        alert(
+                          "Please select a reason for rescheduling the interview."
+                        );
+                        return;
+                      }
+                    }
+
                     const isoString = `${scheduleDate}T${scheduleTime}:00.000`;
                     await applicationApi.scheduleInterview(
                       selectedApplication.id,
-                      isoString
+                      isoString,
+                      rescheduleReason || undefined
                     );
                     setShowModal(false);
                     setSelectedApplication(null);

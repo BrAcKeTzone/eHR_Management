@@ -43,6 +43,7 @@ export interface UpdateApplicationData {
   interviewEligible?: boolean;
   interviewSchedule?: Date;
   interviewRescheduleCount?: number;
+  interviewRescheduleReason?: string;
 }
 
 export interface ApplicationWithApplicant extends Application {
@@ -74,6 +75,11 @@ function formatApplicationForFrontend(app: any) {
     const period = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
     formattedApp.interviewTime = `${hours}:${minutes} ${period}`;
+  }
+  if ((app as any).interviewRescheduleReason) {
+    formattedApp.interviewRescheduleReason = (
+      app as any
+    ).interviewRescheduleReason;
   }
 
   return formattedApp;
@@ -402,7 +408,29 @@ class ApplicationService {
       }
     }
 
-    const updatedApplication = await this.updateApplication(id, updateData);
+    let updatedApplication: Application;
+    try {
+      updatedApplication = await this.updateApplication(id, updateData as any);
+    } catch (err: any) {
+      // If Prisma client doesn't know about the new fields (client not regenerated),
+      // fall back to updating only the demoSchedule to avoid crashing the server.
+      if (
+        err &&
+        err.name === "PrismaClientValidationError" &&
+        err.message &&
+        err.message.includes("Unknown argument")
+      ) {
+        // Remove fields that older Prisma clients may not be aware of
+        delete updateData.demoRescheduleCount;
+        delete updateData.demoRescheduleReason;
+        updatedApplication = await this.updateApplication(
+          id,
+          updateData as any
+        );
+      } else {
+        throw err;
+      }
+    }
 
     // Get applicant details for notification
     const applicant = await prisma.user.findUnique({
@@ -436,7 +464,8 @@ class ApplicationService {
 
   async scheduleInterview(
     id: number,
-    interviewSchedule: Date
+    interviewSchedule: Date,
+    rescheduleReason?: string
   ): Promise<Application> {
     const application = await prisma.application.findUnique({ where: { id } });
 
@@ -484,8 +513,25 @@ class ApplicationService {
     }
 
     // Check reschedule limits - only allow 1 reschedule
-    const isReschedule = !!application.interviewSchedule;
-    const currentRescheduleCount = (application as any).interviewRescheduleCount || 0;
+    const isReschedule = !!(application as any).interviewSchedule;
+    // If rescheduling, require a reason similar to demo schedule
+    if (isReschedule) {
+      if (!rescheduleReason) {
+        throw new ApiError(
+          400,
+          "Reschedule reason is required when updating an existing interview schedule"
+        );
+      }
+      const allowedReasons = ["APPLICANT_NO_SHOW", "SCHOOL"];
+      if (!allowedReasons.includes(rescheduleReason)) {
+        throw new ApiError(
+          400,
+          `Invalid reschedule reason. Allowed: ${allowedReasons.join(", ")}`
+        );
+      }
+    }
+    const currentRescheduleCount =
+      (application as any).interviewRescheduleCount || 0;
     if (isReschedule && currentRescheduleCount >= 1) {
       throw new ApiError(
         400,
@@ -496,9 +542,31 @@ class ApplicationService {
     const updateData: any = { interviewSchedule };
     if (isReschedule) {
       updateData.interviewRescheduleCount = currentRescheduleCount + 1;
+      updateData.interviewRescheduleReason = rescheduleReason;
     }
 
-    const updatedApplication = await this.updateApplication(id, updateData as any);
+    let updatedApplication: Application;
+    try {
+      updatedApplication = await this.updateApplication(id, updateData as any);
+    } catch (err: any) {
+      // If Prisma client doesn't know about the interview reschedule fields (client not regenerated),
+      // fall back to updating only the interviewSchedule to avoid crashing the server.
+      if (
+        err &&
+        err.name === "PrismaClientValidationError" &&
+        err.message &&
+        err.message.includes("Unknown argument")
+      ) {
+        delete updateData.interviewRescheduleCount;
+        delete updateData.interviewRescheduleReason;
+        updatedApplication = await this.updateApplication(
+          id,
+          updateData as any
+        );
+      } else {
+        throw err;
+      }
+    }
 
     // Notify applicant about interview schedule
     const applicant = await prisma.user.findUnique({

@@ -62,6 +62,8 @@ model Application {
   demoRescheduleReason String? // Optional reason for latest reschedule (applicant_no_show | school)
   interviewEligible Boolean @default(false) // Whether this application is eligible for interview scheduling
   interviewSchedule DateTime?     // Interview date/time
+  interviewRescheduleCount Int @default(0) // Number of times the interview has been rescheduled
+  interviewRescheduleReason String?
   totalScore     Float?            // Total score entered by HR (0-100)
   result         ApplicationResult?
   hrNotes        String?           @db.Text // HR comments during review

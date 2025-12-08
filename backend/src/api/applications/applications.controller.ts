@@ -426,7 +426,7 @@ export const scheduleInterview = asyncHandler(
     }
 
     const { id } = req.params;
-    const { interviewSchedule } = req.body;
+    const { interviewSchedule, rescheduleReason } = req.body;
     const applicationId = parseInt(id);
 
     if (!interviewSchedule) {
@@ -435,7 +435,8 @@ export const scheduleInterview = asyncHandler(
 
     const application = await applicationService.scheduleInterview(
       applicationId,
-      new Date(interviewSchedule)
+      new Date(interviewSchedule),
+      rescheduleReason
     );
 
     res.json(
