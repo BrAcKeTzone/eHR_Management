@@ -6,6 +6,7 @@ import DashboardCard from "../../components/DashboardCard";
 import Button from "../../components/Button";
 import Modal from "../../components/Modal";
 import StatusBadge from "../../components/StatusBadge";
+import StatusTracker from "../../components/StatusTracker";
 import { formatDate } from "../../utils/formatDate";
 
 const ApplicantDashboard = () => {
@@ -58,18 +59,37 @@ const ApplicantDashboard = () => {
     }
   };
 
-  const getApplicationProgress = (status) => {
-    const stages = ["Submitted", "Under Review", "Demo Scheduled", "Completed"];
-    const statusMapping = {
-      pending: 0,
-      "under review": 1,
-      approved: 2,
-      completed: 3,
-    };
+  const getApplicationProgress = (application) => {
+    const stages = [
+      "Submitted",
+      "Under Review",
+      "Demo Scheduled",
+      "Interview Scheduled",
+      "Completed",
+    ];
 
-    const currentIndex = statusMapping[status?.toLowerCase()] || 0;
+    // Priority for determining the current stage:
+    // 1. Completed (highest)
+    // 2. Interview scheduled
+    // 3. Demo scheduled
+    // 4. Under review
+    // 5. Submitted
+    let currentIndex = 0;
+    if (!application) {
+      currentIndex = 0;
+    } else if (application.status?.toLowerCase() === "completed") {
+      currentIndex = stages.length - 1;
+    } else if (application.interviewSchedule) {
+      currentIndex = stages.indexOf("Interview Scheduled");
+    } else if (application.demoSchedule) {
+      currentIndex = stages.indexOf("Demo Scheduled");
+    } else if (application.status?.toLowerCase() === "under review") {
+      currentIndex = stages.indexOf("Under Review");
+    } else {
+      currentIndex = 0;
+    }
+
     const percentage = Math.round(((currentIndex + 1) / stages.length) * 100);
-
     return { stages, currentIndex, percentage };
   };
 
@@ -77,10 +97,12 @@ const ApplicantDashboard = () => {
   const stageBgColors = [
     "bg-blue-200",
     "bg-blue-300",
-    "bg-blue-500",
+    "bg-blue-400",
+    "bg-blue-600",
     "bg-blue-800",
   ];
   const stageTextColors = [
+    "text-blue-700",
     "text-blue-700",
     "text-blue-700",
     "text-blue-700",
@@ -116,6 +138,24 @@ const ApplicantDashboard = () => {
   };
 
   const upcomingDemo = getUpcomingDemo();
+
+  const getUpcomingInterview = () => {
+    if (!currentApplication?.interviewSchedule) return null;
+    const interviewDate = new Date(currentApplication.interviewSchedule);
+    const now = new Date();
+    if (interviewDate > now) {
+      return {
+        date: currentApplication.interviewSchedule,
+        time: currentApplication.interviewTime || "Time not set",
+        location: currentApplication.interviewLocation,
+        duration: currentApplication.interviewDuration,
+        notes: currentApplication.interviewNotes,
+      };
+    }
+    return null;
+  };
+
+  const upcomingInterview = getUpcomingInterview();
 
   if (loading) {
     return (
@@ -316,65 +356,61 @@ const ApplicantDashboard = () => {
                 </div>
               </div>
 
-              {/* Progress Bar */}
+              {/* Progress - Desktop: segmented bar, Mobile: vertical tracker */}
               <div>
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                  <span>Application Progress</span>
-                  <span>
-                    {
-                      getApplicationProgress(currentApplication.status)
-                        .percentage
-                    }
-                    %
-                  </span>
-                </div>
+                <div className="hidden md:block">
+                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>Application Progress</span>
+                    <span>
+                      {getApplicationProgress(currentApplication).percentage}%
+                    </span>
+                  </div>
 
-                {/* Segmented progress bar with stage-specific shades */}
-                <div className="w-full rounded-full h-3 bg-gray-200 flex overflow-hidden">
-                  {getApplicationProgress(currentApplication.status).stages.map(
-                    (_, idx) => {
-                      const { currentIndex } = getApplicationProgress(
-                        currentApplication.status
-                      );
+                  {/* Segmented progress bar with stage-specific shades */}
+                  <div className="w-full rounded-full h-3 bg-gray-200 flex overflow-hidden">
+                    {getApplicationProgress(currentApplication).stages.map((_, idx) => {
+                      const { currentIndex } = getApplicationProgress(currentApplication);
                       const isActive = idx <= currentIndex;
                       return (
                         <div
                           key={idx}
-                          className={`h-3 ${
-                            isActive ? stageBgColors[idx] : "bg-gray-200"
-                          } transition-colors duration-300`}
-                          style={{
-                            width: `${
-                              100 /
-                              getApplicationProgress(currentApplication.status)
-                                .stages.length
-                            }%`,
-                          }}
+                          className={`h-3 ${isActive ? stageBgColors[idx] : "bg-gray-200"} transition-colors duration-300`}
+                          style={{ width: `${100 / getApplicationProgress(currentApplication).stages.length}%` }}
                         />
                       );
-                    }
-                  )}
+                    })}
+                  </div>
+
+                  <div className="flex text-xs text-gray-500 mt-2">
+                    {(() => {
+                      const { stages, currentIndex } = getApplicationProgress(currentApplication);
+                      const stageWidth = `${100 / stages.length}%`;
+                      return stages.map((stage, index) => (
+                        <div
+                          key={stage}
+                          style={{ width: stageWidth }}
+                          className={`text-center px-1 whitespace-nowrap truncate ${index <= currentIndex ? `${stageTextColors[index]} font-medium` : "text-gray-400"}`}
+                        >
+                          {stage}
+                        </div>
+                      ));
+                    })()}
+                  </div>
                 </div>
 
-                <div className="flex text-xs text-gray-500 mt-2">
+                <div className="md:hidden">
                   {(() => {
-                    const { stages, currentIndex } = getApplicationProgress(
-                      currentApplication.status
-                    );
-                    const stageWidth = `${100 / stages.length}%`;
-                    return stages.map((stage, index) => (
-                      <div
-                        key={stage}
-                        style={{ width: stageWidth }}
-                        className={`text-center px-1 whitespace-nowrap truncate ${
-                          index <= currentIndex
-                            ? `${stageTextColors[index]} font-medium`
-                            : "text-gray-400"
-                        }`}
-                      >
-                        {stage}
-                      </div>
-                    ));
+                    const { stages, currentIndex } = getApplicationProgress(currentApplication);
+                    const demoSchedule = currentApplication.demoSchedule || currentApplication.demo_schedule;
+                    const interviewSchedule = currentApplication.interviewSchedule || currentApplication.interview_schedule;
+                    const timestamps = {
+                      Submitted: currentApplication.createdAt || currentApplication.created_at || currentApplication.submittedAt,
+                      "Under Review": currentApplication.under_review_at || currentApplication.underReviewAt || currentApplication.updatedAt || currentApplication.updated_at,
+                      "Demo Scheduled": typeof demoSchedule === "object" ? (demoSchedule.date || demoSchedule.datetime || demoSchedule.scheduledAt) : demoSchedule,
+                      "Interview Scheduled": typeof interviewSchedule === "object" ? (interviewSchedule.date || interviewSchedule.datetime || interviewSchedule.scheduledAt) : interviewSchedule,
+                      Completed: currentApplication.completedAt || currentApplication.completed_at,
+                    };
+                    return <StatusTracker currentIndex={currentIndex} stages={stages} timestamps={timestamps} />;
                   })()}
                 </div>
               </div>
@@ -462,114 +498,208 @@ const ApplicantDashboard = () => {
 
         {/* Demo Schedule */}
         {currentApplication?.status?.toLowerCase() !== "completed" && (
-          <DashboardCard title="Upcoming Demo">
-            {upcomingDemo ? (
-              <div className="space-y-4">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg
-                      className="w-8 h-8 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
+          <>
+            <DashboardCard title="Upcoming Demo">
+              {upcomingDemo ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg
+                        className="w-8 h-8 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-gray-900">
+                      Demo Scheduled
+                    </h3>
                   </div>
-                  <h3 className="font-semibold text-gray-900">
-                    Demo Scheduled
-                  </h3>
-                </div>
 
-                <div className="space-y-3 text-sm">
-                  <p className="text-xs font-semibold text-blue-900 mb-1">
-                    DEMONSTRATION DETAILS
-                  </p>
-                  <div>
-                    <p className="text-gray-600">Date & Time:</p>
-                    <p className="font-medium">
-                      {formatDate(upcomingDemo.date)}
+                  <div className="space-y-3 text-sm">
+                    <p className="text-xs font-semibold text-blue-900 mb-1">
+                      DEMONSTRATION DETAILS
                     </p>
-                    <p className="font-medium">{upcomingDemo.time}</p>
-                  </div>
-                  {upcomingDemo.duration && (
                     <div>
-                      <p className="text-gray-600">Duration:</p>
+                      <p className="text-gray-600">Date & Time:</p>
                       <p className="font-medium">
-                        {upcomingDemo.duration} minutes
+                        {formatDate(upcomingDemo.date)}
                       </p>
+                      <p className="font-medium">{upcomingDemo.time}</p>
                     </div>
-                  )}
-                  {upcomingDemo.location && (
-                    <div>
-                      <p className="text-gray-600">Location:</p>
-                      <p className="font-medium">{upcomingDemo.location}</p>
-                    </div>
-                  )}
-                  {upcomingDemo.notes && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                      <p className="text-xs font-medium text-blue-900 mb-1">
-                        Instructions:
-                      </p>
-                      <p className="text-xs text-blue-800">
-                        {upcomingDemo.notes}
-                      </p>
-                    </div>
-                  )}
-                  {!upcomingDemo.notes && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                      <p className="text-xs text-blue-800">
-                        Please arrive 15 minutes early. Further details will be
-                        sent via email.
-                      </p>
-                    </div>
-                  )}
+                    {upcomingDemo.duration && (
+                      <div>
+                        <p className="text-gray-600">Duration:</p>
+                        <p className="font-medium">
+                          {upcomingDemo.duration} minutes
+                        </p>
+                      </div>
+                    )}
+                    {upcomingDemo.location && (
+                      <div>
+                        <p className="text-gray-600">Location:</p>
+                        <p className="font-medium">{upcomingDemo.location}</p>
+                      </div>
+                    )}
+                    {upcomingDemo.notes && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                        <p className="text-xs font-medium text-blue-900 mb-1">
+                          Instructions:
+                        </p>
+                        <p className="text-xs text-blue-800">
+                          {upcomingDemo.notes}
+                        </p>
+                      </div>
+                    )}
+                    {!upcomingDemo.notes && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                        <p className="text-xs text-blue-800">
+                          Please arrive 15 minutes early. Further details will
+                          be sent via email.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : currentApplication?.status?.toLowerCase() === "approved" ? (
-              <div className="text-center py-8">
-                <svg
-                  className="mx-auto h-12 w-12 text-yellow-400 mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <p className="text-yellow-600 font-medium">Schedule Pending</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Demo will be scheduled soon
-                </p>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400 mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <p className="text-gray-500">No demo scheduled</p>
-              </div>
-            )}
-          </DashboardCard>
+              ) : currentApplication?.status?.toLowerCase() === "approved" ? (
+                <div className="text-center py-8">
+                  <svg
+                    className="mx-auto h-12 w-12 text-yellow-400 mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-yellow-600 font-medium">
+                    Schedule Pending
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Demo will be scheduled soon
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <p className="text-gray-500">No demo scheduled</p>
+                </div>
+              )}
+            </DashboardCard>
+
+            <DashboardCard title="Upcoming Interview">
+              {upcomingInterview ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg
+                        className="w-8 h-8 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-gray-900">
+                      Interview Scheduled
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3 text-sm">
+                    <p className="text-xs font-semibold text-blue-900 mb-1">
+                      INTERVIEW DETAILS
+                    </p>
+                    <div>
+                      <p className="text-gray-600">Date & Time:</p>
+                      <p className="font-medium">
+                        {formatDate(upcomingInterview.date)}
+                      </p>
+                      <p className="font-medium">{upcomingInterview.time}</p>
+                    </div>
+                    {upcomingInterview.duration && (
+                      <div>
+                        <p className="text-gray-600">Duration:</p>
+                        <p className="font-medium">
+                          {upcomingInterview.duration} minutes
+                        </p>
+                      </div>
+                    )}
+                    {upcomingInterview.location && (
+                      <div>
+                        <p className="text-gray-600">Location:</p>
+                        <p className="font-medium">
+                          {upcomingInterview.location}
+                        </p>
+                      </div>
+                    )}
+                    {upcomingInterview.notes && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                        <p className="text-xs font-medium text-blue-900 mb-1">
+                          Instructions:
+                        </p>
+                        <p className="text-xs text-blue-800">
+                          {upcomingInterview.notes}
+                        </p>
+                      </div>
+                    )}
+                    {!upcomingInterview.notes && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                        <p className="text-xs text-blue-800">
+                          Your interview details will be emailed to you.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <svg
+                    className="mx-auto h-12 w-12 text-yellow-400 mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4l3 3"
+                    />
+                  </svg>
+                  <p className="text-gray-500">No interview scheduled</p>
+                </div>
+              )}
+            </DashboardCard>
+          </>
         )}
       </div>
 

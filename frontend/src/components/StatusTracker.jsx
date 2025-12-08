@@ -2,22 +2,33 @@ import React from "react";
 
 const StatusTracker = ({
   currentStatus,
-  stages = ["Submitted", "Demo Scheduled", "Completed"],
+  stages = [
+    "Submitted",
+    "Under Review",
+    "Demo Scheduled",
+    "Interview Scheduled",
+    "Completed",
+  ],
   timestamps = {},
+  currentIndex: propCurrentIndex,
   className = "",
 }) => {
   const getStageIndex = (status) => {
     const statusMapping = {
       pending: 0,
-      approved: 1,
-      completed: 2,
+      "under review": 1,
+      approved: 2,
+      completed: 4,
       rejected: -1, // Special case for rejected
     };
 
     return statusMapping[status?.toLowerCase()] || 0;
   };
 
-  const currentIndex = getStageIndex(currentStatus);
+  const currentIndex =
+    typeof propCurrentIndex === "number"
+      ? propCurrentIndex
+      : getStageIndex(currentStatus);
   const isRejected = currentStatus?.toLowerCase() === "rejected";
 
   const formatTimestamp = (timestamp) => {

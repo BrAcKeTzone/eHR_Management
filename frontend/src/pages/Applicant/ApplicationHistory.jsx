@@ -2,6 +2,461 @@ import React, { useState, useEffect } from "react";
 import { useApplicationStore } from "../../store/applicationStore";
 import { useAuthStore } from "../../store/authStore";
 import StatusBadge from "../../components/StatusBadge";
+import StatusTracker from "../../components/StatusTracker";
+import Button from "../../components/Button";
+import LoadingSpinner from "../../components/LoadingSpinner";
+
+const ApplicationHistory = () => {
+  const { user } = useAuthStore();
+  const { applications, loading, fetchApplications } = useApplicationStore();
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [viewMode, setViewMode] = useState("grid"); // grid or list
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
+
+  const userApplications = applications || [];
+
+  const getStatusColor = (status) => {
+    if (!status) return "gray";
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "yellow";
+      case "under review":
+        return "blue";
+      case "approved":
+        return "green";
+      case "rejected":
+        return "red";
+      case "completed":
+        return "green";
+      default:
+        return "gray";
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (e) {
+      return String(dateString);
+    }
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return String(dateString);
+    }
+  };
+
+  const formatSchedule = (schedule) => {
+    if (!schedule) return "Not scheduled";
+    // schedule may be an object ({ date, time, location, notes }) or a string
+    if (typeof schedule === "string") return formatDateTime(schedule);
+    if (typeof schedule === "object") {
+      const date = schedule.date || schedule.datetime || schedule.scheduledAt || schedule.time;
+      const time = schedule.time || schedule.duration || schedule.datetime;
+      const dateLabel = date ? formatDate(date) : "Not scheduled";
+      return time ? `${dateLabel} at ${time}` : dateLabel;
+    }
+    return String(schedule);
+  };
+
+  const getApplicationProgress = (application) => {
+    const stages = [
+      "Submitted",
+      "Under Review",
+      "Demo Scheduled",
+      "Interview Scheduled",
+      "Completed",
+    ];
+
+    const hasInterview = Boolean(application?.interviewSchedule || application?.interview_schedule);
+    const hasDemo = Boolean(application?.demoSchedule || application?.demo_schedule);
+    const status = application?.status?.toLowerCase?.() || "";
+
+    let currentIndex = 0;
+    if (status === "completed") {
+      currentIndex = stages.length - 1;
+    } else if (hasInterview) {
+      currentIndex = stages.indexOf("Interview Scheduled");
+    } else if (hasDemo) {
+      currentIndex = stages.indexOf("Demo Scheduled");
+    } else if (status === "under review") {
+      currentIndex = stages.indexOf("Under Review");
+    } else {
+      currentIndex = stages.indexOf("Submitted");
+    }
+
+    return { stages, currentIndex: Math.max(0, currentIndex) };
+  };
+
+  const renderApplicationCard = (application) => {
+    const { stages, currentIndex } = getApplicationProgress(application);
+    const progressPercent = Math.round(((currentIndex + 1) / stages.length) * 100);
+
+    return (
+      <div
+        key={application.id}
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
+        onClick={() => setSelectedApplication(application)}
+      >
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {application.subject_specialization || application.subjectSpecialization || "Teaching Application"}
+            </h3>
+            <p className="text-sm text-gray-600">{application.subject_specialization || application.subjectSpecialization || "Teaching Position"}</p>
+          </div>
+          <StatusBadge status={application.status} variant={getStatusColor(application.status)} />
+        </div>
+
+        <div className="space-y-2 mb-4">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Application ID:</span>
+            <span className="font-medium text-gray-900">#{application.id}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Submitted:</span>
+            <span className="text-gray-900">{formatDate(application.created_at || application.submittedAt)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Last Updated:</span>
+            <span className="text-gray-900">{formatDate(application.updated_at || application.updatedAt)}</span>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <div className="flex justify-between text-xs text-gray-600 mb-1">
+            <span>Progress</span>
+            <span>{progressPercent}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-gray-600">{Array.isArray(application.documents) ? application.documents.length : 0} documents uploaded</span>
+          <span className="text-blue-600 font-medium">View Details →</span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderApplicationRow = (application) => {
+    const { stages, currentIndex } = getApplicationProgress(application);
+    const progressPercent = Math.round(((currentIndex + 1) / stages.length) * 100);
+
+    return (
+      <tr key={application.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedApplication(application)}>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div>
+            <div className="text-sm font-medium text-gray-900">#{application.id}</div>
+            <div className="text-sm text-gray-500">{formatDate(application.created_at || application.submittedAt)}</div>
+          </div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div>
+            <div className="text-sm text-gray-500">{application.subject_specialization || application.subjectSpecialization || "Teaching Position"}</div>
+          </div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <StatusBadge status={application.status} variant={getStatusColor(application.status)} />
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(application.updated_at || application.updatedAt)}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm">
+          <div className="flex items-center">
+            <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+              <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${progressPercent}%` }} />
+            </div>
+            <span className="text-gray-600">{progressPercent}%</span>
+          </div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <span className="text-blue-600 hover:text-blue-900">View</span>
+        </td>
+      </tr>
+    );
+  };
+
+  const renderApplicationDetail = () => {
+    if (!selectedApplication) return null;
+    const { stages, currentIndex } = getApplicationProgress(selectedApplication);
+    const progressPercent = Math.round(((currentIndex + 1) / stages.length) * 100);
+
+    const demoSchedule = selectedApplication.demoSchedule || selectedApplication.demo_schedule;
+    const interviewSchedule = selectedApplication.interviewSchedule || selectedApplication.interview_schedule;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <div>
+              <div className="text-sm font-medium text-gray-900">Application #{selectedApplication.id}</div>
+            </div>
+            <button onClick={() => setSelectedApplication(null)} className="text-gray-400 hover:text-gray-600">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div className="p-6 space-y-6">
+              {/* Status Progress */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Progress</h3>
+                {(() => {
+                  const timestamps = {
+                    Submitted: selectedApplication.created_at || selectedApplication.submittedAt,
+                    "Under Review": selectedApplication.under_review_at || selectedApplication.underReviewAt || selectedApplication.updated_at,
+                    "Demo Scheduled": (() => {
+                      if (!demoSchedule) return null;
+                      if (typeof demoSchedule === "string") return demoSchedule;
+                      return demoSchedule.date || demoSchedule.datetime || demoSchedule.scheduledAt || null;
+                    })(),
+                    "Interview Scheduled": (() => {
+                      if (!interviewSchedule) return null;
+                      if (typeof interviewSchedule === "string") return interviewSchedule;
+                      return interviewSchedule.date || interviewSchedule.datetime || interviewSchedule.scheduledAt || null;
+                    })(),
+                    Completed: selectedApplication.completed_at || selectedApplication.completedAt || null,
+                  };
+
+                  return <StatusTracker currentIndex={currentIndex} stages={stages} timestamps={timestamps} className="mb-6" />;
+                })()}
+              </div>
+
+              {/* Application Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Information</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Subject Specialization</label>
+                      <p className="text-sm text-gray-900">{selectedApplication.subject_specialization || selectedApplication.subjectSpecialization || "Teaching Position"}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Status</label>
+                      <StatusBadge status={selectedApplication.status} variant={getStatusColor(selectedApplication.status)} />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Timeline</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Submitted</label>
+                      <p className="text-sm text-gray-900">{formatDateTime(selectedApplication.created_at || selectedApplication.submittedAt)}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Last Updated</label>
+                      <p className="text-sm text-gray-900">{formatDateTime(selectedApplication.updated_at || selectedApplication.updatedAt)}</p>
+                    </div>
+                    {demoSchedule && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Demo Schedule</label>
+                        <p className="text-sm text-gray-900">{formatSchedule(demoSchedule)}</p>
+                      </div>
+                    )}
+                    {interviewSchedule && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Interview Schedule</label>
+                        <p className="text-sm text-gray-900">{formatSchedule(interviewSchedule)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Educational Background */}
+              {(selectedApplication.education || selectedApplication.educationalBackground) && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Educational Background</h3>
+                  <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-md">{selectedApplication.education || selectedApplication.educationalBackground}</p>
+                </div>
+              )}
+
+              {/* Teaching Experience */}
+              {(selectedApplication.experience || selectedApplication.teachingExperience) && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Teaching Experience</h3>
+                  <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-md">{selectedApplication.experience || selectedApplication.teachingExperience}</p>
+                </div>
+              )}
+
+              {/* Motivation */}
+              {selectedApplication.motivation && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Motivation</h3>
+                  <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-md">{selectedApplication.motivation}</p>
+                </div>
+              )}
+
+              {/* Documents */}
+              {selectedApplication.documents && Array.isArray(selectedApplication.documents) && selectedApplication.documents.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Uploaded Documents</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedApplication.documents.map((doc, index) => (
+                      <div key={index} className="flex items-center p-3 bg-gray-50 rounded-md">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                          <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd"/></svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{typeof doc === "object" ? doc.name : doc}</p>
+                          <p className="text-xs text-gray-500">{typeof doc === "object" ? `${doc.type || doc.mimeType || "File"} - ${(doc.size || 0) / 1024 <= 0 ? "" : `${(doc.size / 1024).toFixed(1)} KB`}` : "Uploaded document"}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Scores */}
+              {(selectedApplication.scores || selectedApplication.total_score) && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Evaluation Scores</h3>
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    {selectedApplication.total_score && (
+                      <div className="text-center mb-4">
+                        <div className="text-3xl font-bold text-blue-600">{selectedApplication.total_score}</div>
+                        <div className="text-sm text-gray-600">Total Score</div>
+                      </div>
+                    )}
+                    {selectedApplication.scores && Array.isArray(selectedApplication.scores) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {selectedApplication.scores.map((score, index) => (
+                          <div key={index} className="text-center">
+                            <div className="text-2xl font-bold text-green-600">{score.score}</div>
+                            <div className="text-sm text-gray-600 capitalize">{(score.criteria_id || score.criteria || "").replace(/_/g, " ")}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {selectedApplication.feedback && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Evaluator Feedback</label>
+                        <p className="text-sm text-gray-700">{selectedApplication.feedback}</p>
+                      </div>
+                    )}
+                    {selectedApplication.rejection_reason && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Rejection Reason</label>
+                        <p className="text-sm text-red-700">{selectedApplication.rejection_reason}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+            <Button onClick={() => setSelectedApplication(null)} variant="outline">Close</Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto p-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Application History</h1>
+          <p className="text-gray-600 mt-1">View all your teaching applications and their current status</p>
+        </div>
+
+        <div className="mt-4 sm:mt-0 flex items-center space-x-4">
+          {/* View Toggle */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button onClick={() => setViewMode("grid")} className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${viewMode === "grid" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}>
+              Grid
+            </button>
+            <button onClick={() => setViewMode("list")} className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${viewMode === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}>
+              List
+            </button>
+          </div>
+
+          <div className="text-sm text-gray-600">{userApplications.length} application{userApplications.length !== 1 ? "s" : ""}</div>
+        </div>
+      </div>
+
+      {/* Content */}
+      {userApplications.length === 0 ? (
+        <div className="text-center py-12">
+          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No applications yet</h3>
+          <p className="mt-1 text-sm text-gray-500">You haven't submitted any teaching applications.</p>
+          <div className="mt-6">
+            <Button onClick={() => (window.location.href = "/applicant/application")} variant="primary">Submit New Application</Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{userApplications.map(renderApplicationCard)}</div>
+          ) : (
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Application</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program & Position</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                    <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">{userApplications.map(renderApplicationRow)}</tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Application Detail Modal */}
+      {renderApplicationDetail()}
+    </div>
+  );
+};
+
+export default ApplicationHistory;
+import React, { useState, useEffect } from "react";
+import { useApplicationStore } from "../../store/applicationStore";
+import { useAuthStore } from "../../store/authStore";
+import StatusBadge from "../../components/StatusBadge";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
@@ -73,13 +528,28 @@ const ApplicationHistory = () => {
     });
   };
 
-  const getApplicationProgress = (status) => {
-    const stages = ["Submitted", "Under Review", "Demo Scheduled", "Completed"];
-    const currentIndex = stages.findIndex(
-      (stage) =>
-        stage.toLowerCase().includes(status.toLowerCase()) ||
-        status.toLowerCase().includes(stage.toLowerCase())
-    );
+  const getApplicationProgress = (application) => {
+    const stages = [
+      "Submitted",
+      "Under Review",
+      "Demo Scheduled",
+      "Interview Scheduled",
+      "Completed",
+    ];
+    let currentIndex = 0;
+    if (!application) {
+      currentIndex = 0;
+    } else if (application.status?.toLowerCase() === "completed") {
+      currentIndex = stages.length - 1;
+    } else if (application.interviewSchedule) {
+      currentIndex = stages.indexOf("Interview Scheduled");
+    } else if (application.demoSchedule) {
+      currentIndex = stages.indexOf("Demo Scheduled");
+    } else if (application.status?.toLowerCase() === "under review") {
+      currentIndex = stages.indexOf("Under Review");
+    } else {
+      currentIndex = 0;
+    }
     return { stages, currentIndex: currentIndex >= 0 ? currentIndex : 0 };
   };
 
@@ -159,24 +629,19 @@ const ApplicationHistory = () => {
       {/* Quick Info */}
       <div className="flex justify-between items-center text-sm">
         <span className="text-gray-600">
-          {Array.isArray(application.documents)
-            ? application.documents.length
-            : 0}{" "}
-          documents uploaded
+          {Array.isArray(application.documents) ? application.documents.length : 0} documents uploaded
         </span>
         <span className="text-blue-600 font-medium">View Details →</span>
       </div>
-    </div>
-  );
 
   const renderApplicationRow = (application) => (
     <tr
       key={application.id}
-      className="hover:bg-gray-50 cursor-pointer"
-      onClick={() => setSelectedApplication(application)}
-    >
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div>
+                  width: `${
+                    ((getApplicationProgress(application).currentIndex + 1) /
+                      getApplicationProgress(application).stages.length) *
+                    100
+                  }%`,
           <div className="text-sm font-medium text-gray-900">
             #{application.id}
           </div>
@@ -237,22 +702,21 @@ const ApplicationHistory = () => {
   const renderApplicationDetail = () => {
     if (!selectedApplication) return null;
 
-    const { stages, currentIndex } = getApplicationProgress(
-      selectedApplication.status
-    );
-
-    return (
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                      width: `${
+                        ((getApplicationProgress(application).currentIndex + 1) /
+                          getApplicationProgress(application).stages.length) *
+                        100
+                      }%`,
         <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Application Details
-              </h2>
-              <p className="text-sm text-gray-600">
-                Application #{selectedApplication.id}
-              </p>
+                  {Math.round(
+                    ((getApplicationProgress(application).currentIndex + 1) /
+                      getApplicationProgress(application).stages.length) *
+                      100
+                  )}
+                  %
             </div>
             <button
               onClick={() => setSelectedApplication(null)}
