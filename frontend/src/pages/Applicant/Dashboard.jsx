@@ -368,28 +368,44 @@ const ApplicantDashboard = () => {
 
                   {/* Segmented progress bar with stage-specific shades */}
                   <div className="w-full rounded-full h-3 bg-gray-200 flex overflow-hidden">
-                    {getApplicationProgress(currentApplication).stages.map((_, idx) => {
-                      const { currentIndex } = getApplicationProgress(currentApplication);
-                      const isActive = idx <= currentIndex;
-                      return (
-                        <div
-                          key={idx}
-                          className={`h-3 ${isActive ? stageBgColors[idx] : "bg-gray-200"} transition-colors duration-300`}
-                          style={{ width: `${100 / getApplicationProgress(currentApplication).stages.length}%` }}
-                        />
-                      );
-                    })}
+                    {getApplicationProgress(currentApplication).stages.map(
+                      (_, idx) => {
+                        const { currentIndex } =
+                          getApplicationProgress(currentApplication);
+                        const isActive = idx <= currentIndex;
+                        return (
+                          <div
+                            key={idx}
+                            className={`h-3 ${
+                              isActive ? stageBgColors[idx] : "bg-gray-200"
+                            } transition-colors duration-300`}
+                            style={{
+                              width: `${
+                                100 /
+                                getApplicationProgress(currentApplication)
+                                  .stages.length
+                              }%`,
+                            }}
+                          />
+                        );
+                      }
+                    )}
                   </div>
 
                   <div className="flex text-xs text-gray-500 mt-2">
                     {(() => {
-                      const { stages, currentIndex } = getApplicationProgress(currentApplication);
+                      const { stages, currentIndex } =
+                        getApplicationProgress(currentApplication);
                       const stageWidth = `${100 / stages.length}%`;
                       return stages.map((stage, index) => (
                         <div
                           key={stage}
                           style={{ width: stageWidth }}
-                          className={`text-center px-1 whitespace-nowrap truncate ${index <= currentIndex ? `${stageTextColors[index]} font-medium` : "text-gray-400"}`}
+                          className={`text-center px-1 whitespace-nowrap truncate ${
+                            index <= currentIndex
+                              ? `${stageTextColors[index]} font-medium`
+                              : "text-gray-400"
+                          }`}
                         >
                           {stage}
                         </div>
@@ -400,17 +416,47 @@ const ApplicantDashboard = () => {
 
                 <div className="md:hidden">
                   {(() => {
-                    const { stages, currentIndex } = getApplicationProgress(currentApplication);
-                    const demoSchedule = currentApplication.demoSchedule || currentApplication.demo_schedule;
-                    const interviewSchedule = currentApplication.interviewSchedule || currentApplication.interview_schedule;
+                    const { stages, currentIndex } =
+                      getApplicationProgress(currentApplication);
+                    const demoSchedule =
+                      currentApplication.demoSchedule ||
+                      currentApplication.demo_schedule;
+                    const interviewSchedule =
+                      currentApplication.interviewSchedule ||
+                      currentApplication.interview_schedule;
                     const timestamps = {
-                      Submitted: currentApplication.createdAt || currentApplication.created_at || currentApplication.submittedAt,
-                      "Under Review": currentApplication.under_review_at || currentApplication.underReviewAt || currentApplication.updatedAt || currentApplication.updated_at,
-                      "Demo Scheduled": typeof demoSchedule === "object" ? (demoSchedule.date || demoSchedule.datetime || demoSchedule.scheduledAt) : demoSchedule,
-                      "Interview Scheduled": typeof interviewSchedule === "object" ? (interviewSchedule.date || interviewSchedule.datetime || interviewSchedule.scheduledAt) : interviewSchedule,
-                      Completed: currentApplication.completedAt || currentApplication.completed_at,
+                      Submitted:
+                        currentApplication.createdAt ||
+                        currentApplication.created_at ||
+                        currentApplication.submittedAt,
+                      "Under Review":
+                        currentApplication.under_review_at ||
+                        currentApplication.underReviewAt ||
+                        currentApplication.updatedAt ||
+                        currentApplication.updated_at,
+                      "Demo Scheduled":
+                        typeof demoSchedule === "object"
+                          ? demoSchedule.date ||
+                            demoSchedule.datetime ||
+                            demoSchedule.scheduledAt
+                          : demoSchedule,
+                      "Interview Scheduled":
+                        typeof interviewSchedule === "object"
+                          ? interviewSchedule.date ||
+                            interviewSchedule.datetime ||
+                            interviewSchedule.scheduledAt
+                          : interviewSchedule,
+                      Completed:
+                        currentApplication.completedAt ||
+                        currentApplication.completed_at,
                     };
-                    return <StatusTracker currentIndex={currentIndex} stages={stages} timestamps={timestamps} />;
+                    return (
+                      <StatusTracker
+                        currentIndex={currentIndex}
+                        stages={stages}
+                        timestamps={timestamps}
+                      />
+                    );
                   })()}
                 </div>
               </div>
