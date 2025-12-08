@@ -391,7 +391,9 @@ const Scoring = () => {
           <div className="space-y-4 sm:space-y-6">
             {/* Application Info */}
             <div className="bg-gray-50 p-3 sm:p-4 rounded-md">
-              <h4 className="font-medium text-gray-900 mb-2">DEMONSTRATION DETAILS</h4>
+              <h4 className="font-medium text-gray-900 mb-2">
+                DEMONSTRATION DETAILS
+              </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                 <div>
                   <span className="text-gray-500">Program:</span>
