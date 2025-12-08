@@ -73,6 +73,20 @@ const ApplicantDashboard = () => {
     return { stages, currentIndex, percentage };
   };
 
+  // Color shades for each stage from light blue (submitted) to dark blue (completed)
+  const stageBgColors = [
+    "bg-blue-200",
+    "bg-blue-300",
+    "bg-blue-500",
+    "bg-blue-800",
+  ];
+  const stageTextColors = [
+    "text-blue-700",
+    "text-blue-700",
+    "text-blue-700",
+    "text-blue-900",
+  ];
+
   const canCreateNewApplication = () => {
     return (
       !currentApplication ||
@@ -314,34 +328,54 @@ const ApplicantDashboard = () => {
                     %
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${
-                        getApplicationProgress(currentApplication.status)
-                          .percentage
-                      }%`,
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-2">
+
+                {/* Segmented progress bar with stage-specific shades */}
+                <div className="w-full rounded-full h-3 bg-gray-200 flex overflow-hidden">
                   {getApplicationProgress(currentApplication.status).stages.map(
-                    (stage, index) => (
-                      <span
+                    (_, idx) => {
+                      const { currentIndex } = getApplicationProgress(
+                        currentApplication.status
+                      );
+                      const isActive = idx <= currentIndex;
+                      return (
+                        <div
+                          key={idx}
+                          className={`h-3 ${
+                            isActive ? stageBgColors[idx] : "bg-gray-200"
+                          } transition-colors duration-300`}
+                          style={{
+                            width: `${
+                              100 /
+                              getApplicationProgress(currentApplication.status)
+                                .stages.length
+                            }%`,
+                          }}
+                        />
+                      );
+                    }
+                  )}
+                </div>
+
+                <div className="flex text-xs text-gray-500 mt-2">
+                  {(() => {
+                    const { stages, currentIndex } = getApplicationProgress(
+                      currentApplication.status
+                    );
+                    const stageWidth = `${100 / stages.length}%`;
+                    return stages.map((stage, index) => (
+                      <div
                         key={stage}
-                        className={
-                          index <=
-                          getApplicationProgress(currentApplication.status)
-                            .currentIndex
-                            ? "text-blue-600 font-medium"
-                            : ""
-                        }
+                        style={{ width: stageWidth }}
+                        className={`text-center px-1 whitespace-nowrap truncate ${
+                          index <= currentIndex
+                            ? `${stageTextColors[index]} font-medium`
+                            : "text-gray-400"
+                        }`}
                       >
                         {stage}
-                      </span>
-                    )
-                  )}
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
 
