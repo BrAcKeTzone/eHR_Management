@@ -16,6 +16,7 @@ export interface NotificationData {
     | "approval"
     | "rejection"
     | "schedule"
+    | "reschedule"
     | "result"
     | "hr_alert";
   applicationId?: number;
@@ -285,6 +286,74 @@ Blancia College Foundation Inc.
       type: "schedule",
       applicationId: application.id,
     });
+  }
+
+  // Demo reschedule notification with reason-specific content
+  async sendDemoRescheduleNotification(
+    application: Application,
+    applicant: User,
+    reason?: string
+  ): Promise<void> {
+    if (!application.demoSchedule) {
+      throw new Error("Demo schedule not set");
+    }
+
+    const demoDate = application.demoSchedule.toLocaleDateString();
+    const demoTime = application.demoSchedule.toLocaleTimeString();
+    const applicantFullName = this.getApplicantFullName(applicant);
+    const programName = this.getApplicationProgram(application);
+
+    let subject = "Teaching Demo Rescheduled - BCFI Teacher Application";
+    let message = `\nDear ${applicantFullName},\n\n`;
+
+    if (reason === "APPLICANT_NO_SHOW" || reason === "applicant_no_show") {
+      subject = "Action Required: Rescheduling Your Teaching Demo - BCFI";
+      message += `We were unable to proceed with your scheduled teaching demonstration for the ${programName} program because you did not appear at the scheduled time. We have rescheduled another demo for you as indicated below. Please make sure to attend the scheduled demo to avoid further rescheduling.\n\n`;
+    } else if (reason === "SCHOOL" || reason === "school_reschedule") {
+      subject = "Notice: Teaching Demo Rescheduled by HR - BCFI";
+      message += `Your teaching demonstration for the ${programName} program has been rescheduled by our HR team due to scheduling or administrative reasons. We apologize for the inconvenience. Please see the updated schedule below.\n\n`;
+    } else {
+      // Generic reschedule message
+      message += `Your teaching demonstration for the ${programName} program has been rescheduled. Please see the updated schedule below.\n\n`;
+    }
+
+    message += `Demo Details:\n- Date: ${demoDate}\n- Time: ${demoTime}\n- Program: ${programName}\n- Application ID: ${application.id}\n\n`;
+
+    message += `Important Instructions:\n1. Please arrive 15 minutes early for setup\n2. Prepare a 20-30 minute lesson on a topic relevant to your program\n3. Bring any materials you need for your demonstration\n4. Dress professionally\n5. Be prepared to answer questions about your teaching methodology\n\n`;
+
+    if (reason === "APPLICANT_NO_SHOW" || reason === "applicant_no_show") {
+      message += `Note: Since you did not attend the previous schedule, please be punctual for the new one. Frequent no-shows may impact your application status or eligibility.\n\n`;
+    }
+
+    message += `If you need to reschedule again due to an emergency, please contact our HR department as soon as possible.\n\nBest regards,\nBCFI HR Team\nBlancia College Foundation Inc.`;
+
+    await this.sendAndSaveNotification({
+      email: applicant.email,
+      subject,
+      message,
+      type: "reschedule",
+      applicationId: application.id,
+    });
+
+    // Also notify HR with a concise alert about the reschedule and reason
+    const hrEmails = await this.getHREmails();
+    const hrSubject = `Application #${application.id} - Demo Rescheduled`;
+    const hrMessage = `Application ID: ${
+      application.id
+    }\nApplicant: ${applicantFullName} (${
+      applicant.email
+    })\nProgram: ${programName}\nNew Demo: ${demoDate} at ${demoTime}\nReason: ${
+      reason || "Not specified"
+    }\n\nPlease review the schedule in the HR portal.`;
+    for (const hrEmail of hrEmails) {
+      await this.sendAndSaveNotification({
+        email: hrEmail,
+        subject: hrSubject,
+        message: hrMessage,
+        type: "hr_alert",
+        applicationId: application.id,
+      });
+    }
   }
 
   // Final results notification

@@ -235,11 +235,39 @@ export const scheduleDemo = asyncHandler(
     }
 
     const { id } = req.params;
-    const { demoSchedule, demoLocation, demoDuration, demoNotes } = req.body;
+    const {
+      demoSchedule,
+      demoLocation,
+      demoDuration,
+      demoNotes,
+      rescheduleReason,
+    } = req.body;
     const applicationId = parseInt(id);
 
     if (!demoSchedule) {
       throw new ApiError(400, "Demo schedule date is required");
+    }
+
+    // Determine if this is a reschedule so we can validate the input
+    const existingApp = await applicationService.getApplicationById(
+      applicationId
+    );
+    const isReschedule = existingApp?.demoSchedule;
+
+    if (isReschedule && !rescheduleReason) {
+      throw new ApiError(
+        400,
+        "Reschedule reason is required when updating an existing demo schedule"
+      );
+    }
+
+    // If rescheduleReason is provided, validate allowed values
+    const allowedReasons = ["APPLICANT_NO_SHOW", "SCHOOL"];
+    if (rescheduleReason && !allowedReasons.includes(rescheduleReason)) {
+      throw new ApiError(
+        400,
+        `Invalid reschedule reason. Allowed: ${allowedReasons.join(", ")}`
+      );
     }
 
     const application = await applicationService.scheduleDemo(
@@ -247,7 +275,8 @@ export const scheduleDemo = asyncHandler(
       new Date(demoSchedule),
       demoLocation,
       demoDuration ? parseInt(demoDuration) : undefined,
-      demoNotes
+      demoNotes,
+      rescheduleReason
     );
 
     res.json(new ApiResponse(200, application, "Demo scheduled successfully"));

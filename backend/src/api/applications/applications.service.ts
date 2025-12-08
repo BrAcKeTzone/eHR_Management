@@ -313,7 +313,8 @@ class ApplicationService {
     demoSchedule: Date,
     demoLocation?: string,
     demoDuration?: number,
-    demoNotes?: string
+    demoNotes?: string,
+    rescheduleReason?: string
   ): Promise<Application> {
     const application = await prisma.application.findUnique({ where: { id } });
 
@@ -374,6 +375,10 @@ class ApplicationService {
 
     if (isReschedule) {
       updateData.demoRescheduleCount = currentRescheduleCount + 1;
+      // Save reschedule reason if present
+      if (rescheduleReason) {
+        updateData.demoRescheduleReason = rescheduleReason;
+      }
     }
 
     const updatedApplication = await this.updateApplication(id, updateData);
@@ -384,12 +389,25 @@ class ApplicationService {
     });
 
     if (applicant) {
-      // Send demo schedule notification asynchronously
-      notificationService
-        .sendDemoScheduleNotification(updatedApplication, applicant)
-        .catch((error) =>
-          console.error("Failed to send demo schedule notification:", error)
-        );
+      // If this is a reschedule send a specific reschedule notification
+      if (isReschedule) {
+        notificationService
+          .sendDemoRescheduleNotification(
+            updatedApplication,
+            applicant,
+            rescheduleReason
+          )
+          .catch((error) =>
+            console.error("Failed to send demo reschedule notification:", error)
+          );
+      } else {
+        // Send initial demo schedule notification asynchronously
+        notificationService
+          .sendDemoScheduleNotification(updatedApplication, applicant)
+          .catch((error) =>
+            console.error("Failed to send demo schedule notification:", error)
+          );
+      }
     }
 
     return updatedApplication;

@@ -27,7 +27,8 @@ const ProfilePage = () => {
   const fileInputRef = useRef(null);
 
   const [profileData, setProfileData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
   });

@@ -35,6 +35,7 @@ const Scheduling = () => {
     location: "",
     duration: "60",
     notes: "",
+    rescheduleReason: "",
   });
 
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -118,6 +119,7 @@ const Scheduling = () => {
       location: "",
       duration: "60",
       notes: "",
+      rescheduleReason: application.demoRescheduleReason || "",
     });
   };
 
@@ -137,7 +139,12 @@ const Scheduling = () => {
     }
 
     try {
+      // If this is a reschedule and a reason is required, ensure it's provided
       if (selectedApplication.demoSchedule) {
+        if (!scheduleData.rescheduleReason) {
+          alert("Please select a reason for rescheduling the demo.");
+          return;
+        }
         await updateDemoSchedule(selectedApplication.id, scheduleData);
       } else {
         await setDemoSchedule(selectedApplication.id, scheduleData);
@@ -201,6 +208,16 @@ const Scheduling = () => {
               <p className="text-gray-600">{formatDate(row.demoSchedule)}</p>
               {row.demoTime && (
                 <p className="text-gray-600 font-medium">{row.demoTime}</p>
+              )}
+              {row.demoRescheduleReason && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Reason:{" "}
+                  {row.demoRescheduleReason === "APPLICANT_NO_SHOW"
+                    ? "Applicant did not appear"
+                    : row.demoRescheduleReason === "SCHOOL"
+                    ? "Rescheduled by school"
+                    : row.demoRescheduleReason}
+                </p>
               )}
             </div>
           ) : (
@@ -471,6 +488,31 @@ const Scheduling = () => {
               />
             </div>
 
+            {/* Reschedule Reason (only shown when editing existing schedule) */}
+            {selectedApplication.demoSchedule && (
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reschedule Reason <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={scheduleData.rescheduleReason}
+                  onChange={(e) =>
+                    setScheduleData({
+                      ...scheduleData,
+                      rescheduleReason: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select reason</option>
+                  <option value="APPLICANT_NO_SHOW">
+                    Applicant did not appear
+                  </option>
+                  <option value="SCHOOL">Rescheduled by school</option>
+                </select>
+              </div>
+            )}
+
             {/* Current Schedule Info */}
             {selectedApplication.demoSchedule && (
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3 sm:p-4">
@@ -487,6 +529,19 @@ const Scheduling = () => {
                     </p>
                   )}
                 </div>
+                {selectedApplication.demoRescheduleReason && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    <span className="font-semibold mr-1">
+                      Reschedule Reason:
+                    </span>
+                    {selectedApplication.demoRescheduleReason ===
+                    "APPLICANT_NO_SHOW"
+                      ? "Applicant did not appear"
+                      : selectedApplication.demoRescheduleReason === "SCHOOL"
+                      ? "Rescheduled by school"
+                      : selectedApplication.demoRescheduleReason}
+                  </div>
+                )}
               </div>
             )}
 

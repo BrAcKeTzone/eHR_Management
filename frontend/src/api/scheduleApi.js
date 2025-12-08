@@ -15,6 +15,7 @@ export const scheduleApi = {
   // Set/Update demo schedule for application (HR only)
   // Wrapper for PUT /api/applications/:id/schedule
   setDemoSchedule: async (applicationId, scheduleData) => {
+    // Pass rescheduleReason if provided
     const response = await fetchClient.put(
       `${API_BASE_URL}/${applicationId}/schedule`,
       scheduleData

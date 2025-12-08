@@ -31,6 +31,7 @@ export const useScheduleStore = create((set, get) => ({
         // Enforce duration to 60 minutes
         demoDuration: 60,
         demoNotes: scheduleData.notes || undefined,
+        rescheduleReason: scheduleData.rescheduleReason || undefined,
       });
 
       set({
@@ -63,6 +64,7 @@ export const useScheduleStore = create((set, get) => ({
         // Enforce duration to 60 minutes
         demoDuration: 60,
         demoNotes: scheduleData.notes || undefined,
+        rescheduleReason: scheduleData.rescheduleReason || undefined,
       });
 
       set({

@@ -3,8 +3,8 @@ import React from "react";
 const Input = ({
   type = "text",
   placeholder,
-  value,
-  onChange,
+  value = "",
+  onChange = () => {},
   className,
   label,
   error,

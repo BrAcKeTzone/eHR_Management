@@ -257,11 +257,11 @@ export const applicationApi = {
 
   // Schedule demo for application (HR only)
   // Backend endpoint: PUT /api/applications/:id/schedule
-  scheduleDemo: async (applicationId, demoSchedule) => {
+  scheduleDemo: async (applicationId, demoSchedule, rescheduleReason) => {
     try {
       const response = await fetchClient.put(
         `${API_BASE_URL}/applications/${applicationId}/schedule`,
-        { demoSchedule } // ISO date string
+        { demoSchedule, rescheduleReason } // ISO date string and optional reason
       );
       return { application: response.data.data };
     } catch (error) {

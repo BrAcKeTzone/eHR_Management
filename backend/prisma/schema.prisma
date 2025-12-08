@@ -59,6 +59,7 @@ model Application {
   demoDuration   Int?              // Duration in minutes
   demoNotes      String?           @db.Text // Instructions/notes for applicant
   demoRescheduleCount Int @default(0) // Number of times the demo has been rescheduled
+  demoRescheduleReason String? // Optional reason for latest reschedule (applicant_no_show | school)
   totalScore     Float?            // Total score entered by HR (0-100)
   result         ApplicationResult?
   hrNotes        String?           @db.Text // HR comments during review

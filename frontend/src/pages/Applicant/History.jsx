@@ -372,6 +372,22 @@ const ApplicationHistory = () => {
                             </p>
                           </div>
                         )}
+                        {selectedApplication.demoRescheduleReason && (
+                          <div className="col-span-2">
+                            <p className="text-sm text-blue-700 mb-1">
+                              Reschedule Reason
+                            </p>
+                            <p className="text-sm text-blue-800 bg-white rounded p-2">
+                              {selectedApplication.demoRescheduleReason ===
+                              "APPLICANT_NO_SHOW"
+                                ? "Applicant did not appear on scheduled demo"
+                                : selectedApplication.demoRescheduleReason ===
+                                  "SCHOOL"
+                                ? "Rescheduled by school"
+                                : selectedApplication.demoRescheduleReason}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
