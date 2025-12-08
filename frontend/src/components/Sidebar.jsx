@@ -171,7 +171,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           ),
         },
         {
-          name: "Scoring",
+          name: "Demo Scoring",
           path: "/hr/scoring",
           icon: (
             <svg
