@@ -40,6 +40,7 @@ export interface UpdateApplicationData {
   hrNotes?: string;
   totalScore?: number;
   result?: "PASS" | "FAIL";
+  interviewEligible?: boolean;
 }
 
 export interface ApplicationWithApplicant extends Application {
@@ -194,15 +195,24 @@ class ApplicationService {
   async getAllApplications(filters?: {
     status?: ApplicationStatus;
     result?: ApplicationResult;
+    interviewEligible?: boolean;
     search?: string;
     page?: number;
     limit?: number;
   }): Promise<{ applications: ApplicationWithApplicant[]; total: number }> {
-    const { status, result, search, page = 1, limit = 10 } = filters || {};
+    const {
+      status,
+      result,
+      interviewEligible,
+      search,
+      page = 1,
+      limit = 10,
+    } = filters || {};
 
     const where: Prisma.ApplicationWhereInput = {
       ...(status && { status }),
       ...(result && { result }),
+      ...(typeof interviewEligible === "boolean" && { interviewEligible }),
       ...(search && {
         applicant: {
           OR: [
@@ -418,10 +428,14 @@ class ApplicationService {
     totalScore: number,
     result: "PASS" | "FAIL"
   ): Promise<Application> {
+    // When a score is submitted and result is PASS with a score >= 75,
+    // mark the application as interviewEligible so it can appear in the Interview Scheduling queue.
+    const interviewEligible = totalScore >= 75;
     return await this.updateApplication(id, {
       status: ApplicationStatus.COMPLETED,
       totalScore,
       result: result as any,
+      interviewEligible,
     });
   }
 

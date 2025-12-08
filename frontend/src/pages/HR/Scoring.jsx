@@ -95,8 +95,13 @@ const Scoring = () => {
       setResult("");
       setFeedback("");
 
-      // Refresh applications
+      // Refresh general HR list
       getAllApplications({ status: "APPROVED" });
+      // If this entry passed (>=75), also refresh the Interview Scheduling list
+      if (score >= 75) {
+        // Refresh interview-eligible list
+        getAllApplications({ interviewEligible: true });
+      }
     } catch (error) {
       console.error("Failed to submit scores:", error);
       setError(error.message || "Failed to submit scores");

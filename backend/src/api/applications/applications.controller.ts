@@ -132,7 +132,14 @@ export const getAllApplications = asyncHandler(
       throw new ApiError(403, "Only HR and Admin can view all applications");
     }
 
-    const { status, result: resultFilter, search, page, limit } = req.query;
+    const {
+      status,
+      result: resultFilter,
+      interviewEligible,
+      search,
+      page,
+      limit,
+    } = req.query;
 
     // Convert status and result to uppercase to match enums
     const normalizedStatus = status
@@ -146,6 +153,9 @@ export const getAllApplications = asyncHandler(
     const filters = {
       ...(normalizedStatus && { status: normalizedStatus }),
       ...(normalizedResult && { result: normalizedResult }),
+      ...(typeof interviewEligible !== "undefined" && {
+        interviewEligible: interviewEligible === "true",
+      }),
       ...(search && { search: search as string }),
       ...(page && { page: parseInt(page as string) }),
       ...(limit && { limit: parseInt(limit as string) }),
@@ -346,6 +356,11 @@ export const completeApplication = asyncHandler(
 
     if (hrNotes) {
       updateData.hrNotes = hrNotes;
+    }
+    // mark the application as interviewEligible if score is >= 75
+    const numericScore = parseFloat(totalScore);
+    if (!isNaN(numericScore)) {
+      updateData.interviewEligible = numericScore >= 75;
     }
 
     const application = await applicationService.updateApplication(

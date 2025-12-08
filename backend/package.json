@@ -4,6 +4,7 @@
   "description": "Backend for the Automated HR Filing & Email Notification System - Teacher Application Process for Blancia College Foundation Inc.",
   "main": "dist/server.js",
   "scripts": {
+    "backfill-interview-eligible": "node ./scripts/backfill-interview-eligible.js",
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",

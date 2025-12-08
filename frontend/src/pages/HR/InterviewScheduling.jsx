@@ -18,12 +18,11 @@ const InterviewScheduling = () => {
     error,
   } = useApplicationStore();
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showModal, setShowModal] = useState(false);
-
   useEffect(() => {
-    getAllApplications({ status: "APPROVED" });
+    // Fetch only interview-eligible applications (passed the demo with score >= 75)
+    getAllApplications({ interviewEligible: true });
   }, [getAllApplications]);
 
   useEffect(() => {
@@ -97,6 +96,14 @@ const InterviewScheduling = () => {
     },
   ];
 
+  // Only show applications that are interviewEligible or have a passing demo score
+  const visibleApplications = (applications || []).filter((a) => {
+    return (
+      a.interviewEligible ||
+      (typeof a.totalScore === "number" && a.totalScore >= 75)
+    );
+  });
+
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6 sm:mb-8">
@@ -135,11 +142,11 @@ const InterviewScheduling = () => {
       <DashboardCard title="Applications">
         <div className="mt-4">
           <div className="hidden lg:block">
-            <Table columns={columns} data={applications || []} />
+            <Table columns={columns} data={visibleApplications} />
           </div>
 
           <div className="lg:hidden space-y-4">
-            {(applications || []).map((app, idx) => (
+            {visibleApplications.map((app, idx) => (
               <div
                 key={idx}
                 className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
