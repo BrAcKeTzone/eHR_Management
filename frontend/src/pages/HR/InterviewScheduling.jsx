@@ -196,7 +196,8 @@ const InterviewScheduling = () => {
         <div className="text-sm">
           {row.interviewSchedule ? (
             <div>
-              <p className="font-medium text-gray-700">
+              <p className="font-medium text-green-600">Scheduled</p>
+              <p className="text-gray-600">
                 {formatDate(row.interviewSchedule)}
               </p>
               {row.interviewTime && (

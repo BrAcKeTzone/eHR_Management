@@ -439,8 +439,17 @@ export const scheduleInterview = asyncHandler(
       rescheduleReason
     );
 
+    // Get the full application with applicant details and format it
+    const formattedApplication = await applicationService.getApplicationById(
+      applicationId
+    );
+
     res.json(
-      new ApiResponse(200, application, "Interview scheduled successfully")
+      new ApiResponse(
+        200,
+        formattedApplication,
+        "Interview scheduled successfully"
+      )
     );
   }
 );
