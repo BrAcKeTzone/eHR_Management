@@ -342,4 +342,31 @@ export const applicationApi = {
       throw new Error(message);
     }
   },
+
+  // Rate interview with score and result (HR only)
+  rateInterview: async (
+    applicationId,
+    interviewScore,
+    interviewResult,
+    interviewNotes = ""
+  ) => {
+    try {
+      const response = await fetchClient.put(
+        `${API_BASE_URL}/applications/${applicationId}/interview-rating`,
+        {
+          interviewScore: parseFloat(interviewScore),
+          interviewResult: interviewResult.toUpperCase(),
+          interviewNotes,
+        }
+      );
+      return { application: response.data.data };
+    } catch (error) {
+      console.error("Error rating interview:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to rate interview";
+      throw new Error(message);
+    }
+  },
 };

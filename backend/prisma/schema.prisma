@@ -64,6 +64,9 @@ model Application {
   interviewSchedule DateTime?     // Interview date/time
   interviewRescheduleCount Int @default(0) // Number of times the interview has been rescheduled
   interviewRescheduleReason String?
+  interviewScore     Float?            // Interview score (0-100)
+  interviewResult    ApplicationResult? // Interview result (PASS/FAIL)
+  interviewNotes     String?           @db.Text // Interview feedback/notes
   totalScore     Float?            // Total score entered by HR (0-100)
   result         ApplicationResult?
   hrNotes        String?           @db.Text // HR comments during review

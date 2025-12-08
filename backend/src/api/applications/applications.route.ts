@@ -12,6 +12,7 @@ import {
   updateApplication,
   deleteApplication,
   completeApplication,
+  rateInterview,
   getApplicationDocuments,
   downloadDocument,
 } from "./applications.controller";
@@ -52,6 +53,7 @@ router.put("/:id/approve", approveApplication);
 router.put("/:id/reject", rejectApplication);
 router.put("/:id/schedule", scheduleDemo);
 router.put("/:id/interview", scheduleInterview);
+router.put("/:id/interview-rating", rateInterview);
 router.put("/:id/complete", completeApplication);
 
 export default router;

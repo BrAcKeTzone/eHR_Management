@@ -44,6 +44,9 @@ export interface UpdateApplicationData {
   interviewSchedule?: Date;
   interviewRescheduleCount?: number;
   interviewRescheduleReason?: string;
+  interviewScore?: number;
+  interviewResult?: "PASS" | "FAIL";
+  interviewNotes?: string;
 }
 
 export interface ApplicationWithApplicant extends Application {
@@ -559,6 +562,43 @@ class ApplicationService {
       result: result as any,
       interviewEligible,
     });
+  }
+
+  async rateInterview(
+    id: number,
+    interviewScore: number,
+    interviewResult: "PASS" | "FAIL",
+    interviewNotes?: string
+  ): Promise<Application> {
+    const application = await prisma.application.findUnique({ where: { id } });
+
+    if (!application) {
+      throw new ApiError(404, "Application not found");
+    }
+
+    if (!application.interviewSchedule) {
+      throw new ApiError(
+        400,
+        "Application must have a scheduled interview before rating"
+      );
+    }
+
+    // Validate score range
+    if (interviewScore < 0 || interviewScore > 100) {
+      throw new ApiError(400, "Interview score must be between 0 and 100");
+    }
+
+    const updatedApplication = await this.updateApplication(id, {
+      interviewScore,
+      interviewResult: interviewResult as any,
+      interviewNotes,
+      status: ApplicationStatus.COMPLETED,
+    });
+
+    // Note: Interview result notification can be added when notification service is extended
+    // For now, the interview rating is saved successfully
+
+    return updatedApplication;
   }
 
   async deleteApplication(id: number): Promise<void> {

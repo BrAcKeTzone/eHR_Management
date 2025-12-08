@@ -373,6 +373,45 @@ export const completeApplication = asyncHandler(
   }
 );
 
+export const rateInterview = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!["HR", "ADMIN"].includes(req.user!.role)) {
+      throw new ApiError(403, "Only HR and Admin can rate interviews");
+    }
+
+    const { id } = req.params;
+    const { interviewScore, interviewResult, interviewNotes } = req.body;
+    const applicationId = parseInt(id);
+
+    if (interviewScore === undefined || interviewScore === null) {
+      throw new ApiError(400, "Interview score is required");
+    }
+
+    if (
+      !interviewResult ||
+      !["PASS", "FAIL"].includes(interviewResult.toUpperCase())
+    ) {
+      throw new ApiError(400, "Valid result (PASS or FAIL) is required");
+    }
+
+    const application = await applicationService.rateInterview(
+      applicationId,
+      parseFloat(interviewScore),
+      interviewResult.toUpperCase() as "PASS" | "FAIL",
+      interviewNotes
+    );
+
+    // Get the full application with applicant details and format it
+    const formattedApplication = await applicationService.getApplicationById(
+      applicationId
+    );
+
+    res.json(
+      new ApiResponse(200, formattedApplication, "Interview rated successfully")
+    );
+  }
+);
+
 export const getApplicationDocuments = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
