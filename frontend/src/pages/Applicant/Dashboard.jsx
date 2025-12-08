@@ -7,7 +7,7 @@ import Button from "../../components/Button";
 import Modal from "../../components/Modal";
 import StatusBadge from "../../components/StatusBadge";
 import StatusTracker from "../../components/StatusTracker";
-import { formatDate } from "../../utils/formatDate";
+import { formatDate, formatDateTime } from "../../utils/formatDate";
 
 const ApplicantDashboard = () => {
   const navigate = useNavigate();
@@ -397,6 +397,16 @@ const ApplicantDashboard = () => {
                       const { stages, currentIndex } =
                         getApplicationProgress(currentApplication);
                       const stageWidth = `${100 / stages.length}%`;
+                      const demoSchedule = currentApplication.demoSchedule || currentApplication.demo_schedule;
+                      const interviewSchedule = currentApplication.interviewSchedule || currentApplication.interview_schedule;
+                      const timestamps = {
+                        Submitted: currentApplication.createdAt || currentApplication.created_at || currentApplication.submittedAt,
+                        "Under Review": currentApplication.updatedAt || currentApplication.updated_at || null,
+                        "Demo Scheduled": typeof demoSchedule === "object" ? (demoSchedule.date || demoSchedule.datetime || demoSchedule.scheduledAt) : demoSchedule,
+                        "Interview Scheduled": typeof interviewSchedule === "object" ? (interviewSchedule.date || interviewSchedule.datetime || interviewSchedule.scheduledAt) : interviewSchedule,
+                        Completed: currentApplication.completedAt || currentApplication.completed_at || null,
+                      };
+
                       return stages.map((stage, index) => (
                         <div
                           key={stage}
@@ -407,7 +417,8 @@ const ApplicantDashboard = () => {
                               : "text-gray-400"
                           }`}
                         >
-                          {stage}
+                          <div className="text-xs">{stage}</div>
+                          <div className="text-xs text-gray-400 mt-1">{formatDateTime(timestamps[stage])}</div>
                         </div>
                       ));
                     })()}
