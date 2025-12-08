@@ -516,9 +516,7 @@ const Scheduling = () => {
             {/* Current Schedule Info */}
             {selectedApplication.demoSchedule && (
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3 sm:p-4">
-                <h4 className="font-medium text-blue-900 mb-2">
-                  Current Schedule
-                </h4>
+                <h4 className="font-medium text-blue-900 mb-2">DEMONSTRATION DETAILS</h4>
                 <div className="text-sm text-blue-800 space-y-1">
                   <p className="break-words">
                     Date: {formatDate(selectedApplication.demoSchedule)}

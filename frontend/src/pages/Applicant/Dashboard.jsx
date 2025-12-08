@@ -487,6 +487,7 @@ const ApplicantDashboard = () => {
                 </div>
 
                 <div className="space-y-3 text-sm">
+                  <p className="text-xs font-semibold text-blue-900 mb-1">DEMONSTRATION DETAILS</p>
                   <div>
                     <p className="text-gray-600">Date & Time:</p>
                     <p className="font-medium">

@@ -253,26 +253,20 @@ Blancia College Foundation Inc.
     const applicantFullName = this.getApplicantFullName(applicant);
     const programName = this.getApplicationProgram(application);
     const message = `
-  Dear ${applicantFullName},
+Dear ${applicantFullName},
 
-  Your teaching demonstration has been scheduled for your ${programName} program application.
+Your application for the ${programName} position has been approved.
 
-Demo Details:
+DEMONSTRATION DETAILS:
 - Date: ${demoDate}
 - Time: ${demoTime}
 - Program: ${programName}
 - Application ID: ${application.id}
 
-Important Instructions:
-1. Please arrive 15 minutes early for setup
-2. Prepare a 20-30 minute lesson on a topic relevant to your program
-3. Bring any materials you need for your demonstration
-4. Dress professionally
-5. Be prepared to answer questions about your teaching methodology
+Please prepare a 1-hour lesson for your demonstration.
+Dress appropriately.
 
 If you need to reschedule due to an emergency, please contact our HR department as soon as possible.
-
-We look forward to seeing your teaching skills in action!
 
 Best regards,
 BCFI HR Team
@@ -317,9 +311,9 @@ Blancia College Foundation Inc.
       message += `Your teaching demonstration for the ${programName} program has been rescheduled. Please see the updated schedule below.\n\n`;
     }
 
-    message += `Demo Details:\n- Date: ${demoDate}\n- Time: ${demoTime}\n- Program: ${programName}\n- Application ID: ${application.id}\n\n`;
+    message += `DEMONSTRATION DETAILS:\n- Date: ${demoDate}\n- Time: ${demoTime}\n- Program: ${programName}\n- Application ID: ${application.id}\n\n`;
 
-    message += `Important Instructions:\n1. Please arrive 15 minutes early for setup\n2. Prepare a 20-30 minute lesson on a topic relevant to your program\n3. Bring any materials you need for your demonstration\n4. Dress professionally\n5. Be prepared to answer questions about your teaching methodology\n\n`;
+    message += `Please prepare a 1-hour lesson for your demonstration.\nDress appropriately.\n\n`;
 
     if (reason === "APPLICANT_NO_SHOW" || reason === "applicant_no_show") {
       message += `Note: Since you did not attend the previous schedule, please be punctual for the new one. Frequent no-shows may impact your application status or eligibility.\n\n`;
