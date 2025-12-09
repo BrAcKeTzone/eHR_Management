@@ -672,96 +672,96 @@ const ApplicantDashboard = () => {
         {/* Interview Schedule */}
         {!isFinalized(currentApplication?.status) &&
           currentApplication?.interviewSchedule && (
-          <DashboardCard title="Upcoming Interview">
-            {upcomingInterview ? (
-              <div className="space-y-4">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg
-                      className="w-8 h-8 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
+            <DashboardCard title="Upcoming Interview">
+              {upcomingInterview ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg
+                        className="w-8 h-8 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-gray-900">
+                      Interview Scheduled
+                    </h3>
                   </div>
-                  <h3 className="font-semibold text-gray-900">
-                    Interview Scheduled
-                  </h3>
-                </div>
 
-                <div className="space-y-3 text-sm">
-                  <p className="text-xs font-semibold text-blue-900 mb-1">
-                    INTERVIEW DETAILS
-                  </p>
-                  <div>
-                    <p className="text-gray-600">Date & Time:</p>
-                    <p className="font-medium">
-                      {formatDate(upcomingInterview.date)}
+                  <div className="space-y-3 text-sm">
+                    <p className="text-xs font-semibold text-blue-900 mb-1">
+                      INTERVIEW DETAILS
                     </p>
-                    <p className="font-medium">{upcomingInterview.time}</p>
+                    <div>
+                      <p className="text-gray-600">Date & Time:</p>
+                      <p className="font-medium">
+                        {formatDate(upcomingInterview.date)}
+                      </p>
+                      <p className="font-medium">{upcomingInterview.time}</p>
+                    </div>
+                    {upcomingInterview.duration && (
+                      <div>
+                        <p className="text-gray-600">Duration:</p>
+                        <p className="font-medium">
+                          {upcomingInterview.duration} minutes
+                        </p>
+                      </div>
+                    )}
+                    {upcomingInterview.location && (
+                      <div>
+                        <p className="text-gray-600">Location:</p>
+                        <p className="font-medium">
+                          {upcomingInterview.location}
+                        </p>
+                      </div>
+                    )}
+                    {upcomingInterview.notes && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                        <p className="text-xs font-medium text-blue-900 mb-1">
+                          Instructions:
+                        </p>
+                        <p className="text-xs text-blue-800">
+                          {upcomingInterview.notes}
+                        </p>
+                      </div>
+                    )}
+                    {!upcomingInterview.notes && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                        <p className="text-xs text-blue-800">
+                          Your interview details will be emailed to you.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  {upcomingInterview.duration && (
-                    <div>
-                      <p className="text-gray-600">Duration:</p>
-                      <p className="font-medium">
-                        {upcomingInterview.duration} minutes
-                      </p>
-                    </div>
-                  )}
-                  {upcomingInterview.location && (
-                    <div>
-                      <p className="text-gray-600">Location:</p>
-                      <p className="font-medium">
-                        {upcomingInterview.location}
-                      </p>
-                    </div>
-                  )}
-                  {upcomingInterview.notes && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                      <p className="text-xs font-medium text-blue-900 mb-1">
-                        Instructions:
-                      </p>
-                      <p className="text-xs text-blue-800">
-                        {upcomingInterview.notes}
-                      </p>
-                    </div>
-                  )}
-                  {!upcomingInterview.notes && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                      <p className="text-xs text-blue-800">
-                        Your interview details will be emailed to you.
-                      </p>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <svg
-                  className="mx-auto h-12 w-12 text-yellow-400 mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8v4l3 3"
-                  />
-                </svg>
-                <p className="text-gray-500">No interview scheduled</p>
-              </div>
-            )}
-          </DashboardCard>
-        )}
+              ) : (
+                <div className="text-center py-8">
+                  <svg
+                    className="mx-auto h-12 w-12 text-yellow-400 mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4l3 3"
+                    />
+                  </svg>
+                  <p className="text-gray-500">No interview scheduled</p>
+                </div>
+              )}
+            </DashboardCard>
+          )}
       </div>
 
       {/* Assessment Results */}
