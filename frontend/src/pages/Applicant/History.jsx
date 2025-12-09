@@ -131,7 +131,9 @@ const ApplicationHistory = () => {
                       {application.status?.toUpperCase()}
                     </span>
                     {application.result && (
-                      <span className="text-sm ml-2 mr-2 text-gray-500">Demo:</span>
+                      <span className="text-sm ml-2 mr-2 text-gray-500">
+                        Demo:
+                      </span>
                     )}
                     {application.result && (
                       <span
@@ -146,7 +148,9 @@ const ApplicationHistory = () => {
                     {application.result?.toUpperCase() === "PASS" &&
                       application.interviewResult && (
                         <>
-                          <span className="text-sm ml-2 mr-2 text-gray-500">Interview:</span>
+                          <span className="text-sm ml-2 mr-2 text-gray-500">
+                            Interview:
+                          </span>
                           <span
                             className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
                               application.interviewResult
@@ -292,7 +296,9 @@ const ApplicationHistory = () => {
                     </div>
                     {selectedApplication.result && (
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Demo Result</p>
+                        <p className="text-sm text-gray-500 mb-1">
+                          Demo Result
+                        </p>
                         <span
                           className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
                             selectedApplication.result
@@ -303,18 +309,21 @@ const ApplicationHistory = () => {
                       </div>
                     )}
 
-                    {selectedApplication.result?.toUpperCase() === "PASS" && selectedApplication.interviewResult && (
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Interview Result</p>
-                        <span
-                          className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
-                            selectedApplication.interviewResult
-                          )}`}
-                        >
-                          {selectedApplication.interviewResult?.toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    {selectedApplication.result?.toUpperCase() === "PASS" &&
+                      selectedApplication.interviewResult && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">
+                            Interview Result
+                          </p>
+                          <span
+                            className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                              selectedApplication.interviewResult
+                            )}`}
+                          >
+                            {selectedApplication.interviewResult?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                   </div>
                 </div>
 
