@@ -247,7 +247,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           ),
         },
         {
-          name: "User Management",
+          name: "Archiving",
           path: "/hr/users",
           icon: (
             <svg
