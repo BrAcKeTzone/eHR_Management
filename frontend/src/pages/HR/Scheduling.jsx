@@ -236,17 +236,12 @@ const Scheduling = () => {
             variant={row.demoSchedule ? "outline" : "primary"}
             size="sm"
             disabled={
-              row.demoSchedule &&
-              ((row.demoRescheduleCount || 0) >= 1 ||
-                row.totalScore !== null ||
-                row.totalScore !== undefined ||
-                !!row.result)
+              !!row.result ||
+              (row.demoSchedule && (row.demoRescheduleCount || 0) >= 1)
             }
           >
             {row.demoSchedule
-              ? row.totalScore !== null ||
-                row.totalScore !== undefined ||
-                row.result
+              ? !!row.result
                 ? "Scored"
                 : row.demoRescheduleCount >= 1
                 ? "Rescheduled"
@@ -288,29 +283,7 @@ const Scheduling = () => {
         </div>
       )}
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <DashboardCard title="Total Approved" className="text-center">
-          <div className="text-2xl sm:text-3xl font-bold text-blue-600">
-            {approvedApplications.length}
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Applications</div>
-        </DashboardCard>
-
-        <DashboardCard title="Scheduled" className="text-center">
-          <div className="text-2xl sm:text-3xl font-bold text-green-600">
-            {approvedApplications.filter((app) => app.demoSchedule).length}
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Demos</div>
-        </DashboardCard>
-
-        <DashboardCard title="Pending Schedule" className="text-center">
-          <div className="text-2xl sm:text-3xl font-bold text-yellow-600">
-            {approvedApplications.filter((app) => !app.demoSchedule).length}
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Need scheduling</div>
-        </DashboardCard>
-      </div>
+      {/* Statistics removed - showing only applications list */}
 
       {/* Applications Table */}
       <DashboardCard title="Approved Applications">
@@ -376,17 +349,13 @@ const Scheduling = () => {
                       size="sm"
                       className="flex-1"
                       disabled={
-                        app.demoSchedule &&
-                        ((app.demoRescheduleCount || 0) >= 1 ||
-                          app.totalScore !== null ||
-                          app.totalScore !== undefined ||
-                          !!app.result)
+                        !!app.result ||
+                        (app.demoSchedule &&
+                          (app.demoRescheduleCount || 0) >= 1)
                       }
                     >
                       {app.demoSchedule
-                        ? app.totalScore !== null ||
-                          app.totalScore !== undefined ||
-                          app.result
+                        ? !!app.result
                           ? "Scored"
                           : app.demoRescheduleCount >= 1
                           ? "Rescheduled"

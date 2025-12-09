@@ -35,8 +35,23 @@ const InterviewRating = () => {
       (a) => String(a.id) === String(applicationId)
     );
     if (app) {
-      setSelectedApplication(app);
-      setShowModal(true);
+      // Guard: ensure the application is eligible for interview rating
+      const hasInterviewResult =
+        app.interviewResult !== null &&
+        typeof app.interviewResult !== "undefined" &&
+        app.interviewResult.toString().trim() !== "";
+      const demoResult = app.result
+        ? app.result.toString().trim().toUpperCase()
+        : null;
+      const demoPassed = demoResult === "PASS";
+
+      if (app.interviewSchedule && demoPassed && !hasInterviewResult) {
+        setSelectedApplication(app);
+        setShowModal(true);
+      } else {
+        // Do not open modal if not eligible; simply ignore
+        setSelectedApplication(null);
+      }
       setSearchParams({});
     } else {
       (async () => {
@@ -44,8 +59,25 @@ const InterviewRating = () => {
           const res = await getApplicationById(applicationId);
           const appFromApi = res?.application;
           if (appFromApi) {
-            setSelectedApplication(appFromApi);
-            setShowModal(true);
+            const hasInterviewResult =
+              appFromApi.interviewResult !== null &&
+              typeof appFromApi.interviewResult !== "undefined" &&
+              appFromApi.interviewResult.toString().trim() !== "";
+            const demoResult = appFromApi.result
+              ? appFromApi.result.toString().trim().toUpperCase()
+              : null;
+            const demoPassed = demoResult === "PASS";
+
+            if (
+              appFromApi.interviewSchedule &&
+              demoPassed &&
+              !hasInterviewResult
+            ) {
+              setSelectedApplication(appFromApi);
+              setShowModal(true);
+            } else {
+              setSelectedApplication(null);
+            }
             setSearchParams({});
           }
         } catch (e) {
@@ -56,6 +88,22 @@ const InterviewRating = () => {
   }, [applications, searchParams, getApplicationById, setSearchParams]);
 
   const openRatingModal = (app) => {
+    // Guard: only allow opening the rating modal when the app is eligible
+    const hasInterviewResult =
+      app.interviewResult !== null &&
+      typeof app.interviewResult !== "undefined" &&
+      app.interviewResult.toString().trim() !== "";
+    const demoResult = app.result
+      ? app.result.toString().trim().toUpperCase()
+      : null;
+    const demoPassed = demoResult === "PASS";
+
+    if (!(app.interviewSchedule && demoPassed && !hasInterviewResult)) {
+      // not eligible — do nothing
+      setError("This application is not eligible for interview rating.");
+      return;
+    }
+
     setSelectedApplication(app);
     setShowModal(true);
 
@@ -199,13 +247,45 @@ const InterviewRating = () => {
           <div className="hidden lg:block">
             <Table
               columns={columns}
-              data={(applications || []).filter((app) => app.interviewSchedule)}
+              data={(applications || []).filter((app) => {
+                const hasInterviewResult =
+                  app.interviewResult !== null &&
+                  typeof app.interviewResult !== "undefined" &&
+                  app.interviewResult.toString().trim() !== "";
+
+                const demoResult = app.result
+                  ? app.result.toString().trim().toUpperCase()
+                  : null;
+                const demoPassed = demoResult === "PASS";
+
+                // Show only scheduled interviews for applications that:
+                // - Have an interview scheduled
+                // - Have a demo result of PASS
+                // - Do not already have an interviewResult
+                return (
+                  app.interviewSchedule && demoPassed && !hasInterviewResult
+                );
+              })}
             />
           </div>
 
           <div className="lg:hidden space-y-4">
             {(applications || [])
-              .filter((app) => app.interviewSchedule)
+              .filter((app) => {
+                const hasInterviewResult =
+                  app.interviewResult !== null &&
+                  typeof app.interviewResult !== "undefined" &&
+                  app.interviewResult.toString().trim() !== "";
+
+                const demoResult = app.result
+                  ? app.result.toString().trim().toUpperCase()
+                  : null;
+                const demoPassed = demoResult === "PASS";
+
+                return (
+                  app.interviewSchedule && demoPassed && !hasInterviewResult
+                );
+              })
               .map((app, idx) => (
                 <div
                   key={idx}

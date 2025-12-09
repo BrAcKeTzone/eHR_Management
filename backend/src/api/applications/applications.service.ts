@@ -392,16 +392,8 @@ class ApplicationService {
     // Determine whether this is an initial schedule or a reschedule
     const isReschedule = !!application.demoSchedule;
 
-    // Prevent scheduling/rescheduling if a demo score/result is already present.
-    if (
-      (application as any).totalScore !== null &&
-      (application as any).totalScore !== undefined
-    ) {
-      throw new ApiError(
-        400,
-        "Cannot schedule or reschedule demo for an application that already has a demo score"
-      );
-    }
+    // Prevent scheduling/rescheduling if a demo result already exists (i.e., scored and finalized).
+    // Having a raw totalScore without a result should not prevent re-scheduling.
     if ((application as any).result) {
       throw new ApiError(
         400,

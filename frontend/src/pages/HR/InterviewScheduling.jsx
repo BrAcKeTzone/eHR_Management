@@ -252,11 +252,18 @@ const InterviewScheduling = () => {
   ];
 
   // Only show applications that are interviewEligible or have a passing demo score
+  // Only show applications that are interviewEligible or have a passing demo score
+  // and exclude applications that already have an interview result
   const visibleApplications = (applications || []).filter((a) => {
-    return (
+    const eligible =
       a.interviewEligible ||
-      (typeof a.totalScore === "number" && a.totalScore >= 75)
-    );
+      (typeof a.totalScore === "number" && a.totalScore >= 75);
+    // treat empty strings as no result; consider 'PASS' or 'FAIL' as having a result
+    const hasInterviewResult =
+      a.interviewResult !== null &&
+      typeof a.interviewResult !== "undefined" &&
+      a.interviewResult.toString().trim() !== "";
+    return eligible && !hasInterviewResult;
   });
 
   return (
@@ -274,25 +281,7 @@ const InterviewScheduling = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <DashboardCard title="Total Approved" className="text-center">
-          <div className="text-2xl sm:text-3xl font-bold text-blue-600">
-            {(applications || []).filter((a) => a.status === "APPROVED").length}
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Applications</div>
-        </DashboardCard>
-
-        <DashboardCard title="Pending Interviews" className="text-center">
-          <div className="text-2xl sm:text-3xl font-bold text-yellow-600">
-            {
-              (applications || []).filter(
-                (a) => a.status === "APPROVED" && !a.interviewSchedule
-              ).length
-            }
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Need scheduling</div>
-        </DashboardCard>
-      </div>
+      {/* Statistics removed - showing only interview scheduling list */}
 
       <DashboardCard title="Applications">
         <div className="mt-4">
