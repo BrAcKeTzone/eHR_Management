@@ -131,7 +131,6 @@ const ApplicationsManagement = () => {
             {row.applicant?.firstName} {row.applicant?.lastName}
           </p>
           <p className="text-sm text-gray-500">{row.applicant?.email}</p>
-          <p className="text-xs text-gray-400">Attempt #{row.attemptNumber}</p>
         </div>
       ),
     },
@@ -151,6 +150,7 @@ const ApplicationsManagement = () => {
           </div>
           {row.result && (
             <div>
+              <span className="text-xs text-gray-500 mr-2">Demo Result:</span>
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
                   row.result
@@ -160,18 +160,19 @@ const ApplicationsManagement = () => {
               </span>
             </div>
           )}
-        </div>
-      ),
-    },
-    {
-      header: "Score",
-      accessor: "totalScore",
-      cell: (row) => (
-        <div className="text-sm">
-          {row.totalScore !== null && row.totalScore !== undefined ? (
-            <span className="font-medium">{row.totalScore}</span>
-          ) : (
-            <span className="text-gray-400">-</span>
+          {row.result?.toLowerCase() === "pass" && row.interviewResult && (
+            <div>
+              <span className="text-xs text-gray-500 mr-2">
+                Interview Result:
+              </span>
+              <span
+                className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                  row.interviewResult
+                )}`}
+              >
+                {row.interviewResult?.toUpperCase()}
+              </span>
+            </div>
           )}
         </div>
       ),
@@ -382,60 +383,61 @@ const ApplicationsManagement = () => {
                   className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
                 >
                   <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-medium text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 break-words">
                         {app.applicant?.firstName} {app.applicant?.lastName}
                       </h3>
                       <p className="text-sm text-gray-500 break-all">
                         {app.applicant?.email}
                       </p>
-                      <p className="text-xs text-gray-400">
-                        Attempt #{app.attemptNumber}
-                      </p>
                     </div>
-                    <div className="flex flex-col items-end space-y-1">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                          app.status
-                        )}`}
-                      >
-                        {app.status?.toUpperCase()}
-                      </span>
-                      {app.result && (
+                  </div>
+                  <div className="flex justify-between items-center text-sm mb-3">
+                    <div>
+                      <p className="text-gray-500">Submitted:</p>
+                      <p className="font-medium">{formatDate(app.createdAt)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div>
                         <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                            app.result
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                            app.status
                           )}`}
                         >
-                          {app.result?.toUpperCase()}
+                          {app.status?.toUpperCase()}
                         </span>
+                      </div>
+                      {app.result && (
+                        <div>
+                          <span className="text-xs text-gray-500 mr-2">
+                            Demo:
+                          </span>
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                              app.result
+                            )}`}
+                          >
+                            {app.result?.toUpperCase()}
+                          </span>
+                        </div>
                       )}
+                      {app.result?.toLowerCase() === "pass" &&
+                        app.interviewResult && (
+                          <div>
+                            <span className="text-xs text-gray-500 mr-2">
+                              Interview:
+                            </span>
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                                app.interviewResult
+                              )}`}
+                            >
+                              {app.interviewResult?.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Score:</span>
-                      <p className="font-medium">
-                        {app.totalScore !== null && app.totalScore !== undefined
-                          ? app.totalScore
-                          : "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Submitted:</span>
-                      <p>{formatDate(app.createdAt)}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Demo:</span>
-                      <p>
-                        {app.demoSchedule
-                          ? formatDate(app.demoSchedule)
-                          : "Not scheduled"}
-                      </p>
-                    </div>
-                  </div>
-
                   <div className="flex space-x-2">
                     <Button
                       onClick={() => handleViewDetails(app)}
@@ -443,7 +445,7 @@ const ApplicationsManagement = () => {
                       size="sm"
                       className="flex-1"
                     >
-                      View Details
+                      View
                     </Button>
                     <Button
                       onClick={() => handleViewHistory(app)}
