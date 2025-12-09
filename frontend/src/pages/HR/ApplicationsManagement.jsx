@@ -501,62 +501,77 @@ const ApplicationsManagement = () => {
                     key={app.id}
                     className="border border-gray-200 rounded-lg p-3 sm:p-4"
                   >
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900">
-                          Attempt #{app.attemptNumber}
-                        </h4>
-                      </div>
-                      <div className="flex flex-row sm:flex-col sm:text-right gap-2 sm:gap-1">
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                            app.status
-                          )}`}
-                        >
-                          {app.status?.toUpperCase()}
-                        </span>
-                        {app.result && (
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                              app.result
-                            )}`}
-                          >
-                            {app.result?.toUpperCase()}
-                          </span>
-                        )}
-                      </div>
+                    {/* Attempt # and Status */}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
+                      <h4 className="font-medium text-gray-900">
+                        Attempt #{app.attemptNumber}
+                      </h4>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full w-fit ${getStatusColor(
+                          app.status
+                        )}`}
+                      >
+                        {app.status?.toUpperCase()}
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Submitted:</span>
-                        <span className="ml-2 break-words">
-                          {formatDate(app.createdAt)}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Updated:</span>
-                        <span className="ml-2 break-words">
-                          {formatDate(app.updatedAt)}
-                        </span>
-                      </div>
-                      {app.totalScore !== null &&
-                        app.totalScore !== undefined && (
+                    {/* Demo and Interview Schedule/Results Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      {/* Demo Schedule and Result */}
+                      <div className="space-y-3">
+                        {app.demoSchedule && (
                           <div>
-                            <span className="text-gray-500">Score:</span>
-                            <span className="ml-2 font-medium">
-                              {app.totalScore}
+                            <p className="text-xs text-gray-500 mb-1">
+                              Demo Schedule
+                            </p>
+                            <p className="text-sm font-medium text-gray-900 break-words">
+                              {formatDate(app.demoSchedule)}
+                            </p>
+                          </div>
+                        )}
+                        {app.result && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">
+                              Demo Result
+                            </p>
+                            <span
+                              className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                                app.result
+                              )}`}
+                            >
+                              {app.result?.toUpperCase()}
                             </span>
                           </div>
                         )}
-                      {app.demoSchedule && (
-                        <div>
-                          <span className="text-gray-500">Demo:</span>
-                          <span className="ml-2 break-words">
-                            {formatDate(app.demoSchedule)}
-                          </span>
-                        </div>
-                      )}
+                      </div>
+
+                      {/* Interview Schedule and Result */}
+                      <div className="space-y-3">
+                        {app.interviewSchedule && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">
+                              Interview Schedule
+                            </p>
+                            <p className="text-sm font-medium text-gray-900 break-words">
+                              {formatDate(app.interviewSchedule)}
+                            </p>
+                          </div>
+                        )}
+                        {app.interviewResult && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">
+                              Interview Result
+                            </p>
+                            <span
+                              className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                                app.interviewResult
+                              )}`}
+                            >
+                              {app.interviewResult?.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
