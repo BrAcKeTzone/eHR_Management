@@ -4,6 +4,7 @@ import {
   Application,
   ApplicationResult,
   Prisma,
+  ApplicationStatus,
 } from "@prisma/client";
 import prisma from "../../configs/prisma";
 import ApiError from "../../utils/ApiError";
@@ -276,14 +277,25 @@ class ScoringService {
     const calculation = await this.calculateApplicationScore(applicationId);
 
     // Update application with calculated scores and mark as completed
+    const updateData: any = {
+      totalScore: calculation.percentage, // Store as percentage
+      result: calculation.result,
+      updatedAt: new Date(),
+    };
+
+    // Mark as REJECTED if demo result is FAIL; do not mark as COMPLETED on demo PASS
+    if ((calculation.result || "").toUpperCase() === "FAIL") {
+      updateData.status = ApplicationStatus.REJECTED;
+    }
+
+    // If demo passed, mark as interview eligible
+    if ((calculation.result || "").toUpperCase() === "PASS") {
+      updateData.interviewEligible = true;
+    }
+
     const application = await prisma.application.update({
       where: { id: applicationId },
-      data: {
-        totalScore: calculation.percentage, // Store as percentage
-        result: calculation.result,
-        status: "COMPLETED",
-        updatedAt: new Date(),
-      },
+      data: updateData,
     });
 
     // Get applicant details for notification

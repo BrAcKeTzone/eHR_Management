@@ -154,11 +154,53 @@ export const useApplicationStore = create((set, get) => ({
     });
   },
 
-  // Add scores to application
-  addScores: async (applicationId, scores) => {
-    return get().updateApplicationStatus(applicationId, "completed", {
-      scores,
-    });
+  // Add scores to application (submits total score & result via API)
+  addScores: async (applicationId, totalScore, result, hrNotes = "") => {
+    try {
+      set({ loading: true, error: null });
+      const res = await applicationApi.completeApplication(
+        applicationId,
+        totalScore,
+        result,
+        hrNotes
+      );
+
+      // Update applications array similarly to updateApplicationStatus
+      let updatedApplication = res.application;
+      if (!updatedApplication.applicant) {
+        try {
+          const full = await applicationApi.getById(applicationId);
+          updatedApplication = full.application || updatedApplication;
+        } catch (e) {
+          console.warn("Could not fetch full application after update:", e);
+          updatedApplication = res.application;
+        }
+      }
+
+      const { applications } = get();
+      const updatedApplications = applications.map((app) =>
+        app.id === applicationId ? updatedApplication : app
+      );
+
+      const { currentApplication } = get();
+      let updatedCurrentApp = currentApplication;
+      if (currentApplication?.id === applicationId) {
+        updatedCurrentApp = updatedApplication;
+      }
+
+      set({
+        applications: updatedApplications,
+        currentApplication: updatedCurrentApp,
+        loading: false,
+        error: null,
+      });
+
+      return { success: true, application: updatedApplication };
+    } catch (error) {
+      console.error("addScores error:", error);
+      set({ loading: false, error: error.message || "Failed to add scores" });
+      throw error;
+    }
   },
 
   // Get application by ID

@@ -579,9 +579,9 @@ class ApplicationService {
       interviewEligible,
     };
 
-    // Only mark completed if the demo result is FAIL, otherwise keep status for interview scheduling
+    // If demo failed, mark the application as REJECTED
     if ((result || "").toUpperCase() === "FAIL") {
-      updateData.status = ApplicationStatus.COMPLETED;
+      updateData.status = ApplicationStatus.REJECTED;
     }
 
     return await this.updateApplication(id, updateData);
@@ -620,12 +620,16 @@ class ApplicationService {
       interviewNotes,
     };
 
-    // Only mark as COMPLETED if interviewResult is PASS or FAIL
+    // If interview is PASS, mark status as COMPLETED; if FAIL, mark as REJECTED
     if (
       interviewResult &&
       ["PASS", "FAIL"].includes(interviewResult.toUpperCase())
     ) {
-      updateData.status = ApplicationStatus.COMPLETED;
+      if (interviewResult.toUpperCase() === "PASS") {
+        updateData.status = ApplicationStatus.COMPLETED;
+      } else if (interviewResult.toUpperCase() === "FAIL") {
+        updateData.status = ApplicationStatus.REJECTED;
+      }
     }
 
     const updatedApplication = await this.updateApplication(id, updateData);

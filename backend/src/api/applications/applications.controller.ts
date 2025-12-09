@@ -361,9 +361,9 @@ export const completeApplication = asyncHandler(
       updateData.interviewEligible = numericScore >= 75;
     }
 
-    // Only mark the application as COMPLETED if the demo result is FAIL. If PASS, keep the application in its current status (e.g., APPROVED), so it can be scheduled for interview.
+    // If demo result is FAIL, mark the application as REJECTED. If PASS, keep the application in its current status (e.g., APPROVED), so it can be scheduled for interview.
     if ((result || "").toUpperCase() === "FAIL") {
-      updateData.status = ApplicationStatus.COMPLETED;
+      updateData.status = ApplicationStatus.REJECTED;
     }
 
     const application = await applicationService.updateApplication(
@@ -372,7 +372,11 @@ export const completeApplication = asyncHandler(
     );
 
     res.json(
-      new ApiResponse(200, application, "Application completed successfully")
+      new ApiResponse(
+        200,
+        application,
+        "Application scoring saved successfully"
+      )
     );
   }
 );

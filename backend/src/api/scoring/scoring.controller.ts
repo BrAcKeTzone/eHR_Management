@@ -198,7 +198,7 @@ export const completeApplicationScoring = asyncHandler(
       new ApiResponse(
         200,
         application,
-        "Application scoring completed successfully"
+        "Application scoring saved successfully"
       )
     );
   }
