@@ -30,7 +30,9 @@ export const getUsersQuery = Joi.object().keys({
   limit: Joi.number().integer().min(1).max(100).optional(),
   role: Joi.string().valid("APPLICANT", "HR").optional(),
   search: Joi.string().optional(),
-  sortBy: Joi.string().valid("name", "email", "role", "createdAt").optional(),
+  sortBy: Joi.string()
+    .valid("firstName", "lastName", "name", "email", "role", "createdAt")
+    .optional(),
   sortOrder: Joi.string().valid("asc", "desc").optional(),
 });
 

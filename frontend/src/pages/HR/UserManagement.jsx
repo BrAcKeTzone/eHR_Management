@@ -501,7 +501,8 @@ const UserManagement = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="createdAt">Created Date</option>
-              <option value="name">Name</option>
+              <option value="firstName">First Name</option>
+              <option value="lastName">Last Name</option>
               <option value="email">Email</option>
               <option value="role">Role</option>
             </select>
