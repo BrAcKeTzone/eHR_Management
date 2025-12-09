@@ -556,12 +556,18 @@ class ApplicationService {
     // When a score is submitted and result is PASS with a score >= 75,
     // mark the application as interviewEligible so it can appear in the Interview Scheduling queue.
     const interviewEligible = totalScore >= 75;
-    return await this.updateApplication(id, {
-      status: ApplicationStatus.COMPLETED,
+    const updateData: any = {
       totalScore,
       result: result as any,
       interviewEligible,
-    });
+    };
+
+    // Only mark completed if the demo result is FAIL, otherwise keep status for interview scheduling
+    if ((result || "").toUpperCase() === "FAIL") {
+      updateData.status = ApplicationStatus.COMPLETED;
+    }
+
+    return await this.updateApplication(id, updateData);
   }
 
   async rateInterview(
@@ -591,12 +597,21 @@ class ApplicationService {
       throw new ApiError(400, "Interview score must be between 0 and 100");
     }
 
-    const updatedApplication = await this.updateApplication(id, {
+    const updateData: any = {
       ...(interviewScore !== null && { interviewScore }),
       interviewResult: interviewResult as any,
       interviewNotes,
-      status: ApplicationStatus.COMPLETED,
-    });
+    };
+
+    // Only mark as COMPLETED if interviewResult is PASS or FAIL
+    if (
+      interviewResult &&
+      ["PASS", "FAIL"].includes(interviewResult.toUpperCase())
+    ) {
+      updateData.status = ApplicationStatus.COMPLETED;
+    }
+
+    const updatedApplication = await this.updateApplication(id, updateData);
 
     // Note: Interview result notification can be added when notification service is extended
     // For now, the interview rating is saved successfully

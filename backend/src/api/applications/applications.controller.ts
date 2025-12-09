@@ -350,7 +350,6 @@ export const completeApplication = asyncHandler(
     const updateData: any = {
       totalScore: parseFloat(totalScore),
       result: result.toUpperCase() as ApplicationResult,
-      status: ApplicationStatus.COMPLETED,
     };
 
     if (hrNotes) {
@@ -360,6 +359,11 @@ export const completeApplication = asyncHandler(
     const numericScore = parseFloat(totalScore);
     if (!isNaN(numericScore)) {
       updateData.interviewEligible = numericScore >= 75;
+    }
+
+    // Only mark the application as COMPLETED if the demo result is FAIL. If PASS, keep the application in its current status (e.g., APPROVED), so it can be scheduled for interview.
+    if ((result || "").toUpperCase() === "FAIL") {
+      updateData.status = ApplicationStatus.COMPLETED;
     }
 
     const application = await applicationService.updateApplication(
