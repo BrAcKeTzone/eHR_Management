@@ -131,6 +131,9 @@ const ApplicationHistory = () => {
                       {application.status?.toUpperCase()}
                     </span>
                     {application.result && (
+                      <span className="text-sm ml-2 mr-2 text-gray-500">Demo:</span>
+                    )}
+                    {application.result && (
                       <span
                         className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
                           application.result
@@ -139,6 +142,20 @@ const ApplicationHistory = () => {
                         {application.result?.toUpperCase()}
                       </span>
                     )}
+
+                    {application.result?.toUpperCase() === "PASS" &&
+                      application.interviewResult && (
+                        <>
+                          <span className="text-sm ml-2 mr-2 text-gray-500">Interview:</span>
+                          <span
+                            className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                              application.interviewResult
+                            )}`}
+                          >
+                            {application.interviewResult?.toUpperCase()}
+                          </span>
+                        </>
+                      )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -275,13 +292,26 @@ const ApplicationHistory = () => {
                     </div>
                     {selectedApplication.result && (
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Result</p>
+                        <p className="text-sm text-gray-500 mb-1">Demo Result</p>
                         <span
                           className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
                             selectedApplication.result
                           )}`}
                         >
                           {selectedApplication.result?.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedApplication.result?.toUpperCase() === "PASS" && selectedApplication.interviewResult && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Interview Result</p>
+                        <span
+                          className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                            selectedApplication.interviewResult
+                          )}`}
+                        >
+                          {selectedApplication.interviewResult?.toUpperCase()}
                         </span>
                       </div>
                     )}
