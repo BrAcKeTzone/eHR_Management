@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useUserManagementStore } from "../../store/userManagementStore";
 import { useAuthStore } from "../../store/authStore";
+import { useApplicationStore } from "../../store/applicationStore";
 import DashboardCard from "../../components/DashboardCard";
 import Button from "../../components/Button";
 import Table from "../../components/Table";
@@ -9,6 +10,7 @@ import Input from "../../components/Input";
 import PasswordInput from "../../components/PasswordInput";
 import OTPInput from "../../components/OTPInput";
 import Pagination from "../../components/Pagination";
+import ApplicationHistoryModal from "../../components/ApplicationHistoryModal";
 import { formatDate } from "../../utils/formatDate";
 import userApi from "../../api/userApi";
 
@@ -28,10 +30,14 @@ const UserManagement = () => {
     error,
   } = useUserManagementStore();
 
+  const { getApplicationHistory } = useApplicationStore();
+
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [applicationHistory, setApplicationHistory] = useState([]);
   const [deleteOtp, setDeleteOtp] = useState("");
   const [deleteOtpError, setDeleteOtpError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -157,6 +163,18 @@ const UserManagement = () => {
     } else {
       // For non-HR users, show standard delete modal
       setShowDeleteModal(true);
+    }
+  };
+
+  const handleViewHistory = async (user) => {
+    try {
+      const result = await getApplicationHistory(user.email);
+      setApplicationHistory(result?.applications || []);
+      setSelectedUser(user);
+      setShowHistoryModal(true);
+    } catch (error) {
+      console.error("Failed to fetch application history:", error);
+      setApplicationHistory([]);
     }
   };
 
@@ -346,6 +364,15 @@ const UserManagement = () => {
       accessor: "actions",
       cell: (row) => (
         <div className="flex space-x-2">
+          {row.role === "APPLICANT" && (
+            <Button
+              onClick={() => handleViewHistory(row)}
+              variant="outline"
+              size="sm"
+            >
+              View
+            </Button>
+          )}
           {(row.role === "APPLICANT" || row.role === "HR") &&
             row.id !== currentUser?.id && (
               <Button
@@ -384,10 +411,10 @@ const UserManagement = () => {
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-          User Management
+          Archiving
         </h1>
         <p className="text-gray-600">
-          Manage user accounts, roles, and permissions.
+          View and manage archived applicant records and application history.
         </p>
       </div>
 
@@ -565,6 +592,15 @@ const UserManagement = () => {
                       Created: {formatDate(user.createdAt)}
                     </span>
                     <div className="flex space-x-2">
+                      {user.role === "APPLICANT" && (
+                        <Button
+                          onClick={() => handleViewHistory(user)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          View
+                        </Button>
+                      )}
                       {(user.role === "APPLICANT" || user.role === "HR") &&
                         user.id !== currentUser?.id && (
                           <Button
@@ -910,6 +946,18 @@ const UserManagement = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Application History Modal */}
+      <ApplicationHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => {
+          setShowHistoryModal(false);
+          setSelectedUser(null);
+          setApplicationHistory([]);
+        }}
+        selectedApplication={selectedUser}
+        applicationHistory={applicationHistory}
+      />
     </div>
   );
 };
