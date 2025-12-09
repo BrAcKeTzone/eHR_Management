@@ -340,19 +340,33 @@ const HRDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="space-y-3">
                     <div>
-                      <p className="text-gray-500">Submitted:</p>
-                      <p className="font-medium">{formatDate(app.createdAt)}</p>
+                      <p className="text-xs text-gray-500 mb-1">Submitted:</p>
+                      <p className="text-sm font-medium">
+                        {formatDate(app.createdAt)}
+                      </p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      {app.result && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 mr-2">
-                            Demo Result:
-                          </span>
+                    <div className="space-y-2">
+                      {app.status && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Status:</p>
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                            className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                              app.status
+                            )}`}
+                          >
+                            {app.status?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      {app.result && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">
+                            Demo Result:
+                          </p>
+                          <span
+                            className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
                               app.result
                             )}`}
                           >
@@ -362,12 +376,12 @@ const HRDashboard = () => {
                       )}
                       {app.result?.toLowerCase() === "pass" &&
                         app.interviewResult && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500 mr-2">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">
                               Interview Result:
-                            </span>
+                            </p>
                             <span
-                              className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                              className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
                                 app.interviewResult
                               )}`}
                             >
@@ -376,35 +390,18 @@ const HRDashboard = () => {
                           </div>
                         )}
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        onClick={() =>
-                          handleQuickAction("view-application", app.id)
-                        }
-                        variant="outline"
-                        size="sm"
-                      >
-                        View
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          navigate(`/hr/scheduling?applicationId=${app.id}`)
-                        }
-                        variant="outline"
-                        size="sm"
-                      >
-                        Schedule
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          navigate(`/hr/scoring?applicationId=${app.id}`)
-                        }
-                        variant="outline"
-                        size="sm"
-                      >
-                        Score
-                      </Button>
-                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      onClick={() =>
+                        handleQuickAction("view-application", app.id)
+                      }
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      View
+                    </Button>
                   </div>
                 </div>
               ))}
