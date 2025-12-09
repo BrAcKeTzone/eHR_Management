@@ -133,6 +133,9 @@ const ApplicantDashboard = () => {
 
   const upcomingDemo = getUpcomingDemo();
 
+  const isFinalized = (status) =>
+    ["rejected", "completed"].includes((status || "").toLowerCase());
+
   const getUpcomingInterview = () => {
     if (!currentApplication?.interviewSchedule) return null;
     const interviewDate = new Date(currentApplication.interviewSchedule);
@@ -573,7 +576,8 @@ const ApplicantDashboard = () => {
         </DashboardCard>
 
         {/* Demo Schedule */}
-        {currentApplication?.demoSchedule &&
+        {!isFinalized(currentApplication?.status) &&
+          currentApplication?.demoSchedule &&
           !currentApplication?.interviewSchedule && (
             <DashboardCard title="Upcoming Demo">
               {upcomingDemo ? (
@@ -666,7 +670,8 @@ const ApplicantDashboard = () => {
           )}
 
         {/* Interview Schedule */}
-        {currentApplication?.interviewSchedule && (
+        {!isFinalized(currentApplication?.status) &&
+          currentApplication?.interviewSchedule && (
           <DashboardCard title="Upcoming Interview">
             {upcomingInterview ? (
               <div className="space-y-4">
