@@ -370,7 +370,7 @@ const UserManagement = () => {
               variant="outline"
               size="sm"
             >
-              View
+              History
             </Button>
           )}
           {(row.role === "APPLICANT" || row.role === "HR") &&
@@ -598,7 +598,7 @@ const UserManagement = () => {
                           variant="outline"
                           size="sm"
                         >
-                          View
+                          History
                         </Button>
                       )}
                       {(user.role === "APPLICANT" || user.role === "HR") &&

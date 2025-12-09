@@ -9,6 +9,9 @@ const ApplicationHistoryModal = ({
   selectedApplication,
   applicationHistory,
 }) => {
+  // Handle both application and user objects
+  const applicant = selectedApplication?.applicant || selectedApplication;
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "pending":
@@ -43,12 +46,12 @@ const ApplicationHistoryModal = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Application History - ${selectedApplication.applicant?.firstName} ${selectedApplication.applicant?.lastName}`}
+      title={`Application History - ${applicant?.firstName} ${applicant?.lastName}`}
       size="large"
     >
       <div className="space-y-4 sm:space-y-6">
         <div className="text-sm text-gray-600 break-words">
-          All applications from {selectedApplication.applicant?.email}
+          All applications from {applicant?.email}
         </div>
 
         {applicationHistory && applicationHistory.length > 0 ? (
