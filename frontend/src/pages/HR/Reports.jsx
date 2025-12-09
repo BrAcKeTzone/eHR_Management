@@ -111,13 +111,14 @@ const Reports = () => {
   const getResultStats = () => {
     if (!applications) return { pass: 0, fail: 0 };
 
-    const completedApps = applications.filter(
-      (app) => app.status?.toLowerCase() === "completed" && app.result
-    );
-    return completedApps.reduce(
+    return applications.reduce(
       (acc, app) => {
-        const result = app.result?.toLowerCase();
-        acc[result] = (acc[result] || 0) + 1;
+        const status = app.status?.toLowerCase();
+        if (status === "completed") {
+          acc.pass = (acc.pass || 0) + 1;
+        } else if (status === "rejected") {
+          acc.fail = (acc.fail || 0) + 1;
+        }
         return acc;
       },
       { pass: 0, fail: 0 }
@@ -149,7 +150,7 @@ const Reports = () => {
       )}
 
       {/* Analytics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <DashboardCard title="Total Applications" className="text-center">
           <div className="text-3xl font-bold text-blue-600">
             {applications?.length || 0}
@@ -175,13 +176,6 @@ const Reports = () => {
             %
           </div>
           <div className="text-sm text-gray-500 mt-1">Overall success</div>
-        </DashboardCard>
-
-        <DashboardCard title="Avg. Processing" className="text-center">
-          <div className="text-3xl font-bold text-orange-600">
-            {analytics?.avgProcessingTime || 0}
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Days to completion</div>
         </DashboardCard>
       </div>
 
@@ -276,46 +270,84 @@ const Reports = () => {
         </DashboardCard>
 
         <DashboardCard title="Assessment Results">
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-green-600 mb-2">
-                {resultStats.pass}
-              </div>
-              <div className="text-sm text-gray-600">Passed</div>
-            </div>
-
-            <div className="text-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">
-                {resultStats.fail}
-              </div>
-              <div className="text-sm text-gray-600">Failed</div>
-            </div>
-
-            {resultStats.pass + resultStats.fail > 0 && (
-              <div className="mt-4">
-                <div className="flex justify-between text-sm text-gray-600 mb-1">
-                  <span>Success Rate</span>
-                  <span>
-                    {Math.round(
-                      (resultStats.pass /
-                        (resultStats.pass + resultStats.fail)) *
-                        100
-                    )}
-                    %
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full"
-                    style={{
-                      width: `${
+          <div className="flex flex-col items-center justify-center space-y-6">
+            {resultStats.pass + resultStats.fail > 0 ? (
+              <>
+                {/* Pie Chart */}
+                <div className="relative w-48 h-48">
+                  <svg viewBox="0 0 200 200" className="w-full h-full">
+                    {/* Passed segment */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="90"
+                      fill="none"
+                      stroke="#10b981"
+                      strokeWidth="60"
+                      strokeDasharray={`${
                         (resultStats.pass /
                           (resultStats.pass + resultStats.fail)) *
-                        100
-                      }%`,
-                    }}
-                  ></div>
+                        565.48
+                      } 565.48`}
+                      transform="rotate(-90 100 100)"
+                    />
+                    {/* Failed segment */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="90"
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth="60"
+                      strokeDasharray={`${
+                        (resultStats.fail /
+                          (resultStats.pass + resultStats.fail)) *
+                        565.48
+                      } 565.48`}
+                      strokeDashoffset={`${
+                        -1 *
+                        ((resultStats.pass /
+                          (resultStats.pass + resultStats.fail)) *
+                          565.48)
+                      }`}
+                      transform="rotate(-90 100 100)"
+                    />
+                    {/* Center circle for donut effect */}
+                    <circle cx="100" cy="100" r="50" fill="white" />
+                  </svg>
+                  {/* Center text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-2xl font-bold text-gray-900">
+                      {Math.round(
+                        (resultStats.pass /
+                          (resultStats.pass + resultStats.fail)) *
+                          100
+                      )}
+                      %
+                    </div>
+                    <div className="text-xs text-gray-600">Success Rate</div>
+                  </div>
                 </div>
+
+                {/* Legend */}
+                <div className="flex space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                    <span className="text-sm text-gray-600">
+                      Passed: {resultStats.pass}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                    <span className="text-sm text-gray-600">
+                      Failed: {resultStats.fail}
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No assessment data available</p>
               </div>
             )}
           </div>
