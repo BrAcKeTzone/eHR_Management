@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApplicationStore } from "../../store/applicationStore";
 import { applicationApi } from "../../api/applicationApi";
 import DashboardCard from "../../components/DashboardCard";
@@ -15,6 +16,7 @@ const Scoring = () => {
     loading: appLoading,
     error: appError,
   } = useApplicationStore();
+  const navigate = useNavigate();
 
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showScoringModal, setShowScoringModal] = useState(false);
@@ -82,7 +84,7 @@ const Scoring = () => {
       setLoading(true);
       setError(null);
 
-      await applicationApi.completeApplication(
+      const res = await applicationApi.completeApplication(
         selectedApplication.id,
         score,
         result,
@@ -97,10 +99,14 @@ const Scoring = () => {
 
       // Refresh general HR list
       getAllApplications({ status: "APPROVED" });
-      // If this entry passed (>=75), also refresh the Interview Scheduling list
-      if (score >= 75) {
+      // If this entry passed (PASS), also refresh the Interview Scheduling list
+      const updatedResult = res?.application?.result || result;
+      if ((updatedResult || "").toUpperCase() === "PASS") {
         // Refresh interview-eligible list
         getAllApplications({ interviewEligible: true });
+        // Navigate to interview scheduling for the newly updated application
+        const appId = res?.application?.id || selectedApplication.id;
+        navigate(`/hr/interview-scheduling?applicationId=${appId}`);
       }
     } catch (error) {
       console.error("Failed to submit scores:", error);
