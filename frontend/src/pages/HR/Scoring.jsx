@@ -43,9 +43,14 @@ const Scoring = () => {
     }
   }, [totalScore]);
 
+  // Only include applications that are approved, have a demo scheduled,
+  // and have NOT been scored yet (totalScore null/undefined)
   const scheduledApplications =
     applications?.filter(
-      (app) => app.status === "APPROVED" && app.demoSchedule
+      (app) =>
+        app.status === "APPROVED" &&
+        app.demoSchedule &&
+        (app.totalScore === null || app.totalScore === undefined)
     ) || [];
 
   const handleScoreApplication = (application) => {
@@ -214,7 +219,8 @@ const Scoring = () => {
           Demo Scoring
         </h1>
         <p className="text-gray-600">
-          Score teaching demonstrations and provide feedback.
+          Score scheduled demos awaiting scoring (only unscored scheduled demos
+          are listed).
         </p>
       </div>
 
@@ -225,58 +231,7 @@ const Scoring = () => {
         </div>
       )}
 
-      {/* Statistics */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-        <DashboardCard title="Total Scheduled" className="text-center">
-          <div className="text-xl sm:text-3xl font-bold text-blue-600">
-            {scheduledApplications.length}
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Demos</div>
-        </DashboardCard>
-
-        <DashboardCard title="Scored" className="text-center">
-          <div className="text-xl sm:text-3xl font-bold text-green-600">
-            {
-              scheduledApplications.filter(
-                (app) => app.totalScore !== null && app.totalScore !== undefined
-              ).length
-            }
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Completed</div>
-        </DashboardCard>
-
-        <DashboardCard title="Pending" className="text-center">
-          <div className="text-xl sm:text-3xl font-bold text-yellow-600">
-            {
-              scheduledApplications.filter(
-                (app) => app.totalScore === null || app.totalScore === undefined
-              ).length
-            }
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Need scoring</div>
-        </DashboardCard>
-
-        <DashboardCard title="Pass Rate" className="text-center">
-          <div className="text-xl sm:text-3xl font-bold text-purple-600">
-            {scheduledApplications.filter(
-              (app) => app.result?.toLowerCase() === "pass"
-            ).length > 0
-              ? Math.round(
-                  (scheduledApplications.filter(
-                    (app) => app.result?.toLowerCase() === "pass"
-                  ).length /
-                    scheduledApplications.filter(
-                      (app) =>
-                        app.totalScore !== null && app.totalScore !== undefined
-                    ).length) *
-                    100
-                )
-              : 0}
-            %
-          </div>
-          <div className="text-sm text-gray-500 mt-1">Success rate</div>
-        </DashboardCard>
-      </div>
+      {/* Removed statistics block - show only scheduled demos that need scoring */}
 
       {/* Applications Table */}
       <DashboardCard title="Scheduled Demos">
@@ -372,7 +327,9 @@ const Scoring = () => {
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-500">No scheduled demos found.</p>
+            <p className="text-gray-500">
+              No scheduled demos awaiting scoring.
+            </p>
           </div>
         )}
       </DashboardCard>

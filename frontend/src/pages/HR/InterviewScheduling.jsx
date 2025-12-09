@@ -124,6 +124,11 @@ const InterviewScheduling = () => {
       );
       return;
     }
+    // Prevent scheduling/rescheduling if the interview has already been rated
+    if (app.interviewResult) {
+      alert("This application has already been rated and cannot be scheduled or rescheduled.");
+      return;
+    }
     setSelectedApplication(app);
     setShowModal(true);
     // preselect date and fetch available slots if interview already scheduled
@@ -229,15 +234,19 @@ const InterviewScheduling = () => {
             onClick={() => openScheduleModal(row)}
             variant={row.interviewSchedule ? "outline" : "primary"}
             size="sm"
-            disabled={
-              row.interviewSchedule && (row.interviewRescheduleCount || 0) >= 1
-            }
+            disabled={!!row.interviewResult}
           >
-            {row.interviewSchedule
-              ? (row.interviewRescheduleCount || 0) >= 1
-                ? "Rescheduled"
-                : "Reschedule"
-              : "Schedule"}
+            {row.interviewSchedule ? (
+              row.interviewResult ? (
+                "Interviewed"
+              ) : (row.interviewRescheduleCount || 0) >= 1 ? (
+                "Rescheduled"
+              ) : (
+                "Reschedule"
+              )
+            ) : (
+              "Schedule"
+            )}
           </Button>
         </div>
       ),
@@ -364,21 +373,24 @@ const InterviewScheduling = () => {
                 </div>
 
                 <div className="flex space-x-2">
-                  <Button
-                    onClick={() => openScheduleModal(app)}
-                    variant={app.interviewSchedule ? "outline" : "primary"}
-                    size="sm"
-                    className="flex-1"
-                    disabled={
-                      app.interviewSchedule &&
-                      (app.interviewRescheduleCount || 0) >= 1
-                    }
-                  >
-                    {app.interviewSchedule
-                      ? (app.interviewRescheduleCount || 0) >= 1
-                        ? "Rescheduled"
-                        : "Reschedule"
-                      : "Schedule"}
+                    <Button
+                      onClick={() => openScheduleModal(app)}
+                      variant={app.interviewSchedule ? "outline" : "primary"}
+                      size="sm"
+                      className="flex-1"
+                      disabled={!!app.interviewResult}
+                    >
+                    {app.interviewSchedule ? (
+                      app.interviewResult ? (
+                        "Interviewed"
+                      ) : (app.interviewRescheduleCount || 0) >= 1 ? (
+                        "Rescheduled"
+                      ) : (
+                        "Reschedule"
+                      )
+                    ) : (
+                      "Schedule"
+                    )}
                   </Button>
                 </div>
               </div>

@@ -235,10 +235,20 @@ const Scheduling = () => {
             onClick={() => handleScheduleDemo(row)}
             variant={row.demoSchedule ? "outline" : "primary"}
             size="sm"
-            disabled={row.demoSchedule && (row.demoRescheduleCount || 0) >= 1}
+            disabled={
+              row.demoSchedule &&
+              ((row.demoRescheduleCount || 0) >= 1 ||
+                row.totalScore !== null ||
+                row.totalScore !== undefined ||
+                !!row.result)
+            }
           >
             {row.demoSchedule
-              ? row.demoRescheduleCount >= 1
+              ? row.totalScore !== null ||
+                row.totalScore !== undefined ||
+                row.result
+                ? "Scored"
+                : row.demoRescheduleCount >= 1
                 ? "Rescheduled"
                 : "Reschedule"
               : "Schedule"}
@@ -366,11 +376,19 @@ const Scheduling = () => {
                       size="sm"
                       className="flex-1"
                       disabled={
-                        app.demoSchedule && (app.demoRescheduleCount || 0) >= 1
+                        app.demoSchedule &&
+                        ((app.demoRescheduleCount || 0) >= 1 ||
+                          app.totalScore !== null ||
+                          app.totalScore !== undefined ||
+                          !!app.result)
                       }
                     >
                       {app.demoSchedule
-                        ? app.demoRescheduleCount >= 1
+                        ? app.totalScore !== null ||
+                          app.totalScore !== undefined ||
+                          app.result
+                          ? "Scored"
+                          : app.demoRescheduleCount >= 1
                           ? "Rescheduled"
                           : "Reschedule"
                         : "Schedule"}

@@ -391,6 +391,23 @@ class ApplicationService {
 
     // Determine whether this is an initial schedule or a reschedule
     const isReschedule = !!application.demoSchedule;
+
+    // Prevent scheduling/rescheduling if a demo score/result is already present.
+    if (
+      (application as any).totalScore !== null &&
+      (application as any).totalScore !== undefined
+    ) {
+      throw new ApiError(
+        400,
+        "Cannot schedule or reschedule demo for an application that already has a demo score"
+      );
+    }
+    if ((application as any).result) {
+      throw new ApiError(
+        400,
+        "Cannot schedule or reschedule demo for an application that already has a demo result"
+      );
+    }
     const currentRescheduleCount = application.demoRescheduleCount || 0;
 
     // If attempting to reschedule and reschedule count already reached 1, prevent further reschedules
@@ -457,6 +474,14 @@ class ApplicationService {
 
     if (!application) {
       throw new ApiError(404, "Application not found");
+    }
+
+    // Prevent scheduling/rescheduling if interview result already exists
+    if ((application as any).interviewResult) {
+      throw new ApiError(
+        400,
+        "Cannot schedule or reschedule interview for an application that already has an interview result"
+      );
     }
 
     // Require application to be interviewEligible or have passing score
