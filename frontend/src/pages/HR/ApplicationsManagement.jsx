@@ -175,6 +175,7 @@ const ApplicationsManagement = () => {
           </div>
           {row.result && (
             <div>
+              <span className="text-xs text-gray-500 mr-2">Demo Result:</span>
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
                   row.result
@@ -184,19 +185,23 @@ const ApplicationsManagement = () => {
               </span>
             </div>
           )}
-        </div>
-      ),
-    },
-    {
-      header: "Score",
-      accessor: "totalScore",
-      cell: (row) => (
-        <div className="text-sm">
-          {row.totalScore !== null && row.totalScore !== undefined ? (
-            <span className="font-medium">{row.totalScore}</span>
-          ) : (
-            <span className="text-gray-400">-</span>
-          )}
+          {/* Show interview result only when demo was PASS */}
+          {row.result?.toLowerCase() ===
+            APPLICATION_RESULT.PASS.toLowerCase() &&
+            row.interviewResult && (
+              <div>
+                <span className="text-xs text-gray-500 mr-2">
+                  Interview Result:
+                </span>
+                <span
+                  className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                    row.interviewResult
+                  )}`}
+                >
+                  {row.interviewResult?.toUpperCase()}
+                </span>
+              </div>
+            )}
         </div>
       ),
     },
@@ -434,18 +439,21 @@ const ApplicationsManagement = () => {
                           {app.result?.toUpperCase()}
                         </span>
                       )}
+                      {app.result?.toLowerCase() ===
+                        APPLICATION_RESULT.PASS.toLowerCase() &&
+                        app.interviewResult && (
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                              app.interviewResult
+                            )}`}
+                          >
+                            {app.interviewResult?.toUpperCase()}
+                          </span>
+                        )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Score:</span>
-                      <p className="font-medium">
-                        {app.totalScore !== null && app.totalScore !== undefined
-                          ? app.totalScore
-                          : "-"}
-                      </p>
-                    </div>
                     <div>
                       <span className="text-gray-500">Submitted:</span>
                       <p>{formatDate(app.createdAt)}</p>
@@ -458,6 +466,26 @@ const ApplicationsManagement = () => {
                           : "Not scheduled"}
                       </p>
                     </div>
+                    {app.result && (
+                      <div>
+                        <span className="text-gray-500">Demo Result:</span>
+                        <p className="font-medium">
+                          {app.result?.toUpperCase()}
+                        </p>
+                      </div>
+                    )}
+                    {app.result?.toLowerCase() ===
+                      APPLICATION_RESULT.PASS.toLowerCase() &&
+                      app.interviewResult && (
+                        <div>
+                          <span className="text-gray-500">
+                            Interview Result:
+                          </span>
+                          <p className="font-medium">
+                            {app.interviewResult?.toUpperCase()}
+                          </p>
+                        </div>
+                      )}
                   </div>
 
                   <div className="flex space-x-2">
@@ -518,7 +546,7 @@ const ApplicationsManagement = () => {
                 </div>
                 {selectedApplication.result && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Result</p>
+                    <p className="text-sm text-gray-500 mb-1">Demo Result</p>
                     <span
                       className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
                         selectedApplication.result
@@ -528,6 +556,23 @@ const ApplicationsManagement = () => {
                     </span>
                   </div>
                 )}
+                {/* Show interview result only if demo PASS */}
+                {selectedApplication.result?.toLowerCase() ===
+                  APPLICATION_RESULT.PASS.toLowerCase() &&
+                  selectedApplication.interviewResult && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">
+                        Interview Result
+                      </p>
+                      <span
+                        className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                          selectedApplication.interviewResult
+                        )}`}
+                      >
+                        {selectedApplication.interviewResult?.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
               </div>
             </div>
 
@@ -732,14 +777,36 @@ const ApplicationsManagement = () => {
                           {app.status?.toUpperCase()}
                         </span>
                         {app.result && (
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                              app.result
-                            )}`}
-                          >
-                            {app.result?.toUpperCase()}
-                          </span>
+                          <>
+                            <span className="text-xs text-gray-500 mr-2">
+                              Demo:
+                            </span>
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                                app.result
+                              )}`}
+                            >
+                              {app.result?.toUpperCase()}
+                            </span>
+                          </>
                         )}
+                        {/* Show interview result only if demo PASS */}
+                        {app.result?.toLowerCase() ===
+                          APPLICATION_RESULT.PASS.toLowerCase() &&
+                          app.interviewResult && (
+                            <>
+                              <span className="text-xs text-gray-500 mr-2">
+                                Interview Result:
+                              </span>
+                              <span
+                                className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                                  app.interviewResult
+                                )}`}
+                              >
+                                {app.interviewResult?.toUpperCase()}
+                              </span>
+                            </>
+                          )}
                       </div>
                     </div>
 

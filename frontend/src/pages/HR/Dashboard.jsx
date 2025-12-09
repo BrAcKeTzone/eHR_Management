@@ -68,6 +68,17 @@ const HRDashboard = () => {
     }
   };
 
+  const getResultColor = (result) => {
+    switch (result?.toLowerCase()) {
+      case "pass":
+        return "bg-green-100 text-green-800";
+      case "fail":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
   const handleQuickAction = (action, applicationId = null) => {
     switch (action) {
       case "review":
@@ -120,16 +131,46 @@ const HRDashboard = () => {
       ),
     },
     {
-      header: "Status",
+      header: "Status / Result",
       accessor: "status",
       cell: (row) => (
-        <span
-          className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-            row.status
-          )}`}
-        >
-          {row.status?.toUpperCase()}
-        </span>
+        <div className="space-y-1">
+          <div>
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                row.status
+              )}`}
+            >
+              {row.status?.toUpperCase()}
+            </span>
+          </div>
+          {row.result && (
+            <div>
+              <span className="text-xs text-gray-500 mr-2">Demo Result:</span>
+              <span
+                className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                  row.result
+                )}`}
+              >
+                {row.result?.toUpperCase()}
+              </span>
+            </div>
+          )}
+          {row.result?.toLowerCase() === "pass" && row.interviewResult && (
+            <div>
+              <span className="text-xs text-gray-500 mr-2">
+                Interview Result:
+              </span>
+              <span
+                className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                  row.interviewResult
+                )}`}
+              >
+                {row.interviewResult?.toUpperCase()}
+              </span>
+            </div>
+          )}
+        </div>
       ),
     },
     {
@@ -434,9 +475,41 @@ const HRDashboard = () => {
                   </div>
 
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">
-                      Submitted: {formatDate(app.createdAt)}
-                    </span>
+                    <div>
+                      <p className="text-gray-500">Submitted:</p>
+                      <p className="font-medium">{formatDate(app.createdAt)}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {app.result && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500 mr-2">
+                            Demo Result:
+                          </span>
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                              app.result
+                            )}`}
+                          >
+                            {app.result?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      {app.result?.toLowerCase() === "pass" &&
+                        app.interviewResult && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 mr-2">
+                              Interview Result:
+                            </span>
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                                app.interviewResult
+                              )}`}
+                            >
+                              {app.interviewResult?.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                    </div>
                     <div className="flex items-center space-x-2">
                       <Button
                         onClick={() =>
@@ -595,8 +668,8 @@ const HRDashboard = () => {
                   )}
                   {selectedApplication.demoNotes && (
                     <div className="md:col-span-2">
-                      <p className="text-sm text-blue-700">Notes</p>
-                      <p className="font-medium text-blue-900">
+                      <p className="text-sm text-blue-700 mb-1">Notes</p>
+                      <p className="text-sm text-blue-800 bg-white rounded p-2 break-words">
                         {selectedApplication.demoNotes}
                       </p>
                     </div>
@@ -604,31 +677,114 @@ const HRDashboard = () => {
                 </div>
               </div>
             )}
-
-            {/* Assessment (if completed) */}
-            {selectedApplication.totalScore && (
+            {/* Demo Assessment */}
+            {(selectedApplication.totalScore || selectedApplication.result) && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  Assessment
+                  Demo Assessment
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-green-50 p-4 rounded-lg">
                   <div>
                     <p className="text-sm text-green-700">Total Score</p>
                     <p className="font-medium text-green-900">
-                      {selectedApplication.totalScore}%
+                      {selectedApplication.totalScore
+                        ? `${selectedApplication.totalScore}%`
+                        : "N/A"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-green-700">Result</p>
-                    <p className="font-medium text-green-900">
-                      {selectedApplication.result || "N/A"}
-                    </p>
+                    <p className="text-sm text-green-700">Demo Result</p>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                          selectedApplication.result
+                        )}`}
+                      >
+                        {selectedApplication.result?.toUpperCase() || "N/A"}
+                      </span>
+                    </div>
                   </div>
                   {selectedApplication.hrNotes && (
                     <div className="md:col-span-2">
-                      <p className="text-sm text-green-700">HR Notes</p>
-                      <p className="font-medium text-green-900">
+                      <p className="text-sm text-blue-700">Notes</p>
+                      <p className="text-sm text-blue-800 bg-white rounded p-2 break-words">
                         {selectedApplication.hrNotes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Interview Schedule (if exists) */}
+            {selectedApplication.interviewSchedule && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Interview Schedule
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-sm text-blue-700">Date & Time</p>
+                    <p className="font-medium text-blue-900">
+                      {formatDate(selectedApplication.interviewSchedule)}
+                      {selectedApplication.interviewTime &&
+                        ` at ${selectedApplication.interviewTime}`}
+                    </p>
+                  </div>
+                  {selectedApplication.interviewLocation && (
+                    <div>
+                      <p className="text-sm text-blue-700">Location</p>
+                      <p className="font-medium text-blue-900">
+                        {selectedApplication.interviewLocation}
+                      </p>
+                    </div>
+                  )}
+                  {selectedApplication.interviewDuration && (
+                    <div>
+                      <p className="text-sm text-blue-700">Duration</p>
+                      <p className="font-medium text-blue-900">
+                        {selectedApplication.interviewDuration} minutes
+                      </p>
+                    </div>
+                  )}
+                  {selectedApplication.interviewNotes && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-blue-700 mb-1">Notes</p>
+                      <p className="text-sm text-blue-800 bg-white rounded p-2 break-words">
+                        {selectedApplication.interviewNotes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Interview Assessment */}
+            {(selectedApplication.interviewResult ||
+              selectedApplication.interviewNotes) && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Interview Assessment
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-green-50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-sm text-green-700">Interview Result</p>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                          selectedApplication.interviewResult
+                        )}`}
+                      >
+                        {selectedApplication.interviewResult?.toUpperCase() ||
+                          "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                  {selectedApplication.interviewNotes && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-blue-700">Notes</p>
+                      <p className="text-sm text-blue-800 bg-white rounded p-2 break-words">
+                        {selectedApplication.interviewNotes}
                       </p>
                     </div>
                   )}

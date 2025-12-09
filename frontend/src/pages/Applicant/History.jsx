@@ -132,7 +132,7 @@ const ApplicationHistory = () => {
                     </span>
                     {application.result && (
                       <span className="text-sm ml-2 mr-2 text-gray-500">
-                        Demo:
+                        Demo Result:
                       </span>
                     )}
                     {application.result && (
@@ -149,7 +149,7 @@ const ApplicationHistory = () => {
                       application.interviewResult && (
                         <>
                           <span className="text-sm ml-2 mr-2 text-gray-500">
-                            Interview:
+                            Interview Result:
                           </span>
                           <span
                             className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
