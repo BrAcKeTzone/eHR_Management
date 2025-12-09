@@ -22,28 +22,10 @@ const InterviewRating = () => {
 
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [interviewScore, setInterviewScore] = useState("");
   const [interviewResult, setInterviewResult] = useState("");
   const [interviewNotes, setInterviewNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const passingScore = 75; // Minimum passing score
-
-  useEffect(() => {
-    // Fetch only applications with interview schedules
-    getAllApplications({ interviewEligible: true });
-  }, [getAllApplications]);
-
-  // Auto-calculate result when interviewScore changes
-  useEffect(() => {
-    if (interviewScore !== "") {
-      const score = parseFloat(interviewScore);
-      if (!isNaN(score)) {
-        setInterviewResult(score >= passingScore ? "PASS" : "FAIL");
-      }
-    }
-  }, [interviewScore]);
 
   useEffect(() => {
     const applicationId = searchParams.get("applicationId");
@@ -78,12 +60,10 @@ const InterviewRating = () => {
     setShowModal(true);
 
     // Initialize with existing data if available
-    if (app.interviewScore !== null && app.interviewScore !== undefined) {
-      setInterviewScore(app.interviewScore.toString());
-      setInterviewResult(app.interviewResult || "");
+    if (app.interviewResult) {
+      setInterviewResult(app.interviewResult);
       setInterviewNotes(app.interviewNotes || "");
     } else {
-      setInterviewScore("");
       setInterviewResult("");
       setInterviewNotes("");
     }
@@ -91,14 +71,8 @@ const InterviewRating = () => {
   };
 
   const handleSubmitRating = async () => {
-    if (!selectedApplication || interviewScore === "") {
-      setError("Please enter an interview score");
-      return;
-    }
-
-    const score = parseFloat(interviewScore);
-    if (isNaN(score) || score < 0 || score > 100) {
-      setError("Interview score must be between 0 and 100");
+    if (!selectedApplication || !interviewResult) {
+      setError("Please select an interview result");
       return;
     }
 
@@ -108,14 +82,13 @@ const InterviewRating = () => {
 
       await applicationApi.rateInterview(
         selectedApplication.id,
-        score,
+        null, // No score needed
         interviewResult,
         interviewNotes
       );
 
       setShowModal(false);
       setSelectedApplication(null);
-      setInterviewScore("");
       setInterviewResult("");
       setInterviewNotes("");
 
@@ -166,13 +139,12 @@ const InterviewRating = () => {
     },
     {
       header: "Rating Status",
-      accessor: "interviewScore",
+      accessor: "interviewResult",
       cell: (row) => (
         <div className="text-sm">
-          {row.interviewScore !== null && row.interviewScore !== undefined ? (
+          {row.interviewResult ? (
             <div>
               <p className="font-medium text-green-600">Rated</p>
-              <p className="text-gray-600">Score: {row.interviewScore}</p>
               <span
                 className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
                   row.interviewResult?.toLowerCase() === "pass"
@@ -198,15 +170,9 @@ const InterviewRating = () => {
             onClick={() => openRatingModal(row)}
             disabled={!row.interviewSchedule}
             size="sm"
-            variant={
-              row.interviewScore !== null && row.interviewScore !== undefined
-                ? "outline"
-                : "primary"
-            }
+            variant={row.interviewResult ? "outline" : "primary"}
           >
-            {row.interviewScore !== null && row.interviewScore !== undefined
-              ? "Edit Rating"
-              : "Rate Interview"}
+            {row.interviewResult ? "Edit Rating" : "Rate Interview"}
           </Button>
         </div>
       ),
@@ -279,13 +245,9 @@ const InterviewRating = () => {
                     </div>
                     <div>
                       <span className="text-gray-500">Rating Status:</span>
-                      {app.interviewScore !== null &&
-                      app.interviewScore !== undefined ? (
+                      {app.interviewResult ? (
                         <div className="mt-1">
                           <p className="font-medium text-green-600">Rated</p>
-                          <p className="text-gray-600">
-                            Score: {app.interviewScore}
-                          </p>
                           <span
                             className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
                               app.interviewResult?.toLowerCase() === "pass"
@@ -308,17 +270,9 @@ const InterviewRating = () => {
                       size="sm"
                       className="flex-1"
                       disabled={!app.interviewSchedule}
-                      variant={
-                        app.interviewScore !== null &&
-                        app.interviewScore !== undefined
-                          ? "outline"
-                          : "primary"
-                      }
+                      variant={app.interviewResult ? "outline" : "primary"}
                     >
-                      {app.interviewScore !== null &&
-                      app.interviewScore !== undefined
-                        ? "Edit Rating"
-                        : "Rate Interview"}
+                      {app.interviewResult ? "Edit Rating" : "Rate Interview"}
                     </Button>
                   </div>
                 </div>
@@ -369,51 +323,22 @@ const InterviewRating = () => {
               </div>
             )}
 
-            {/* Interview Score Input */}
+            {/* Interview Result Dropdown */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Interview Score (0-100)
+                Interview Result
                 <span className="text-red-500 ml-1">*</span>
               </label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={interviewScore}
-                onChange={(e) => setInterviewScore(e.target.value)}
-                placeholder="Enter interview score (e.g., 85.5)"
-                className="w-full"
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Minimum passing score: {passingScore}
-              </p>
+              <select
+                value={interviewResult}
+                onChange={(e) => setInterviewResult(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select result...</option>
+                <option value="PASS">Passed</option>
+                <option value="FAIL">Failed</option>
+              </select>
             </div>
-
-            {/* Result Display */}
-            {interviewResult && (
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 sm:p-4">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                  <div>
-                    <h4 className="font-medium text-blue-900">Result</h4>
-                    <p className="text-sm text-blue-700">
-                      Based on the score entered
-                    </p>
-                  </div>
-                  <div className="text-center sm:text-right">
-                    <span
-                      className={`inline-block px-4 py-2 text-lg font-medium rounded-full ${
-                        interviewResult === "PASS"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {interviewResult}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Feedback */}
             <div>
@@ -430,29 +355,24 @@ const InterviewRating = () => {
             </div>
 
             {/* Current Rating Info */}
-            {selectedApplication.interviewScore !== null &&
-              selectedApplication.interviewScore !== undefined && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 sm:p-4">
-                  <h4 className="font-medium text-yellow-900 mb-2">
-                    ⚠️ Editing Existing Rating
-                  </h4>
-                  <div className="text-sm text-yellow-800 space-y-1">
-                    <p>
-                      Current Interview Score:{" "}
-                      <strong>{selectedApplication.interviewScore}</strong>
-                    </p>
-                    <p>
-                      Current Result:{" "}
-                      <strong>
-                        {selectedApplication.interviewResult?.toUpperCase()}
-                      </strong>
-                    </p>
-                    <p className="text-xs mt-2">
-                      Submitting will overwrite the current rating and result.
-                    </p>
-                  </div>
+            {selectedApplication.interviewResult && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 sm:p-4">
+                <h4 className="font-medium text-yellow-900 mb-2">
+                  ⚠️ Editing Existing Rating
+                </h4>
+                <div className="text-sm text-yellow-800 space-y-1">
+                  <p>
+                    Current Result:{" "}
+                    <strong>
+                      {selectedApplication.interviewResult?.toUpperCase()}
+                    </strong>
+                  </p>
+                  <p className="text-xs mt-2">
+                    Submitting will overwrite the current rating.
+                  </p>
                 </div>
-              )}
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 sm:pt-6 border-t border-gray-200">
@@ -471,13 +391,12 @@ const InterviewRating = () => {
               <Button
                 onClick={handleSubmitRating}
                 variant="primary"
-                disabled={!interviewScore || loading}
+                disabled={!interviewResult || loading}
                 className="w-full sm:w-auto"
               >
                 {loading
                   ? "Saving..."
-                  : selectedApplication.interviewScore !== null &&
-                    selectedApplication.interviewScore !== undefined
+                  : selectedApplication.interviewResult
                   ? "Update Rating"
                   : "Submit Rating"}
               </Button>

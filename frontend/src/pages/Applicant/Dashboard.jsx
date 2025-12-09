@@ -62,7 +62,6 @@ const ApplicantDashboard = () => {
   const getApplicationProgress = (application) => {
     const stages = [
       "Submitted",
-      "Under Review",
       "Demo Scheduled",
       "Interview Scheduled",
       "Completed",
@@ -72,8 +71,7 @@ const ApplicantDashboard = () => {
     // 1. Completed (highest)
     // 2. Interview scheduled
     // 3. Demo scheduled
-    // 4. Under review
-    // 5. Submitted
+    // 4. Submitted
     let currentIndex = 0;
     if (!application) {
       currentIndex = 0;
@@ -83,8 +81,6 @@ const ApplicantDashboard = () => {
       currentIndex = stages.indexOf("Interview Scheduled");
     } else if (application.demoSchedule) {
       currentIndex = stages.indexOf("Demo Scheduled");
-    } else if (application.status?.toLowerCase() === "under review") {
-      currentIndex = stages.indexOf("Under Review");
     } else {
       currentIndex = 0;
     }
@@ -96,13 +92,11 @@ const ApplicantDashboard = () => {
   // Color shades for each stage from light blue (submitted) to dark blue (completed)
   const stageBgColors = [
     "bg-blue-200",
-    "bg-blue-300",
     "bg-blue-400",
     "bg-blue-600",
     "bg-blue-800",
   ];
   const stageTextColors = [
-    "text-blue-700",
     "text-blue-700",
     "text-blue-700",
     "text-blue-700",
@@ -579,8 +573,8 @@ const ApplicantDashboard = () => {
         </DashboardCard>
 
         {/* Demo Schedule */}
-        {currentApplication?.status?.toLowerCase() !== "completed" && (
-          <>
+        {currentApplication?.demoSchedule &&
+          !currentApplication?.interviewSchedule && (
             <DashboardCard title="Upcoming Demo">
               {upcomingDemo ? (
                 <div className="space-y-4">
@@ -650,28 +644,6 @@ const ApplicantDashboard = () => {
                     )}
                   </div>
                 </div>
-              ) : currentApplication?.status?.toLowerCase() === "approved" ? (
-                <div className="text-center py-8">
-                  <svg
-                    className="mx-auto h-12 w-12 text-yellow-400 mb-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <p className="text-yellow-600 font-medium">
-                    Schedule Pending
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Demo will be scheduled soon
-                  </p>
-                </div>
               ) : (
                 <div className="text-center py-8">
                   <svg
@@ -691,97 +663,99 @@ const ApplicantDashboard = () => {
                 </div>
               )}
             </DashboardCard>
+          )}
 
-            <DashboardCard title="Upcoming Interview">
-              {upcomingInterview ? (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <svg
-                        className="w-8 h-8 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                    </div>
-                    <h3 className="font-semibold text-gray-900">
-                      Interview Scheduled
-                    </h3>
+        {/* Interview Schedule */}
+        {currentApplication?.interviewSchedule && (
+          <DashboardCard title="Upcoming Interview">
+            {upcomingInterview ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg
+                      className="w-8 h-8 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
                   </div>
+                  <h3 className="font-semibold text-gray-900">
+                    Interview Scheduled
+                  </h3>
+                </div>
 
-                  <div className="space-y-3 text-sm">
-                    <p className="text-xs font-semibold text-blue-900 mb-1">
-                      INTERVIEW DETAILS
+                <div className="space-y-3 text-sm">
+                  <p className="text-xs font-semibold text-blue-900 mb-1">
+                    INTERVIEW DETAILS
+                  </p>
+                  <div>
+                    <p className="text-gray-600">Date & Time:</p>
+                    <p className="font-medium">
+                      {formatDate(upcomingInterview.date)}
                     </p>
-                    <div>
-                      <p className="text-gray-600">Date & Time:</p>
-                      <p className="font-medium">
-                        {formatDate(upcomingInterview.date)}
-                      </p>
-                      <p className="font-medium">{upcomingInterview.time}</p>
-                    </div>
-                    {upcomingInterview.duration && (
-                      <div>
-                        <p className="text-gray-600">Duration:</p>
-                        <p className="font-medium">
-                          {upcomingInterview.duration} minutes
-                        </p>
-                      </div>
-                    )}
-                    {upcomingInterview.location && (
-                      <div>
-                        <p className="text-gray-600">Location:</p>
-                        <p className="font-medium">
-                          {upcomingInterview.location}
-                        </p>
-                      </div>
-                    )}
-                    {upcomingInterview.notes && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                        <p className="text-xs font-medium text-blue-900 mb-1">
-                          Instructions:
-                        </p>
-                        <p className="text-xs text-blue-800">
-                          {upcomingInterview.notes}
-                        </p>
-                      </div>
-                    )}
-                    {!upcomingInterview.notes && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                        <p className="text-xs text-blue-800">
-                          Your interview details will be emailed to you.
-                        </p>
-                      </div>
-                    )}
+                    <p className="font-medium">{upcomingInterview.time}</p>
                   </div>
+                  {upcomingInterview.duration && (
+                    <div>
+                      <p className="text-gray-600">Duration:</p>
+                      <p className="font-medium">
+                        {upcomingInterview.duration} minutes
+                      </p>
+                    </div>
+                  )}
+                  {upcomingInterview.location && (
+                    <div>
+                      <p className="text-gray-600">Location:</p>
+                      <p className="font-medium">
+                        {upcomingInterview.location}
+                      </p>
+                    </div>
+                  )}
+                  {upcomingInterview.notes && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                      <p className="text-xs font-medium text-blue-900 mb-1">
+                        Instructions:
+                      </p>
+                      <p className="text-xs text-blue-800">
+                        {upcomingInterview.notes}
+                      </p>
+                    </div>
+                  )}
+                  {!upcomingInterview.notes && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                      <p className="text-xs text-blue-800">
+                        Your interview details will be emailed to you.
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <svg
-                    className="mx-auto h-12 w-12 text-yellow-400 mb-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 8v4l3 3"
-                    />
-                  </svg>
-                  <p className="text-gray-500">No interview scheduled</p>
-                </div>
-              )}
-            </DashboardCard>
-          </>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <svg
+                  className="mx-auto h-12 w-12 text-yellow-400 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4l3 3"
+                  />
+                </svg>
+                <p className="text-gray-500">No interview scheduled</p>
+              </div>
+            )}
+          </DashboardCard>
         )}
       </div>
 

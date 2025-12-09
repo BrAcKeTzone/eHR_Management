@@ -343,7 +343,7 @@ export const applicationApi = {
     }
   },
 
-  // Rate interview with score and result (HR only)
+  // Rate interview with result (HR only)
   rateInterview: async (
     applicationId,
     interviewScore,
@@ -354,7 +354,7 @@ export const applicationApi = {
       const response = await fetchClient.put(
         `${API_BASE_URL}/applications/${applicationId}/interview-rating`,
         {
-          interviewScore: parseFloat(interviewScore),
+          interviewScore: interviewScore ? parseFloat(interviewScore) : null,
           interviewResult: interviewResult.toUpperCase(),
           interviewNotes,
         }

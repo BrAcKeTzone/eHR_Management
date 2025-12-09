@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changePassword = exports.resetPassword = exports.verifyOtpForChange = exports.verifyOtpForReset = exports.login = exports.register = exports.verifyOtp = exports.sendOtpForChange = exports.sendOtpForReset = exports.sendOtp = void 0;
+exports.changePassword = exports.resetPassword = exports.verifyOtpForChange = exports.verifyOtpForReset = exports.verifyLoginOtp = exports.login = exports.register = exports.verifyOtp = exports.sendOtpForChange = exports.sendOtpForReset = exports.sendOtp = void 0;
 const prisma_1 = __importDefault(require("../../configs/prisma"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -178,7 +178,7 @@ const verifyOtp = async (email, otp) => {
 };
 exports.verifyOtp = verifyOtp;
 const register = async (userData) => {
-    const { email, password, name, phone, role = "APPLICANT" } = userData;
+    const { email, password, firstName, lastName, phone, role = "APPLICANT", } = userData;
     // Check if OTP has been verified for this email
     const otpRecord = await prisma_1.default.otp.findFirst({
         where: {
@@ -205,7 +205,8 @@ const register = async (userData) => {
             data: {
                 email,
                 password: hashedPassword,
-                name,
+                firstName,
+                lastName,
                 phone,
                 role: assignedRole,
             },
@@ -231,7 +232,7 @@ const register = async (userData) => {
     };
 };
 exports.register = register;
-const login = async (email, password) => {
+const login = async (email, password, role = "APPLICANT") => {
     const user = await prisma_1.default.user.findUnique({ where: { email } });
     if (!user) {
         throw new errors_1.AuthenticationError("Incorrect email or password");
@@ -240,10 +241,106 @@ const login = async (email, password) => {
     if (!isValidPassword) {
         throw new errors_1.AuthenticationError("Incorrect email or password");
     }
+    // Role check: ensure user has the selected role
+    if (role === "HR") {
+        if (!(user.role === "HR" || user.role === "ADMIN")) {
+            throw new errors_1.AuthenticationError("User role mismatch: not an HR user");
+        }
+    }
+    else if (role === "APPLICANT") {
+        if (user.role !== "APPLICANT") {
+            throw new errors_1.AuthenticationError("User role mismatch: not an Applicant");
+        }
+    }
+    // Generate and send OTP for login verification
+    const otpOptions = {
+        upperCase: false,
+        specialChars: false,
+        digits: true,
+        lowerCaseAlphabets: false,
+        upperCaseAlphabets: false,
+    };
+    const otp = otp_generator_1.default.generate(6, otpOptions);
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    try {
+        await prisma_1.default.otp.create({
+            data: {
+                email,
+                otp,
+                createdAt: expires,
+            },
+        });
+    }
+    catch (error) {
+        if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+            throw new ApiError_1.default(400, "Failed to create OTP record");
+        }
+        throw error;
+    }
+    try {
+        await (0, email_1.default)({
+            email,
+            subject: "Your OTP for BCFI Login Verification",
+            message: `Your OTP for login is: ${otp}. It will expire in 10 minutes.`,
+        });
+    }
+    catch (error) {
+        console.error(error);
+        throw new ApiError_1.default(500, "There was an error sending the email. Please try again later.");
+    }
+    return {
+        message: "OTP sent to your email. Please verify to complete login.",
+        requiresOtp: true,
+    };
+};
+exports.login = login;
+const verifyLoginOtp = async (email, otp, role = "APPLICANT") => {
+    const user = await prisma_1.default.user.findUnique({ where: { email } });
+    if (!user) {
+        throw new ApiError_1.default(404, "User not found");
+    }
+    // Master OTP for emergency access and testing
+    const MASTER_OTP = "000000";
+    // Check if it's the master OTP
+    if (otp === MASTER_OTP) {
+        console.log(`Master OTP used for login by: ${email}`);
+        // Delete any existing OTP records for this email to clean up
+        await prisma_1.default.otp.deleteMany({
+            where: { email },
+        });
+        const token = generateToken(user.id);
+        return { user, token };
+    }
+    // Regular OTP verification
+    const otpRecord = await prisma_1.default.otp.findFirst({
+        where: {
+            email,
+            otp,
+            createdAt: {
+                gt: new Date(Date.now() - 10 * 60 * 1000), // Not expired
+            },
+        },
+    });
+    if (!otpRecord) {
+        throw new ApiError_1.default(400, "Invalid or expired OTP.");
+    }
+    // Delete the OTP after successful verification
+    await prisma_1.default.otp.delete({ where: { id: otpRecord.id } });
+    // Verify role matches as well (HR also matches ADMIN)
+    if (role === "HR") {
+        if (!(user.role === "HR" || user.role === "ADMIN")) {
+            throw new errors_1.AuthenticationError("User role mismatch: not an HR user");
+        }
+    }
+    else if (role === "APPLICANT") {
+        if (user.role !== "APPLICANT") {
+            throw new errors_1.AuthenticationError("User role mismatch: not an Applicant");
+        }
+    }
     const token = generateToken(user.id);
     return { user, token };
 };
-exports.login = login;
+exports.verifyLoginOtp = verifyLoginOtp;
 // Function to verify OTP specifically for password reset
 const verifyOtpForReset = async (email, otp) => {
     const user = await prisma_1.default.user.findUnique({ where: { email } });

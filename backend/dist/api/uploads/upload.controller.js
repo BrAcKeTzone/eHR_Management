@@ -18,12 +18,12 @@ exports.uploadFile = (0, asyncHandler_1.default)(async (req, res) => {
     }
     // Determine the upload folder based on the request type
     const uploadType = req.query.type || "general";
-    let folder = "bcfi_hr/general";
+    let folder = "hr-applications/applicants-attachments";
     let resourceType = "auto";
     // Set the appropriate folder based on upload type
     switch (uploadType) {
         case "application":
-            folder = "bcfi_hr/applications";
+            folder = "hr-applications/applicants-attachments";
             resourceType = "auto";
             break;
         case "id":
@@ -31,11 +31,11 @@ exports.uploadFile = (0, asyncHandler_1.default)(async (req, res) => {
             resourceType = "image";
             break;
         case "document":
-            folder = "bcfi_hr/documents";
+            folder = "hr-applications/applicants-attachments";
             resourceType = "raw";
             break;
         case "profile":
-            folder = "bcfi_hr/profiles";
+            folder = "hr-applications/profile-pictures";
             resourceType = "image";
             break;
         default:
@@ -81,15 +81,15 @@ exports.uploadMultipleFiles = (0, asyncHandler_1.default)(async (req, res) => {
     }
     // Determine the upload folder based on the request type
     const uploadType = req.query.type || "document";
-    let folder = "bcfi_hr/documents";
+    let folder = "hr-applications/applicants-attachments";
     let resourceType = "auto";
     switch (uploadType) {
         case "application":
-            folder = "bcfi_hr/applications";
+            folder = "hr-applications/applicants-attachments";
             resourceType = "auto";
             break;
         case "document":
-            folder = "bcfi_hr/documents";
+            folder = "hr-applications/applicants-attachments";
             resourceType = "raw";
             break;
         default:
@@ -158,10 +158,10 @@ exports.uploadBase64Image = (0, asyncHandler_1.default)(async (req, res) => {
     }
     // Determine the upload folder based on the request type
     const uploadType = req.query.type || "profile";
-    let folder = "bcfi_hr/profiles";
+    let folder = "hr-applications/profile-pictures";
     switch (uploadType) {
         case "profile":
-            folder = "bcfi_hr/profiles";
+            folder = "hr-applications/profile-pictures";
             break;
         case "id":
             folder = "bcfi_hr/valid_ids";

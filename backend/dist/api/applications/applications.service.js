@@ -10,14 +10,30 @@ const notifications_service_1 = __importDefault(require("../notifications/notifi
 // Helper function to format application for frontend
 function formatApplicationForFrontend(app) {
     let formattedApp = { ...app };
-    // Format demoSchedule to include separate time string
+    // Format demoSchedule to include separate time string in 12-hour format
     if (app.demoSchedule) {
         // Convert to local timezone and extract time
         const demoDate = new Date(app.demoSchedule);
-        // Get local hours and minutes (this accounts for the timezone offset)
-        const hours = demoDate.getHours().toString().padStart(2, "0");
+        let hours = demoDate.getHours();
         const minutes = demoDate.getMinutes().toString().padStart(2, "0");
-        formattedApp.demoTime = `${hours}:${minutes}`;
+        // Convert to 12-hour format
+        const period = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12; // Convert 0 to 12 for midnight, 13-23 to 1-11
+        formattedApp.demoTime = `${hours}:${minutes} ${period}`;
+    }
+    if (app.interviewSchedule) {
+        const interviewDate = new Date(app.interviewSchedule);
+        let hours = interviewDate.getHours();
+        const minutes = interviewDate.getMinutes().toString().padStart(2, "0");
+        const period = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12;
+        formattedApp.interviewTime = `${hours}:${minutes} ${period}`;
+    }
+    if (app.interviewRescheduleCount !== undefined) {
+        formattedApp.interviewRescheduleCount = app.interviewRescheduleCount;
+    }
+    if (app.interviewRescheduleReason) {
+        formattedApp.interviewRescheduleReason = app.interviewRescheduleReason;
     }
     return formattedApp;
 }
@@ -80,7 +96,8 @@ class ApplicationService {
                 applicant: {
                     select: {
                         id: true,
-                        name: true,
+                        firstName: true,
+                        lastName: true,
                         email: true,
                         phone: true,
                     },
@@ -112,13 +129,18 @@ class ApplicationService {
         return application ? formatApplicationForFrontend(application) : null;
     }
     async getAllApplications(filters) {
-        const { status, result, search, page = 1, limit = 10 } = filters || {};
+        const { status, result, interviewEligible, search, page = 1, limit = 10, } = filters || {};
         const where = {
             ...(status && { status }),
             ...(result && { result }),
+            ...(typeof interviewEligible === "boolean" && { interviewEligible }),
             ...(search && {
                 applicant: {
-                    OR: [{ name: { contains: search } }, { email: { contains: search } }],
+                    OR: [
+                        { firstName: { contains: search } },
+                        { lastName: { contains: search } },
+                        { email: { contains: search } },
+                    ],
                 },
             }),
         };
@@ -129,7 +151,8 @@ class ApplicationService {
                     applicant: {
                         select: {
                             id: true,
-                            name: true,
+                            firstName: true,
+                            lastName: true,
                             email: true,
                             phone: true,
                         },
@@ -192,7 +215,7 @@ class ApplicationService {
         }
         return application;
     }
-    async scheduleDemo(id, demoSchedule, demoLocation, demoDuration, demoNotes) {
+    async scheduleDemo(id, demoSchedule, demoLocation, demoDuration, demoNotes, rescheduleReason) {
         const application = await prisma_1.default.application.findUnique({ where: { id } });
         if (!application) {
             throw new ApiError_1.default(404, "Application not found");
@@ -200,30 +223,159 @@ class ApplicationService {
         if (application.status !== client_1.ApplicationStatus.APPROVED) {
             throw new ApiError_1.default(400, "Application must be approved before scheduling demo");
         }
-        const updatedApplication = await this.updateApplication(id, {
+        // Validate demo date is at least 1 day in the future
+        const demoDate = new Date(demoSchedule);
+        const today = new Date();
+        // Set time to start of day for comparison
+        today.setHours(0, 0, 0, 0);
+        demoDate.setHours(0, 0, 0, 0);
+        // Calculate the difference in days
+        const timeDifference = demoDate.getTime() - today.getTime();
+        const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+        if (daysDifference < 1) {
+            throw new ApiError_1.default(400, `Demo date must be at least 1 day in the future. Please select a date starting from ${new Date(today.getTime() + 24 * 60 * 60 * 1000)
+                .toISOString()
+                .split("T")[0]}`);
+        }
+        // Enforce demo duration to 60 minutes
+        const enforcedDuration = 60;
+        // Determine whether this is an initial schedule or a reschedule
+        const isReschedule = !!application.demoSchedule;
+        const currentRescheduleCount = application.demoRescheduleCount || 0;
+        // If attempting to reschedule and reschedule count already reached 1, prevent further reschedules
+        if (isReschedule && currentRescheduleCount >= 1) {
+            throw new ApiError_1.default(400, "This application has already been rescheduled once and cannot be rescheduled again.");
+        }
+        const updateData = {
             demoSchedule,
             demoLocation,
-            demoDuration,
+            demoDuration: enforcedDuration,
             demoNotes,
-        });
+        };
+        if (isReschedule) {
+            updateData.demoRescheduleCount = currentRescheduleCount + 1;
+            // Save reschedule reason if present
+            if (rescheduleReason) {
+                updateData.demoRescheduleReason = rescheduleReason;
+            }
+        }
+        const updatedApplication = await this.updateApplication(id, updateData);
         // Get applicant details for notification
         const applicant = await prisma_1.default.user.findUnique({
             where: { id: application.applicantId },
         });
         if (applicant) {
-            // Send demo schedule notification asynchronously
+            // If this is a reschedule send a specific reschedule notification
+            if (isReschedule) {
+                notifications_service_1.default
+                    .sendDemoRescheduleNotification(updatedApplication, applicant, rescheduleReason)
+                    .catch((error) => console.error("Failed to send demo reschedule notification:", error));
+            }
+            else {
+                // Send initial demo schedule notification asynchronously
+                notifications_service_1.default
+                    .sendDemoScheduleNotification(updatedApplication, applicant)
+                    .catch((error) => console.error("Failed to send demo schedule notification:", error));
+            }
+        }
+        return updatedApplication;
+    }
+    async scheduleInterview(id, interviewSchedule, rescheduleReason) {
+        const application = await prisma_1.default.application.findUnique({ where: { id } });
+        if (!application) {
+            throw new ApiError_1.default(404, "Application not found");
+        }
+        // Require application to be interviewEligible or have passing score
+        const appAny = application;
+        const eligible = appAny.interviewEligible ||
+            (typeof application.totalScore === "number" &&
+                application.totalScore >= 75);
+        if (!eligible) {
+            throw new ApiError_1.default(400, "Application is not eligible for interview scheduling");
+        }
+        const interviewDate = new Date(interviewSchedule);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        interviewDate.setHours(0, 0, 0, 0);
+        const timeDifference = interviewDate.getTime() - today.getTime();
+        const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+        if (daysDifference < 1) {
+            throw new ApiError_1.default(400, "Interview date must be at least 1 day in the future");
+        }
+        // If a demo is scheduled, interview date must be on/after demo date (date-only)
+        if (application.demoSchedule) {
+            const demoDate = new Date(application.demoSchedule);
+            demoDate.setHours(0, 0, 0, 0);
+            if (interviewDate.getTime() < demoDate.getTime()) {
+                throw new ApiError_1.default(400, "Interview date must be on or after the demo schedule date");
+            }
+        }
+        // Check reschedule limits - only allow 1 reschedule
+        const isReschedule = !!application.interviewSchedule;
+        // If rescheduling, require a reason similar to demo schedule
+        if (isReschedule) {
+            if (!rescheduleReason) {
+                throw new ApiError_1.default(400, "Reschedule reason is required when updating an existing interview schedule");
+            }
+            const allowedReasons = ["APPLICANT_NO_SHOW", "SCHOOL"];
+            if (!allowedReasons.includes(rescheduleReason)) {
+                throw new ApiError_1.default(400, `Invalid reschedule reason. Allowed: ${allowedReasons.join(", ")}`);
+            }
+        }
+        const currentRescheduleCount = application.interviewRescheduleCount || 0;
+        if (isReschedule && currentRescheduleCount >= 1) {
+            throw new ApiError_1.default(400, "This application has already been rescheduled once and cannot be rescheduled again.");
+        }
+        const updateData = { interviewSchedule };
+        if (isReschedule) {
+            updateData.interviewRescheduleCount = currentRescheduleCount + 1;
+            updateData.interviewRescheduleReason = rescheduleReason;
+        }
+        const updatedApplication = await this.updateApplication(id, updateData);
+        // Notify applicant about interview schedule
+        const applicant = await prisma_1.default.user.findUnique({
+            where: { id: updatedApplication.applicantId },
+        });
+        if (applicant) {
             notifications_service_1.default
-                .sendDemoScheduleNotification(updatedApplication, applicant)
-                .catch((error) => console.error("Failed to send demo schedule notification:", error));
+                .sendInterviewScheduleNotification(updatedApplication, applicant)
+                .catch((err) => console.error("Failed to send interview schedule notification:", err));
         }
         return updatedApplication;
     }
     async completeApplication(id, totalScore, result) {
+        // When a score is submitted and result is PASS with a score >= 75,
+        // mark the application as interviewEligible so it can appear in the Interview Scheduling queue.
+        const interviewEligible = totalScore >= 75;
         return await this.updateApplication(id, {
             status: client_1.ApplicationStatus.COMPLETED,
             totalScore,
             result: result,
+            interviewEligible,
         });
+    }
+    async rateInterview(id, interviewScore, interviewResult, interviewNotes) {
+        const application = await prisma_1.default.application.findUnique({ where: { id } });
+        if (!application) {
+            throw new ApiError_1.default(404, "Application not found");
+        }
+        if (!application.interviewSchedule) {
+            throw new ApiError_1.default(400, "Application must have a scheduled interview before rating");
+        }
+        // Validate score range if provided
+        if (interviewScore !== null &&
+            (interviewScore < 0 || interviewScore > 100)) {
+            throw new ApiError_1.default(400, "Interview score must be between 0 and 100");
+        }
+        const updatedApplication = await this.updateApplication(id, {
+            ...(interviewScore !== null && { interviewScore }),
+            interviewResult: interviewResult,
+            interviewNotes,
+            status: client_1.ApplicationStatus.COMPLETED,
+        });
+        // Note: Interview result notification can be added when notification service is extended
+        // For now, the interview rating is saved successfully
+        return updatedApplication;
     }
     async deleteApplication(id) {
         const application = await prisma_1.default.application.findUnique({ where: { id } });

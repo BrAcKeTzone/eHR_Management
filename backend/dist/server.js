@@ -10,6 +10,5 @@ dotenv_1.default.config();
 const PORT = process.env.PORT || 3000;
 app_1.default.listen(PORT, () => {
     console.log(`BCFI HR Application System running on http://localhost:${PORT}`);
-    console.log(`Teacher application portal ready for use`);
 });
 //# sourceMappingURL=server.js.map

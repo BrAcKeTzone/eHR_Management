@@ -18,6 +18,22 @@ app.use(body_parser_1.default.urlencoded({ extended: true }));
 app.use("/api", index_1.default);
 // Error handling middleware
 app.use((err, req, res, next) => {
+    console.error("=== ERROR CAUGHT ===");
+    console.error("Error name:", err.name);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
+    // Check if it's a Cloudinary error
+    if (err.http_code || err.storageErrors) {
+        console.error("Cloudinary error details:", {
+            http_code: err.http_code,
+            message: err.message,
+            storageErrors: err.storageErrors,
+        });
+        return res.status(err.http_code || 500).json({
+            success: false,
+            message: `File upload error: ${err.message}`,
+        });
+    }
     if (err instanceof ApiError_1.default) {
         return res.status(err.statusCode).json({
             success: false,
@@ -31,10 +47,14 @@ app.use((err, req, res, next) => {
             message: err.message,
         });
     }
-    console.error(err.stack);
+    console.error("Unhandled error:", err);
     res.status(500).json({
         success: false,
-        message: "Internal server error",
+        message: err.message || "Internal server error",
+        ...(process.env.NODE_ENV === "development" && {
+            error: err.message,
+            stack: err.stack,
+        }),
     });
 });
 exports.default = app;

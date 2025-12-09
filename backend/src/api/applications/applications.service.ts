@@ -566,7 +566,7 @@ class ApplicationService {
 
   async rateInterview(
     id: number,
-    interviewScore: number,
+    interviewScore: number | null,
     interviewResult: "PASS" | "FAIL",
     interviewNotes?: string
   ): Promise<Application> {
@@ -583,13 +583,16 @@ class ApplicationService {
       );
     }
 
-    // Validate score range
-    if (interviewScore < 0 || interviewScore > 100) {
+    // Validate score range if provided
+    if (
+      interviewScore !== null &&
+      (interviewScore < 0 || interviewScore > 100)
+    ) {
       throw new ApiError(400, "Interview score must be between 0 and 100");
     }
 
     const updatedApplication = await this.updateApplication(id, {
-      interviewScore,
+      ...(interviewScore !== null && { interviewScore }),
       interviewResult: interviewResult as any,
       interviewNotes,
       status: ApplicationStatus.COMPLETED,

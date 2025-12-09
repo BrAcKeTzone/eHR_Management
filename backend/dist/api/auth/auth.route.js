@@ -49,6 +49,7 @@ router.post("/send-otp-change", (0, validate_middleware_1.default)(authValidatio
 router.post("/verify-otp-change", (0, validate_middleware_1.default)(authValidation.verifyOtpForChange), authController.verifyOtpForChange);
 router.post("/register", (0, validate_middleware_1.default)(authValidation.register), authController.register);
 router.post("/login", (0, validate_middleware_1.default)(authValidation.login), authController.login);
+router.post("/verify-login-otp", (0, validate_middleware_1.default)(authValidation.verifyLoginOtp), authController.verifyLoginOtp);
 router.post("/reset-password", (0, validate_middleware_1.default)(authValidation.resetPassword), authController.resetPassword);
 router.post("/change-password", (0, validate_middleware_1.default)(authValidation.changePassword), authController.changePassword);
 exports.default = router;

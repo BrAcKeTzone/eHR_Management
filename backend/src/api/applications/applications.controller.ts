@@ -383,10 +383,6 @@ export const rateInterview = asyncHandler(
     const { interviewScore, interviewResult, interviewNotes } = req.body;
     const applicationId = parseInt(id);
 
-    if (interviewScore === undefined || interviewScore === null) {
-      throw new ApiError(400, "Interview score is required");
-    }
-
     if (
       !interviewResult ||
       !["PASS", "FAIL"].includes(interviewResult.toUpperCase())
@@ -396,7 +392,7 @@ export const rateInterview = asyncHandler(
 
     const application = await applicationService.rateInterview(
       applicationId,
-      parseFloat(interviewScore),
+      interviewScore ? parseFloat(interviewScore) : null,
       interviewResult.toUpperCase() as "PASS" | "FAIL",
       interviewNotes
     );

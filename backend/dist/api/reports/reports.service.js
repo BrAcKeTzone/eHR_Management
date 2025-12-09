@@ -24,16 +24,14 @@ class ReportsService {
         if (filters?.result) {
             whereClause.result = filters.result;
         }
-        if (filters?.program) {
-            whereClause.program = { contains: filters.program };
-        }
         const applications = await prisma_1.default.application.findMany({
             where: whereClause,
             include: {
                 applicant: {
                     select: {
                         id: true,
-                        name: true,
+                        firstName: true,
+                        lastName: true,
                         email: true,
                         phone: true,
                     },
@@ -61,16 +59,14 @@ class ReportsService {
         if (filters?.result) {
             whereClause.result = filters.result;
         }
-        if (filters?.program) {
-            whereClause.program = { contains: filters.program };
-        }
         const applications = await prisma_1.default.application.findMany({
             where: whereClause,
             include: {
                 applicant: {
                     select: {
                         id: true,
-                        name: true,
+                        firstName: true,
+                        lastName: true,
                         email: true,
                         phone: true,
                     },
@@ -145,7 +141,9 @@ class ReportsService {
             app.demoLocation || "",
             app.hrNotes || "",
         ]);
-        return [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
+        return [headers, ...rows]
+            .map((row) => row.map((cell) => `"${cell}"`).join(","))
+            .join("\n");
     }
     // Generate CSV for scoring
     generateScoringCSV(applications) {
@@ -173,7 +171,9 @@ class ReportsService {
             app.hrNotes || "",
             new Date(app.updatedAt).toLocaleDateString(),
         ]);
-        return [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
+        return [headers, ...rows]
+            .map((row) => row.map((cell) => `"${cell}"`).join(","))
+            .join("\n");
     }
     // Generate CSV for applicants
     generateApplicantsCSV(users) {
@@ -190,9 +190,11 @@ class ReportsService {
         const rows = users.map((user) => {
             const applications = user.applications;
             const latestApp = applications[0];
-            const programs = [...new Set(applications.map((app) => app.program))].join("; ");
+            const programs = [
+                ...new Set(applications.map((app) => app.program)),
+            ].join("; ");
             return [
-                user.name,
+                `${user.firstName} ${user.lastName}`,
                 user.email,
                 user.phone || "",
                 applications.length,
@@ -202,7 +204,9 @@ class ReportsService {
                 latestApp ? new Date(latestApp.createdAt).toLocaleDateString() : "",
             ];
         });
-        return [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
+        return [headers, ...rows]
+            .map((row) => row.map((cell) => `"${cell}"`).join(","))
+            .join("\n");
     }
     // Get report statistics
     async getReportStatistics(dateRange) {
@@ -240,10 +244,18 @@ class ReportsService {
                 },
             }),
             Promise.all([
-                prisma_1.default.application.count({ where: { ...whereClause, status: client_1.ApplicationStatus.PENDING } }),
-                prisma_1.default.application.count({ where: { ...whereClause, status: client_1.ApplicationStatus.APPROVED } }),
-                prisma_1.default.application.count({ where: { ...whereClause, status: client_1.ApplicationStatus.REJECTED } }),
-                prisma_1.default.application.count({ where: { ...whereClause, status: client_1.ApplicationStatus.COMPLETED } }),
+                prisma_1.default.application.count({
+                    where: { ...whereClause, status: client_1.ApplicationStatus.PENDING },
+                }),
+                prisma_1.default.application.count({
+                    where: { ...whereClause, status: client_1.ApplicationStatus.APPROVED },
+                }),
+                prisma_1.default.application.count({
+                    where: { ...whereClause, status: client_1.ApplicationStatus.REJECTED },
+                }),
+                prisma_1.default.application.count({
+                    where: { ...whereClause, status: client_1.ApplicationStatus.COMPLETED },
+                }),
             ]),
             prisma_1.default.application.findMany({
                 where: {
@@ -257,14 +269,23 @@ class ReportsService {
                 },
             }),
             prisma_1.default.application.findMany({
-                where: whereClause,
+                where: {
+                    ...whereClause,
+                    status: client_1.ApplicationStatus.COMPLETED,
+                },
                 select: {
-                    program: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    result: true,
                 },
             }),
         ]);
         // Calculate growth percentage
-        const growth = lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth) * 100 : thisMonth > 0 ? 100 : 0;
+        const growth = lastMonth > 0
+            ? ((thisMonth - lastMonth) / lastMonth) * 100
+            : thisMonth > 0
+                ? 100
+                : 0;
         // Calculate status breakdown
         const statusBreakdown = {
             pending: statusCounts[0],
@@ -272,30 +293,28 @@ class ReportsService {
             rejected: statusCounts[2],
             completed: statusCounts[3],
         };
-        // Calculate program breakdown
-        const programBreakdown = {};
-        allApplications.forEach((app) => {
-            programBreakdown[app.program] = (programBreakdown[app.program] || 0) + 1;
-        });
         // Calculate average processing time (days from creation to completion)
         let averageProcessingTime = 0;
         if (completedApplications.length > 0) {
             const totalDays = completedApplications.reduce((sum, app) => {
-                const days = Math.floor((new Date(app.updatedAt).getTime() - new Date(app.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                const days = Math.floor((new Date(app.updatedAt).getTime() -
+                    new Date(app.createdAt).getTime()) /
+                    (1000 * 60 * 60 * 24));
                 return sum + days;
             }, 0);
             averageProcessingTime = Math.round(totalDays / completedApplications.length);
         }
         // Calculate pass rate
         const passedApplications = completedApplications.filter((app) => app.result === client_1.ApplicationResult.PASS).length;
-        const passRate = completedApplications.length > 0 ? (passedApplications / completedApplications.length) * 100 : 0;
+        const passRate = completedApplications.length > 0
+            ? (passedApplications / completedApplications.length) * 100
+            : 0;
         return {
             totalApplications,
             thisMonth,
             lastMonth,
             growth: Math.round(growth * 10) / 10,
             statusBreakdown,
-            programBreakdown,
             averageProcessingTime,
             passRate: Math.round(passRate * 10) / 10,
         };
@@ -322,14 +341,8 @@ class ReportsService {
                 applications: count,
             });
         }
-        // Get top programs
-        const topPrograms = Object.entries(stats.programBreakdown)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 5)
-            .map(([name, count]) => ({ name, count }));
         return {
             ...stats,
-            topPrograms,
             monthlyTrend,
         };
     }

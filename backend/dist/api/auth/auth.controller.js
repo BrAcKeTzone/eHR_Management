@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changePassword = exports.resetPassword = exports.login = exports.register = exports.sendOtpForChange = exports.sendOtpForReset = exports.verifyOtpForChange = exports.verifyOtpForReset = exports.verifyOtp = exports.sendOtp = void 0;
+exports.changePassword = exports.resetPassword = exports.verifyLoginOtp = exports.login = exports.register = exports.sendOtpForChange = exports.sendOtpForReset = exports.verifyOtpForChange = exports.verifyOtpForReset = exports.verifyOtp = exports.sendOtp = void 0;
 const authService = __importStar(require("./auth.service"));
 const asyncHandler_1 = __importDefault(require("../../utils/asyncHandler"));
 const ApiResponse_1 = __importDefault(require("../../utils/ApiResponse"));
@@ -48,7 +48,9 @@ exports.sendOtp = (0, asyncHandler_1.default)(async (req, res) => {
 exports.verifyOtp = (0, asyncHandler_1.default)(async (req, res) => {
     const { email, otp } = req.body;
     const result = await authService.verifyOtp(email, otp);
-    res.status(200).json(new ApiResponse_1.default(200, result, "Email verified successfully"));
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, result, "Email verified successfully"));
 });
 exports.verifyOtpForReset = (0, asyncHandler_1.default)(async (req, res) => {
     const { email, otp } = req.body;
@@ -77,8 +79,13 @@ exports.register = (0, asyncHandler_1.default)(async (req, res) => {
         .json(new ApiResponse_1.default(201, result, "User registered successfully"));
 });
 exports.login = (0, asyncHandler_1.default)(async (req, res) => {
-    const { email, password } = req.body;
-    const result = await authService.login(email, password);
+    const { email, password, role } = req.body;
+    const result = await authService.login(email, password, role);
+    res.status(200).json(new ApiResponse_1.default(200, result, "OTP sent to your email"));
+});
+exports.verifyLoginOtp = (0, asyncHandler_1.default)(async (req, res) => {
+    const { email, otp, role } = req.body;
+    const result = await authService.verifyLoginOtp(email, otp, role);
     res.status(200).json(new ApiResponse_1.default(200, result, "Login successful"));
 });
 exports.resetPassword = (0, asyncHandler_1.default)(async (req, res) => {

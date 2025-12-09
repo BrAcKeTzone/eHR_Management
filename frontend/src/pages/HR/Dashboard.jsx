@@ -372,7 +372,6 @@ const HRDashboard = () => {
                     variant="outline"
                     size="sm"
                     className="ml-2 flex-shrink-0"
-                    disabled={!nextToSchedule}
                   >
                     Schedule
                   </Button>

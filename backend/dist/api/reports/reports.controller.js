@@ -34,13 +34,12 @@ exports.exportApplicationsCSV = (0, asyncHandler_1.default)(async (req, res) => 
     if (!["HR", "ADMIN"].includes(req.user.role)) {
         throw new ApiError_1.default(403, "Only HR and Admin can export reports");
     }
-    const { startDate, endDate, status, result, program } = req.query;
+    const { startDate, endDate, status, result } = req.query;
     const applications = await reports_service_1.default.getApplicationsData({
         startDate: startDate,
         endDate: endDate,
         status: status,
         result: result,
-        program: program,
     });
     const csv = reports_service_1.default.generateApplicationsCSV(applications);
     res.setHeader("Content-Type", "text/csv");
@@ -52,12 +51,11 @@ exports.exportScoringCSV = (0, asyncHandler_1.default)(async (req, res) => {
     if (!["HR", "ADMIN"].includes(req.user.role)) {
         throw new ApiError_1.default(403, "Only HR and Admin can export reports");
     }
-    const { startDate, endDate, result, program } = req.query;
+    const { startDate, endDate, result } = req.query;
     const applications = await reports_service_1.default.getScoringData({
         startDate: startDate,
         endDate: endDate,
         result: result,
-        program: program,
     });
     const csv = reports_service_1.default.generateScoringCSV(applications);
     res.setHeader("Content-Type", "text/csv");
@@ -84,13 +82,12 @@ exports.generateApplicationsPDF = (0, asyncHandler_1.default)(async (req, res) =
     if (!["HR", "ADMIN"].includes(req.user.role)) {
         throw new ApiError_1.default(403, "Only HR and Admin can generate reports");
     }
-    const { startDate, endDate, status, result, program } = req.query;
+    const { startDate, endDate, status, result } = req.query;
     const applications = await reports_service_1.default.getApplicationsData({
         startDate: startDate,
         endDate: endDate,
         status: status,
         result: result,
-        program: program,
     });
     const statistics = await reports_service_1.default.getReportStatistics({
         startDate: startDate,
@@ -104,10 +101,14 @@ exports.generateApplicationsPDF = (0, asyncHandler_1.default)(async (req, res) =
     // Pipe PDF to response
     doc.pipe(res);
     // Add content
-    doc.fontSize(20).text("BLANCIA COLLEGE FOUNDATION INC.", { align: "center" });
+    doc
+        .fontSize(20)
+        .text("BLANCIA COLLEGE FOUNDATION INC.", { align: "center" });
     doc.fontSize(16).text("APPLICATIONS REPORT", { align: "center" });
     doc.moveDown();
-    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, { align: "center" });
+    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, {
+        align: "center",
+    });
     doc.moveDown(2);
     // Summary Section
     doc.fontSize(14).text("SUMMARY", { underline: true });
@@ -126,24 +127,19 @@ exports.generateApplicationsPDF = (0, asyncHandler_1.default)(async (req, res) =
     doc.moveDown();
     applications.forEach((app, index) => {
         doc.fontSize(10);
-        doc.text(`${index + 1}. ${app.applicant.name} (Attempt #${app.attemptNumber})`);
-        doc.text(`   Program: ${app.program}`, { indent: 20 });
-        doc.text(`   Status: ${app.status} | Result: ${app.result || "N/A"}`, { indent: 20 });
+        doc.text(`${index + 1}. ${app.applicant.firstName} ${app.applicant.lastName} (Attempt #${app.attemptNumber})`);
+        doc.text(`   Status: ${app.status} | Result: ${app.result || "N/A"}`, {
+            indent: 20,
+        });
         if (app.totalScore) {
             doc.text(`   Score: ${app.totalScore}%`, { indent: 20 });
         }
-        doc.text(`   Date: ${new Date(app.createdAt).toLocaleDateString()}`, { indent: 20 });
+        doc.text(`   Date: ${new Date(app.createdAt).toLocaleDateString()}`, {
+            indent: 20,
+        });
         doc.moveDown(0.5);
     });
     doc.moveDown();
-    // Statistics Section
-    doc.fontSize(14).text("PROGRAM STATISTICS", { underline: true });
-    doc.moveDown();
-    doc.fontSize(10);
-    Object.entries(statistics.programBreakdown).forEach(([program, count]) => {
-        const percentage = ((count / statistics.totalApplications) * 100).toFixed(1);
-        doc.text(`${program}: ${count} (${percentage}%)`);
-    });
     // Finalize PDF
     doc.end();
 });
@@ -152,17 +148,17 @@ exports.generateScoringPDF = (0, asyncHandler_1.default)(async (req, res) => {
     if (!["HR", "ADMIN"].includes(req.user.role)) {
         throw new ApiError_1.default(403, "Only HR and Admin can generate reports");
     }
-    const { startDate, endDate, result, program } = req.query;
+    const { startDate, endDate, result } = req.query;
     const applications = await reports_service_1.default.getScoringData({
         startDate: startDate,
         endDate: endDate,
         result: result,
-        program: program,
     });
     // Calculate statistics
     const totalScored = applications.length;
     const avgScore = totalScored > 0
-        ? applications.reduce((sum, app) => sum + (app.totalScore || 0), 0) / totalScored
+        ? applications.reduce((sum, app) => sum + (app.totalScore || 0), 0) /
+            totalScored
         : 0;
     const passed = applications.filter((app) => app.result === "PASS").length;
     const passRate = totalScored > 0 ? (passed / totalScored) * 100 : 0;
@@ -174,10 +170,14 @@ exports.generateScoringPDF = (0, asyncHandler_1.default)(async (req, res) => {
     // Pipe PDF to response
     doc.pipe(res);
     // Add content
-    doc.fontSize(20).text("BLANCIA COLLEGE FOUNDATION INC.", { align: "center" });
+    doc
+        .fontSize(20)
+        .text("BLANCIA COLLEGE FOUNDATION INC.", { align: "center" });
     doc.fontSize(16).text("SCORING REPORT", { align: "center" });
     doc.moveDown();
-    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, { align: "center" });
+    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, {
+        align: "center",
+    });
     doc.moveDown(2);
     // Overall Statistics
     doc.fontSize(14).text("OVERALL STATISTICS", { underline: true });
@@ -193,8 +193,10 @@ exports.generateScoringPDF = (0, asyncHandler_1.default)(async (req, res) => {
     doc.moveDown();
     applications.forEach((app, index) => {
         doc.fontSize(10);
-        doc.text(`${index + 1}. ${app.applicant.name} - ${app.program}`);
-        doc.text(`   Total Score: ${app.totalScore}% - ${app.result}`, { indent: 20 });
+        doc.text(`${index + 1}. ${app.applicant.firstName} ${app.applicant.lastName}`);
+        doc.text(`   Total Score: ${app.totalScore}% - ${app.result}`, {
+            indent: 20,
+        });
         if (app.hrNotes) {
             doc.text(`   Notes: ${app.hrNotes}`, { indent: 20 });
         }
@@ -226,10 +228,14 @@ exports.generateApplicantsPDF = (0, asyncHandler_1.default)(async (req, res) => 
     // Pipe PDF to response
     doc.pipe(res);
     // Add content
-    doc.fontSize(20).text("BLANCIA COLLEGE FOUNDATION INC.", { align: "center" });
+    doc
+        .fontSize(20)
+        .text("BLANCIA COLLEGE FOUNDATION INC.", { align: "center" });
     doc.fontSize(16).text("APPLICANT REPORT", { align: "center" });
     doc.moveDown();
-    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, { align: "center" });
+    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, {
+        align: "center",
+    });
     doc.moveDown(2);
     // Applicant Summary
     doc.fontSize(14).text("APPLICANT SUMMARY", { underline: true });
@@ -244,11 +250,11 @@ exports.generateApplicantsPDF = (0, asyncHandler_1.default)(async (req, res) => 
     doc.moveDown();
     users.forEach((user, index) => {
         const latestApp = user.applications[0];
-        const programs = [...new Set(user.applications.map((app) => app.program))].join(", ");
         doc.fontSize(10);
-        doc.text(`${index + 1}. ${user.name} (${user.email})`);
-        doc.text(`   Total Applications: ${user.applications.length}`, { indent: 20 });
-        doc.text(`   Programs: ${programs}`, { indent: 20 });
+        doc.text(`${index + 1}. ${user.firstName} ${user.lastName} (${user.email})`);
+        doc.text(`   Total Applications: ${user.applications.length}`, {
+            indent: 20,
+        });
         if (latestApp) {
             doc.text(`   Latest Status: ${latestApp.status}`, { indent: 20 });
             if (latestApp.result) {

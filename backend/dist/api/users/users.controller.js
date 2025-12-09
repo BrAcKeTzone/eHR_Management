@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserStats = exports.deleteUser = exports.updateUserPassword = exports.updateUser = exports.updateCurrentUser = exports.createUser = exports.getUserById = exports.getCurrentUser = exports.getAllUsers = void 0;
+exports.deleteProfilePicture = exports.uploadProfilePicture = exports.getUserStats = exports.checkEmailExists = exports.verifyOtpAndDeleteHr = exports.sendOtpForHrDeletion = exports.deleteUser = exports.updateUserPassword = exports.updateUser = exports.updateCurrentUser = exports.createUser = exports.getUserById = exports.getCurrentUser = exports.getAllUsers = void 0;
 const usersService = __importStar(require("./users.service"));
 const asyncHandler_1 = __importDefault(require("../../utils/asyncHandler"));
 const ApiResponse_1 = __importDefault(require("../../utils/ApiResponse"));
@@ -108,11 +108,64 @@ exports.deleteUser = (0, asyncHandler_1.default)(async (req, res) => {
         .status(200)
         .json(new ApiResponse_1.default(200, result, "User deleted successfully"));
 });
+// Send OTP for deleting an HR user
+exports.sendOtpForHrDeletion = (0, asyncHandler_1.default)(async (req, res) => {
+    const requestingUser = req.user;
+    const result = await usersService.sendOtpForHrDeletion(requestingUser.email);
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, result, "OTP sent to your email for HR deletion confirmation"));
+});
+// Verify OTP and delete HR user
+exports.verifyOtpAndDeleteHr = (0, asyncHandler_1.default)(async (req, res) => {
+    const userToDeleteId = parseInt(req.params.id);
+    const requestingUser = req.user;
+    const { otp } = req.body;
+    const result = await usersService.verifyOtpAndDeleteHr(userToDeleteId, requestingUser.email, otp, requestingUser.id, requestingUser.role);
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, result, "HR user deleted successfully after OTP verification"));
+});
+// Check if email exists
+exports.checkEmailExists = (0, asyncHandler_1.default)(async (req, res) => {
+    const { email } = req.query;
+    if (!email) {
+        return res
+            .status(400)
+            .json(new ApiResponse_1.default(400, null, "Email is required"));
+    }
+    const exists = await usersService.checkEmailExists(email);
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, { exists }, exists ? "Email already exists" : "Email is available"));
+});
 // Get user statistics
 exports.getUserStats = (0, asyncHandler_1.default)(async (req, res) => {
     const stats = await usersService.getUserStats();
     res
         .status(200)
         .json(new ApiResponse_1.default(200, stats, "User statistics retrieved successfully"));
+});
+// Upload profile picture
+exports.uploadProfilePicture = (0, asyncHandler_1.default)(async (req, res) => {
+    const requestingUser = req.user;
+    const file = req.file;
+    if (!file) {
+        return res
+            .status(400)
+            .json(new ApiResponse_1.default(400, null, "No file uploaded"));
+    }
+    const result = await usersService.updateProfilePicture(requestingUser.id, file);
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, result, "Profile picture updated successfully"));
+});
+// Delete profile picture
+exports.deleteProfilePicture = (0, asyncHandler_1.default)(async (req, res) => {
+    const requestingUser = req.user;
+    const result = await usersService.deleteProfilePicture(requestingUser.id);
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, result, "Profile picture deleted successfully"));
 });
 //# sourceMappingURL=users.controller.js.map
