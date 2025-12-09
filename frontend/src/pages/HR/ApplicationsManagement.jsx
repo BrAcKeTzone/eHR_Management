@@ -5,6 +5,7 @@ import Button from "../../components/Button";
 import Table from "../../components/Table";
 import Modal from "../../components/Modal";
 import Input from "../../components/Input";
+import ApplicationDetailsModal from "../../components/ApplicationDetailsModal";
 import { formatDate } from "../../utils/formatDate";
 import { APPLICATION_STATUS, APPLICATION_RESULT } from "../../utils/constants";
 
@@ -13,7 +14,6 @@ const ApplicationsManagement = () => {
     applications,
     getAllApplications,
     getApplicationHistory,
-    getApplicationById,
     updateApplicationStatus,
     loading,
     error,
@@ -34,6 +34,7 @@ const ApplicationsManagement = () => {
   useEffect(() => {
     getAllApplications(filters);
   }, [getAllApplications, filters]);
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "pending":
@@ -100,45 +101,20 @@ const ApplicationsManagement = () => {
 
   const handleViewHistory = async (application) => {
     try {
-      // Try getting the applicant email from the passed application if present
-      let applicantEmail = application?.applicant?.email;
-
-      // If email is missing, fetch the full application by ID to get applicant details
-      if (!applicantEmail) {
-        try {
-          const full = await getApplicationById(application.id);
-          applicantEmail = full?.application?.applicant?.email;
-        } catch (err) {
-          console.warn(
-            "Could not fetch full application to get applicant email:",
-            err
-          );
-        }
-      }
-
-      if (!applicantEmail) {
-        // If still no email, display an empty history and open the modal with no data
-        console.warn("Applicant email not available for this application");
-        setApplicationHistory([]);
-        setSelectedApplication(application);
-        setShowHistoryModal(true);
-        return;
-      }
-
-      const result = await getApplicationHistory(applicantEmail);
+      const result = await getApplicationHistory(application.applicant?.email);
       setApplicationHistory(result?.applications || []);
       setSelectedApplication(application);
       setShowHistoryModal(true);
     } catch (error) {
       console.error("Failed to fetch application history:", error);
-      setApplicationHistory([]); // Set empty array on error
+      setApplicationHistory([]);
     }
   };
 
   const handleStatusUpdate = async (applicationId, newStatus, reason = "") => {
     try {
       await updateApplicationStatus(applicationId, newStatus, reason);
-      getAllApplications(filters); // Refresh the list with current filters
+      getAllApplications(filters);
     } catch (error) {
       console.error("Failed to update application status:", error);
     }
@@ -175,7 +151,6 @@ const ApplicationsManagement = () => {
           </div>
           {row.result && (
             <div>
-              <span className="text-xs text-gray-500 mr-2">Demo Result:</span>
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
                   row.result
@@ -185,23 +160,19 @@ const ApplicationsManagement = () => {
               </span>
             </div>
           )}
-          {/* Show interview result only when demo was PASS */}
-          {row.result?.toLowerCase() ===
-            APPLICATION_RESULT.PASS.toLowerCase() &&
-            row.interviewResult && (
-              <div>
-                <span className="text-xs text-gray-500 mr-2">
-                  Interview Result:
-                </span>
-                <span
-                  className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                    row.interviewResult
-                  )}`}
-                >
-                  {row.interviewResult?.toUpperCase()}
-                </span>
-              </div>
-            )}
+        </div>
+      ),
+    },
+    {
+      header: "Score",
+      accessor: "totalScore",
+      cell: (row) => (
+        <div className="text-sm">
+          {row.totalScore !== null && row.totalScore !== undefined ? (
+            <span className="font-medium">{row.totalScore}</span>
+          ) : (
+            <span className="text-gray-400">-</span>
+          )}
         </div>
       ),
     },
@@ -439,21 +410,18 @@ const ApplicationsManagement = () => {
                           {app.result?.toUpperCase()}
                         </span>
                       )}
-                      {app.result?.toLowerCase() ===
-                        APPLICATION_RESULT.PASS.toLowerCase() &&
-                        app.interviewResult && (
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                              app.interviewResult
-                            )}`}
-                          >
-                            {app.interviewResult?.toUpperCase()}
-                          </span>
-                        )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Score:</span>
+                      <p className="font-medium">
+                        {app.totalScore !== null && app.totalScore !== undefined
+                          ? app.totalScore
+                          : "-"}
+                      </p>
+                    </div>
                     <div>
                       <span className="text-gray-500">Submitted:</span>
                       <p>{formatDate(app.createdAt)}</p>
@@ -466,26 +434,6 @@ const ApplicationsManagement = () => {
                           : "Not scheduled"}
                       </p>
                     </div>
-                    {app.result && (
-                      <div>
-                        <span className="text-gray-500">Demo Result:</span>
-                        <p className="font-medium">
-                          {app.result?.toUpperCase()}
-                        </p>
-                      </div>
-                    )}
-                    {app.result?.toLowerCase() ===
-                      APPLICATION_RESULT.PASS.toLowerCase() &&
-                      app.interviewResult && (
-                        <div>
-                          <span className="text-gray-500">
-                            Interview Result:
-                          </span>
-                          <p className="font-medium">
-                            {app.interviewResult?.toUpperCase()}
-                          </p>
-                        </div>
-                      )}
                   </div>
 
                   <div className="flex space-x-2">
@@ -521,225 +469,14 @@ const ApplicationsManagement = () => {
 
       {/* Application Details Modal */}
       {showDetailsModal && selectedApplication && (
-        <Modal
-          isOpen={true}
+        <ApplicationDetailsModal
+          isOpen={showDetailsModal}
+          application={selectedApplication}
           onClose={() => setShowDetailsModal(false)}
-          title={`Application Details - ${selectedApplication.applicant?.firstName} ${selectedApplication.applicant?.lastName}`}
-          size="large"
-        >
-          <div className="space-y-4 sm:space-y-6">
-            {/* Status Section */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                Application Status
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Status</p>
-                  <span
-                    className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                      selectedApplication.status
-                    )}`}
-                  >
-                    {selectedApplication.status?.toUpperCase()}
-                  </span>
-                </div>
-                {selectedApplication.result && (
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Demo Result</p>
-                    <span
-                      className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
-                        selectedApplication.result
-                      )}`}
-                    >
-                      {selectedApplication.result?.toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                {/* Show interview result only if demo PASS */}
-                {selectedApplication.result?.toLowerCase() ===
-                  APPLICATION_RESULT.PASS.toLowerCase() &&
-                  selectedApplication.interviewResult && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">
-                        Interview Result
-                      </p>
-                      <span
-                        className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
-                          selectedApplication.interviewResult
-                        )}`}
-                      >
-                        {selectedApplication.interviewResult?.toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-              </div>
-            </div>
-
-            {/* Applicant Information */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                Applicant Information
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Application ID</p>
-                  <p className="mt-1 font-medium">#{selectedApplication.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Attempt Number</p>
-                  <p className="mt-1 font-medium">
-                    #{selectedApplication.attemptNumber}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Name</p>
-                  <p className="mt-1 font-medium">
-                    {selectedApplication.applicant?.firstName}{" "}
-                    {selectedApplication.applicant?.lastName}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="mt-1 font-medium break-all">
-                    {selectedApplication.applicant?.email}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Phone</p>
-                  <p className="mt-1 font-medium">
-                    {selectedApplication.applicant?.phone || "Not provided"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Timeline */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                Timeline
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Submitted Date</p>
-                  <p className="mt-1 font-medium">
-                    {formatDate(selectedApplication.createdAt)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Last Updated</p>
-                  <p className="mt-1 font-medium">
-                    {formatDate(selectedApplication.updatedAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Demo Schedule */}
-            {selectedApplication.demoSchedule && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  Demo Schedule
-                </h3>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-blue-700">Date & Time</p>
-                      <p className="mt-1 font-medium text-blue-900">
-                        {formatDate(selectedApplication.demoSchedule)}
-                      </p>
-                      <p className="text-sm text-blue-800">
-                        {selectedApplication.demoTime || "Time not set"}
-                      </p>
-                    </div>
-                    {selectedApplication.demoDuration && (
-                      <div>
-                        <p className="text-sm text-blue-700">Duration</p>
-                        <p className="mt-1 font-medium text-blue-900">
-                          {selectedApplication.demoDuration} minutes
-                        </p>
-                      </div>
-                    )}
-                    {selectedApplication.demoLocation && (
-                      <div className="col-span-1 sm:col-span-2">
-                        <p className="text-sm text-blue-700">Location</p>
-                        <p className="mt-1 font-medium text-blue-900 break-words">
-                          {selectedApplication.demoLocation}
-                        </p>
-                      </div>
-                    )}
-                    {selectedApplication.demoNotes && (
-                      <div className="col-span-1 sm:col-span-2">
-                        <p className="text-sm text-blue-700 mb-1">
-                          Instructions
-                        </p>
-                        <p className="text-sm text-blue-800 bg-white rounded p-2 break-words">
-                          {selectedApplication.demoNotes}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Assessment Score */}
-            {selectedApplication.totalScore !== null &&
-              selectedApplication.totalScore !== undefined && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                    Assessment Score
-                  </h3>
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4">
-                    <div className="text-center">
-                      <p className="text-4xl font-bold text-blue-600">
-                        {selectedApplication.totalScore}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">Total Score</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            {/* HR Notes / Rejection Reason */}
-            {selectedApplication.hrNotes && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  {selectedApplication.status === "REJECTED"
-                    ? "Rejection Reason"
-                    : "HR Notes"}
-                </h3>
-                <div
-                  className={`p-4 rounded-lg ${
-                    selectedApplication.status === "REJECTED"
-                      ? "bg-red-50 border border-red-200"
-                      : "bg-yellow-50 border border-yellow-200"
-                  }`}
-                >
-                  <p
-                    className={`text-sm break-words ${
-                      selectedApplication.status === "REJECTED"
-                        ? "text-red-800"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    {selectedApplication.hrNotes}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end pt-4 border-t">
-              <Button
-                onClick={() => setShowDetailsModal(false)}
-                variant="outline"
-                className="w-full sm:w-auto"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </Modal>
+          onGoToReview={() => {
+            setShowDetailsModal(false);
+          }}
+        />
       )}
 
       {/* Application History Modal */}
@@ -777,36 +514,14 @@ const ApplicationsManagement = () => {
                           {app.status?.toUpperCase()}
                         </span>
                         {app.result && (
-                          <>
-                            <span className="text-xs text-gray-500 mr-2">
-                              Demo:
-                            </span>
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                                app.result
-                              )}`}
-                            >
-                              {app.result?.toUpperCase()}
-                            </span>
-                          </>
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                              app.result
+                            )}`}
+                          >
+                            {app.result?.toUpperCase()}
+                          </span>
                         )}
-                        {/* Show interview result only if demo PASS */}
-                        {app.result?.toLowerCase() ===
-                          APPLICATION_RESULT.PASS.toLowerCase() &&
-                          app.interviewResult && (
-                            <>
-                              <span className="text-xs text-gray-500 mr-2">
-                                Interview Result:
-                              </span>
-                              <span
-                                className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                                  app.interviewResult
-                                )}`}
-                              >
-                                {app.interviewResult?.toUpperCase()}
-                              </span>
-                            </>
-                          )}
                       </div>
                     </div>
 

@@ -6,6 +6,7 @@ import DashboardCard from "../../components/DashboardCard";
 import Button from "../../components/Button";
 import Table from "../../components/Table";
 import Modal from "../../components/Modal";
+import ApplicationDetailsModal from "../../components/ApplicationDetailsModal";
 import Input from "../../components/Input";
 import { formatDate } from "../../utils/formatDate";
 
@@ -71,6 +72,13 @@ const Scoring = () => {
       setFeedback("");
     }
     setError(null);
+  };
+
+  // Optional: show application details in a modal (reuse the details modal)
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const handleViewDetails = (app) => {
+    setSelectedApplication(app);
+    setShowDetailsModal(true);
   };
 
   const handleSubmitScores = async () => {
@@ -320,6 +328,14 @@ const Scoring = () => {
                         ? "Edit Scores"
                         : "Score Demo"}
                     </Button>
+                    <Button
+                      onClick={() => handleViewDetails(app)}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      View
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -496,6 +512,15 @@ const Scoring = () => {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Application Details Modal (reusable) */}
+      {showDetailsModal && selectedApplication && (
+        <ApplicationDetailsModal
+          isOpen={showDetailsModal}
+          application={selectedApplication}
+          onClose={() => setShowDetailsModal(false)}
+        />
       )}
     </div>
   );
