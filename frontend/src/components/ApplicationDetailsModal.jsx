@@ -104,15 +104,16 @@ const ApplicationDetailsModal = ({
               <p className="mt-1 font-medium">#{application.attemptNumber}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Program & Specialization</p>
+              <p className="text-sm text-gray-500">Program</p>
+              <p className="mt-1 font-medium">{application.program || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Specialization</p>
               <p className="mt-1 font-medium">
-                {application.program || "N/A"}
-                {application.specialization?.name
-                  ? ` - ${application.specialization.name}`
-                  : application.subjectSpecialization ||
-                      application.subject_specialization
-                    ? ` - ${application.subjectSpecialization || application.subject_specialization}`
-                    : ""}
+                {application.specialization?.name ||
+                  application.subjectSpecialization ||
+                  application.subject_specialization ||
+                  "N/A"}
               </p>
             </div>
             <div>
