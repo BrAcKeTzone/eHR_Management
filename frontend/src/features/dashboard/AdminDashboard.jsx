@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import UserManagement from "./UserManagement";
 import PostList from "../posts/PostList";
+import Button from "../../components/Button";
 
 const AdminDashboard = () => {
   const { user } = useAuthStore();
@@ -13,6 +14,7 @@ const AdminDashboard = () => {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold">HR Dashboard</h2>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div className="border p-4 rounded shadow">
           <h3 className="text-xl font-semibold">User Management</h3>

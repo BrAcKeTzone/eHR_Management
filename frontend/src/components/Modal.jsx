@@ -30,11 +30,11 @@ const Modal = ({
   if (!isOpen) return null;
 
   const sizeClasses = {
-    sm: "w-96",
-    md: "w-1/2 max-w-2xl",
-    lg: "w-2/3 max-w-4xl",
-    xl: "w-3/4 max-w-6xl",
-    full: "w-11/12 max-w-7xl",
+    sm: "sm:w-96",
+    md: "sm:w-1/2 sm:max-w-2xl",
+    lg: "sm:w-2/3 sm:max-w-4xl",
+    xl: "sm:w-3/4 sm:max-w-6xl",
+    full: "sm:w-11/12 sm:max-w-7xl",
   };
 
   const handleOverlayClick = (e) => {
@@ -45,14 +45,14 @@ const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 sm:p-4"
       onClick={handleOverlayClick}
     >
       <div
-        className={`bg-white rounded-lg shadow-xl ${sizeClasses[size]} max-h-[90vh] overflow-hidden`}
+        className={`bg-white sm:rounded-lg shadow-xl w-full ${sizeClasses[size]} h-full sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col`}
       >
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-none">
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             {showCloseButton && (
               <button
@@ -76,14 +76,12 @@ const Modal = ({
             )}
           </div>
         )}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-8rem)]">
-          {children}
-        </div>
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">{children}</div>
         {!title && showCloseButton && (
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 flex-none">
             <button
               onClick={onClose}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
             >
               Close
             </button>

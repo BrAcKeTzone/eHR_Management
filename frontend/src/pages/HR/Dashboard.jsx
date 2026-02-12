@@ -7,6 +7,7 @@ import Table from "../../components/Table";
 import { formatDate } from "../../utils/formatDate";
 import { useNavigate } from "react-router-dom";
 import ApplicationDetailsModal from "../../components/ApplicationDetailsModal";
+import SpecializationModal from "../../features/dashboard/SpecializationModal";
 
 const HRDashboard = () => {
   const navigate = useNavigate();
@@ -25,14 +26,15 @@ const HRDashboard = () => {
   const [recentApplications, setRecentApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [isSpecModalOpen, setIsSpecModalOpen] = useState(false);
 
   // Quick picks used by the buttons in Quick Actions
   const nextToSchedule = applications?.find(
-    (a) => !a.demoSchedule && a.status?.toLowerCase() === "approved"
+    (a) => !a.demoSchedule && a.status?.toLowerCase() === "approved",
   );
   const nextToScore = applications?.find(
     (a) =>
-      a.demoSchedule && (a.totalScore === undefined || a.totalScore === null)
+      a.demoSchedule && (a.totalScore === undefined || a.totalScore === null),
   );
 
   useEffect(() => {
@@ -48,7 +50,7 @@ const HRDashboard = () => {
           acc.total += 1;
           return acc;
         },
-        { pending: 0, approved: 0, rejected: 0, completed: 0, total: 0 }
+        { pending: 0, approved: 0, rejected: 0, completed: 0, total: 0 },
       );
 
       setStats(newStats);
@@ -95,14 +97,14 @@ const HRDashboard = () => {
         navigate(
           applicationId
             ? `/hr/scheduling?applicationId=${applicationId}`
-            : "/hr/scheduling"
+            : "/hr/scheduling",
         );
         break;
       case "scoring":
         navigate(
           applicationId
             ? `/hr/scoring?applicationId=${applicationId}`
-            : "/hr/scoring"
+            : "/hr/scoring",
         );
         break;
       case "reports":
@@ -144,7 +146,7 @@ const HRDashboard = () => {
           <div>
             <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                row.status
+                row.status,
               )}`}
             >
               {row.status?.toUpperCase()}
@@ -155,7 +157,7 @@ const HRDashboard = () => {
               <span className="text-xs text-gray-500 mr-2">Demo Result:</span>
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                  row.result
+                  row.result,
                 )}`}
               >
                 {row.result?.toUpperCase()}
@@ -169,7 +171,7 @@ const HRDashboard = () => {
               </span>
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                  row.interviewResult
+                  row.interviewResult,
                 )}`}
               >
                 {row.interviewResult?.toUpperCase()}
@@ -212,15 +214,25 @@ const HRDashboard = () => {
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Welcome Header */}
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-          HR Dashboard
-        </h1>
-        <p className="text-gray-600">
-          Welcome back, {user?.firstName} {user?.lastName}! Here's an overview
-          of application activities.
-        </p>
+      <div className="mb-6 sm:mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            HR Dashboard
+          </h1>
+          <p className="text-gray-600">
+            Welcome back, {user?.firstName} {user?.lastName}! Here's an overview
+            of application activities.
+          </p>
+        </div>
+        <Button onClick={() => setIsSpecModalOpen(true)}>
+          Manage Specializations
+        </Button>
       </div>
+
+      <SpecializationModal
+        isOpen={isSpecModalOpen}
+        onClose={() => setIsSpecModalOpen(false)}
+      />
 
       {/* Error Display */}
       {error && (
@@ -276,7 +288,7 @@ const HRDashboard = () => {
               onClick={() =>
                 handleQuickAction(
                   "schedule",
-                  nextToSchedule ? nextToSchedule.id : null
+                  nextToSchedule ? nextToSchedule.id : null,
                 )
               }
               variant="outline"
@@ -289,7 +301,7 @@ const HRDashboard = () => {
               onClick={() =>
                 handleQuickAction(
                   "scoring",
-                  nextToScore ? nextToScore.id : null
+                  nextToScore ? nextToScore.id : null,
                 )
               }
               variant="outline"
@@ -353,7 +365,7 @@ const HRDashboard = () => {
                           <p className="text-xs text-gray-500 mb-1">Status:</p>
                           <span
                             className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                              app.status
+                              app.status,
                             )}`}
                           >
                             {app.status?.toUpperCase()}
@@ -367,7 +379,7 @@ const HRDashboard = () => {
                           </p>
                           <span
                             className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                              app.result
+                              app.result,
                             )}`}
                           >
                             {app.result?.toUpperCase()}
@@ -382,7 +394,7 @@ const HRDashboard = () => {
                             </p>
                             <span
                               className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                                app.interviewResult
+                                app.interviewResult,
                               )}`}
                             >
                               {app.interviewResult?.toUpperCase()}
