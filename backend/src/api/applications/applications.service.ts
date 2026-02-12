@@ -13,6 +13,7 @@ export interface CreateApplicationData {
   program: string;
   documents?: string;
   applicantId: number;
+  specializationId?: number;
   // Additional application fields from frontend
   firstName?: string;
   lastName?: string;
@@ -118,7 +119,7 @@ class ApplicationService {
     if (existingApplication) {
       throw new ApiError(
         400,
-        "You already have an active application. Please wait for the current application to be completed."
+        "You already have an active application. Please wait for the current application to be completed.",
       );
     }
 
@@ -134,10 +135,23 @@ class ApplicationService {
 
     const application = await prisma.application.create({
       data: {
-        ...data,
+        documents: data.documents,
         applicantId: applicantId,
+        specializationId: data.specializationId
+          ? Number(data.specializationId)
+          : undefined,
         attemptNumber,
         status: ApplicationStatus.PENDING,
+
+        // Save additional fields
+        program: data.program,
+        subjectSpecialization: data.subjectSpecialization,
+        educationalBackground: data.educationalBackground,
+        teachingExperience: data.teachingExperience,
+        motivation: data.motivation,
+      },
+      include: {
+        specialization: true,
       },
     });
 
@@ -151,7 +165,7 @@ class ApplicationService {
       notificationService
         .sendApplicationSubmissionNotification(application, applicant)
         .catch((error) =>
-          console.error("Failed to send submission notification:", error)
+          console.error("Failed to send submission notification:", error),
         );
 
       notificationService
@@ -163,7 +177,7 @@ class ApplicationService {
   }
 
   async getApplicationById(
-    id: number
+    id: number,
   ): Promise<ApplicationWithApplicant | null> {
     const application = await prisma.application.findUnique({
       where: { id },
@@ -184,7 +198,7 @@ class ApplicationService {
   }
 
   async getApplicationsByApplicant(
-    applicantId: number
+    applicantId: number,
   ): Promise<Application[]> {
     // Ensure applicantId is a number
     const id =
@@ -193,13 +207,26 @@ class ApplicationService {
     const applications = await prisma.application.findMany({
       where: { applicantId: id },
       orderBy: { attemptNumber: "desc" },
+      include: {
+        specialization: true,
+        applicant: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            profilePicture: true,
+          },
+        },
+      },
     });
 
     return applications.map((app: any) => formatApplicationForFrontend(app));
   }
 
   async getActiveApplicationByApplicant(
-    applicantId: number
+    applicantId: number,
   ): Promise<Application | null> {
     // Ensure applicantId is a number
     const id =
@@ -262,6 +289,7 @@ class ApplicationService {
               phone: true,
             },
           },
+          specialization: true,
         },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
@@ -272,7 +300,7 @@ class ApplicationService {
 
     // Format applications for frontend
     const formattedApplications = applications.map(
-      formatApplicationForFrontend
+      formatApplicationForFrontend,
     );
 
     return { applications: formattedApplications, total };
@@ -280,7 +308,7 @@ class ApplicationService {
 
   async updateApplication(
     id: number,
-    data: UpdateApplicationData
+    data: UpdateApplicationData,
   ): Promise<Application> {
     const application = await prisma.application.findUnique({ where: { id } });
 
@@ -313,7 +341,7 @@ class ApplicationService {
       notificationService
         .sendApplicationApprovalNotification(application, applicant)
         .catch((error) =>
-          console.error("Failed to send approval notification:", error)
+          console.error("Failed to send approval notification:", error),
         );
     }
 
@@ -336,7 +364,7 @@ class ApplicationService {
       notificationService
         .sendApplicationRejectionNotification(application, applicant)
         .catch((error) =>
-          console.error("Failed to send rejection notification:", error)
+          console.error("Failed to send rejection notification:", error),
         );
     }
 
@@ -349,7 +377,7 @@ class ApplicationService {
     demoLocation?: string,
     demoDuration?: number,
     demoNotes?: string,
-    rescheduleReason?: string
+    rescheduleReason?: string,
   ): Promise<Application> {
     const application = await prisma.application.findUnique({ where: { id } });
 
@@ -360,7 +388,7 @@ class ApplicationService {
     if (application.status !== ApplicationStatus.APPROVED) {
       throw new ApiError(
         400,
-        "Application must be approved before scheduling demo"
+        "Application must be approved before scheduling demo",
       );
     }
 
@@ -382,7 +410,7 @@ class ApplicationService {
           new Date(today.getTime() + 24 * 60 * 60 * 1000)
             .toISOString()
             .split("T")[0]
-        }`
+        }`,
       );
     }
 
@@ -397,7 +425,7 @@ class ApplicationService {
     if ((application as any).result) {
       throw new ApiError(
         400,
-        "Cannot schedule or reschedule demo for an application that already has a demo result"
+        "Cannot schedule or reschedule demo for an application that already has a demo result",
       );
     }
     const currentRescheduleCount = application.demoRescheduleCount || 0;
@@ -406,7 +434,7 @@ class ApplicationService {
     if (isReschedule && currentRescheduleCount >= 1) {
       throw new ApiError(
         400,
-        "This application has already been rescheduled once and cannot be rescheduled again."
+        "This application has already been rescheduled once and cannot be rescheduled again.",
       );
     }
 
@@ -439,17 +467,20 @@ class ApplicationService {
           .sendDemoRescheduleNotification(
             updatedApplication,
             applicant,
-            rescheduleReason
+            rescheduleReason,
           )
           .catch((error) =>
-            console.error("Failed to send demo reschedule notification:", error)
+            console.error(
+              "Failed to send demo reschedule notification:",
+              error,
+            ),
           );
       } else {
         // Send initial demo schedule notification asynchronously
         notificationService
           .sendDemoScheduleNotification(updatedApplication, applicant)
           .catch((error) =>
-            console.error("Failed to send demo schedule notification:", error)
+            console.error("Failed to send demo schedule notification:", error),
           );
       }
     }
@@ -460,7 +491,7 @@ class ApplicationService {
   async scheduleInterview(
     id: number,
     interviewSchedule: Date,
-    rescheduleReason?: string
+    rescheduleReason?: string,
   ): Promise<Application> {
     const application = await prisma.application.findUnique({ where: { id } });
 
@@ -472,7 +503,7 @@ class ApplicationService {
     if ((application as any).interviewResult) {
       throw new ApiError(
         400,
-        "Cannot schedule or reschedule interview for an application that already has an interview result"
+        "Cannot schedule or reschedule interview for an application that already has an interview result",
       );
     }
 
@@ -485,7 +516,7 @@ class ApplicationService {
     if (!eligible) {
       throw new ApiError(
         400,
-        "Application is not eligible for interview scheduling"
+        "Application is not eligible for interview scheduling",
       );
     }
 
@@ -499,7 +530,7 @@ class ApplicationService {
     if (daysDifference < 1) {
       throw new ApiError(
         400,
-        "Interview date must be at least 1 day in the future"
+        "Interview date must be at least 1 day in the future",
       );
     }
 
@@ -510,7 +541,7 @@ class ApplicationService {
       if (interviewDate.getTime() < demoDate.getTime()) {
         throw new ApiError(
           400,
-          "Interview date must be on or after the demo schedule date"
+          "Interview date must be on or after the demo schedule date",
         );
       }
     }
@@ -522,14 +553,14 @@ class ApplicationService {
       if (!rescheduleReason) {
         throw new ApiError(
           400,
-          "Reschedule reason is required when updating an existing interview schedule"
+          "Reschedule reason is required when updating an existing interview schedule",
         );
       }
       const allowedReasons = ["APPLICANT_NO_SHOW", "SCHOOL"];
       if (!allowedReasons.includes(rescheduleReason)) {
         throw new ApiError(
           400,
-          `Invalid reschedule reason. Allowed: ${allowedReasons.join(", ")}`
+          `Invalid reschedule reason. Allowed: ${allowedReasons.join(", ")}`,
         );
       }
     }
@@ -538,7 +569,7 @@ class ApplicationService {
     if (isReschedule && currentRescheduleCount >= 1) {
       throw new ApiError(
         400,
-        "This application has already been rescheduled once and cannot be rescheduled again."
+        "This application has already been rescheduled once and cannot be rescheduled again.",
       );
     }
 
@@ -558,7 +589,7 @@ class ApplicationService {
       notificationService
         .sendInterviewScheduleNotification(updatedApplication, applicant)
         .catch((err: any) =>
-          console.error("Failed to send interview schedule notification:", err)
+          console.error("Failed to send interview schedule notification:", err),
         );
     }
 
@@ -568,7 +599,7 @@ class ApplicationService {
   async completeApplication(
     id: number,
     totalScore: number,
-    result: "PASS" | "FAIL"
+    result: "PASS" | "FAIL",
   ): Promise<Application> {
     // When a score is submitted and result is PASS with a score >= 75,
     // mark the application as interviewEligible so it can appear in the Interview Scheduling queue.
@@ -591,7 +622,7 @@ class ApplicationService {
     id: number,
     interviewScore: number | null,
     interviewResult: "PASS" | "FAIL",
-    interviewNotes?: string
+    interviewNotes?: string,
   ): Promise<Application> {
     const application = await prisma.application.findUnique({ where: { id } });
 
@@ -602,7 +633,7 @@ class ApplicationService {
     if (!application.interviewSchedule) {
       throw new ApiError(
         400,
-        "Application must have a scheduled interview before rating"
+        "Application must have a scheduled interview before rating",
       );
     }
 

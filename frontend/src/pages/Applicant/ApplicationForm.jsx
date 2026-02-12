@@ -5,6 +5,7 @@ import { useAuthStore } from "../../store/authStore";
 import Button from "../../components/Button";
 import Modal from "../../components/Modal";
 import UploadBox from "../../components/UploadBox";
+import { specializationApi } from "../../api/specializationApi";
 
 const ApplicationForm = () => {
   const navigate = useNavigate();
@@ -18,12 +19,35 @@ const ApplicationForm = () => {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // Specialization state
+  const [specializations, setSpecializations] = useState([]);
+  const [selectedSpecialization, setSelectedSpecialization] = useState("");
+  const [isSpecializationLoading, setIsSpecializationLoading] = useState(false);
+
   // File upload states
   const [resumeFile, setResumeFile] = useState(null);
   const [applicationLetterFile, setApplicationLetterFile] = useState(null);
   const [documentFiles, setDocumentFiles] = useState([]);
 
   const [formErrors, setFormErrors] = useState({});
+
+  useEffect(() => {
+    loadSpecializations();
+  }, []);
+
+  const loadSpecializations = async () => {
+    setIsSpecializationLoading(true);
+    try {
+      const response = await specializationApi.getSpecializations();
+      if (response && response.data) {
+        setSpecializations(response.data);
+      }
+    } catch (err) {
+      console.error("Failed to load specializations", err);
+    } finally {
+      setIsSpecializationLoading(false);
+    }
+  };
 
   // Check for pending application on component mount
   useEffect(() => {
@@ -68,6 +92,10 @@ const ApplicationForm = () => {
   const validateAll = () => {
     const errors = {};
 
+    if (!selectedSpecialization) {
+      errors.specialization = "Please select a specialization";
+    }
+
     if (!resumeFile) {
       errors.resume = "Please upload your resume";
     }
@@ -79,7 +107,7 @@ const ApplicationForm = () => {
     const requiredDocs = requiredDocuments.filter((doc) => doc.required);
     const uploadedTypes = documentFiles.map((doc) => doc.type);
     const missingRequired = requiredDocs.filter(
-      (doc) => !uploadedTypes.includes(doc.type)
+      (doc) => !uploadedTypes.includes(doc.type),
     );
 
     if (missingRequired.length > 0) {
@@ -230,6 +258,8 @@ const ApplicationForm = () => {
       const applicationData = {
         documents: allDocuments,
         applicantId: user?.id,
+        specializationId: selectedSpecialization,
+        program: "Basic Education", // Adding default program
       };
 
       await createApplication(applicationData);
@@ -307,8 +337,8 @@ const ApplicationForm = () => {
           formErrors.applicationLetter
             ? "Error"
             : applicationLetterFile
-            ? "Uploaded"
-            : ""
+              ? "Uploaded"
+              : ""
         }
         variant={formErrors.applicationLetter ? "error" : "neutral"}
       />
@@ -336,7 +366,7 @@ const ApplicationForm = () => {
       <div className="space-y-4">
         {requiredDocuments.map((docType) => {
           const uploadedCount = documentFiles.filter(
-            (doc) => doc.type === docType.type
+            (doc) => doc.type === docType.type,
           ).length;
 
           return (
@@ -355,15 +385,15 @@ const ApplicationForm = () => {
                     uploadedCount > 0
                       ? "bg-green-100 text-green-800"
                       : docType.required
-                      ? "bg-red-100 text-red-800"
-                      : "bg-gray-100 text-gray-600"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-gray-100 text-gray-600"
                   }`}
                 >
                   {uploadedCount > 0
                     ? `Uploaded (${uploadedCount})`
                     : docType.required
-                    ? "Required"
-                    : "Optional"}
+                      ? "Required"
+                      : "Optional"}
                 </span>
               </div>
 
@@ -386,8 +416,8 @@ const ApplicationForm = () => {
                   uploadedCount > 0
                     ? "Uploaded"
                     : docType.required
-                    ? "Required"
-                    : "Optional"
+                      ? "Required"
+                      : "Optional"
                 }
                 variant="neutral"
               />
@@ -454,7 +484,7 @@ const ApplicationForm = () => {
                   <li>
                     <strong>Submitted:</strong>{" "}
                     {new Date(
-                      pendingApplicationData.createdAt
+                      pendingApplicationData.createdAt,
                     ).toLocaleDateString()}
                   </li>
                   <li>
@@ -511,6 +541,56 @@ const ApplicationForm = () => {
 
           <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Specialization Selection */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Select Specialization
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Please choose your area of specialization
+                  </p>
+                </div>
+
+                {formErrors.specialization && (
+                  <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                    <span className="text-sm">{formErrors.specialization}</span>
+                  </div>
+                )}
+
+                <div className="w-full">
+                  <select
+                    className={`w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      formErrors.specialization
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
+                    value={selectedSpecialization}
+                    onChange={(e) => {
+                      setSelectedSpecialization(e.target.value);
+                      if (formErrors.specialization) {
+                        setFormErrors((prev) => ({
+                          ...prev,
+                          specialization: null,
+                        }));
+                      }
+                    }}
+                    disabled={isSpecializationLoading}
+                  >
+                    <option value="" disabled>
+                      {isSpecializationLoading
+                        ? "Loading..."
+                        : "Select a specialization"}
+                    </option>
+                    {specializations.map((spec) => (
+                      <option key={spec.id} value={spec.id}>
+                        {spec.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               {renderResumeUpload()}
               {renderApplicationLetter()}
               {renderDocuments()}

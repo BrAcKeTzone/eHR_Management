@@ -73,11 +73,22 @@ model Application {
 
   applicant   User @relation(fields: [applicantId], references: [id], onDelete: Cascade)
   applicantId Int
+  
+  specialization Specialization? @relation(fields: [specializationId], references: [id])
+  specializationId Int?
+
+  // Additional application fields
+  program               String?
+  subjectSpecialization String?
+  educationalBackground String?           @db.Text
+  teachingExperience    String?           @db.Text
+  motivation            String?           @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([applicantId, attemptNumber])
+  @@index([specializationId])
 }
 
 // EMAIL NOTIFICATIONS LOG
@@ -109,6 +120,8 @@ model Otp {
 
 // CONFIGURATIONS
 model Specialization {
+  
+  applications Application[]
   id        Int      @id @default(autoincrement())
   name      String   @unique
   createdAt DateTime @default(now())

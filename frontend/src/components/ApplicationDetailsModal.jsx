@@ -55,7 +55,7 @@ const ApplicationDetailsModal = ({
               <p className="text-sm text-gray-500 mb-1">Status</p>
               <span
                 className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                  application.status
+                  application.status,
                 )}`}
               >
                 {application.status?.toUpperCase()}
@@ -66,7 +66,7 @@ const ApplicationDetailsModal = ({
                 <p className="text-sm text-gray-500 mb-1">Demo Result</p>
                 <span
                   className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
-                    application.result
+                    application.result,
                   )}`}
                 >
                   {application.result?.toUpperCase()}
@@ -79,7 +79,7 @@ const ApplicationDetailsModal = ({
                   <p className="text-sm text-gray-500 mb-1">Interview Result</p>
                   <span
                     className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
-                      application.interviewResult
+                      application.interviewResult,
                     )}`}
                   >
                     {application.interviewResult?.toUpperCase()}
@@ -102,6 +102,18 @@ const ApplicationDetailsModal = ({
             <div>
               <p className="text-sm text-gray-500">Attempt Number</p>
               <p className="mt-1 font-medium">#{application.attemptNumber}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Program & Specialization</p>
+              <p className="mt-1 font-medium">
+                {application.program || "N/A"}
+                {application.specialization?.name
+                  ? ` - ${application.specialization.name}`
+                  : application.subjectSpecialization ||
+                      application.subject_specialization
+                    ? ` - ${application.subjectSpecialization || application.subject_specialization}`
+                    : ""}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Name</p>
@@ -143,6 +155,136 @@ const ApplicationDetailsModal = ({
             </div>
           </div>
         </div>
+
+        {/* Educational Background */}
+        {(application.education || application.educationalBackground) && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Educational Background
+            </h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                {application.education || application.educationalBackground}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Teaching Experience */}
+        {(application.experience || application.teachingExperience) && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Teaching Experience
+            </h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                {application.experience || application.teachingExperience}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Motivation */}
+        {application.motivation && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Motivation
+            </h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                {application.motivation}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Documents */}
+        {application.documents && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Uploaded Documents
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(() => {
+                let docs = [];
+                try {
+                  docs = Array.isArray(application.documents)
+                    ? application.documents
+                    : JSON.parse(application.documents);
+                } catch (e) {
+                  console.error("Failed to parse parsing documents", e);
+                }
+
+                if (docs.length === 0) {
+                  return (
+                    <p className="text-sm text-gray-500">
+                      No documents uploaded.
+                    </p>
+                  );
+                }
+
+                return docs.map((doc, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center p-3 bg-gray-50 rounded-md border border-gray-100"
+                  >
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                      <svg
+                        className="w-4 h-4 text-blue-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {typeof doc === "object"
+                          ? doc.fileName || doc.name
+                          : doc}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {typeof doc === "object"
+                          ? `${doc.mimetype || "File"} • ${(
+                              (doc.size || 0) / 1024
+                            ).toFixed(1)} KB`
+                          : "Document"}
+                      </p>
+                    </div>
+                    {/* Add download button if URL exists */}
+                    {doc.url && (
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 text-blue-600 hover:text-blue-800"
+                        title="Download"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
+                        </svg>
+                      </a>
+                    )}
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* Demo Schedule */}
         {application.demoSchedule && (
@@ -208,7 +350,7 @@ const ApplicationDetailsModal = ({
                 <div className="flex items-center gap-2">
                   <span
                     className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                      application.result
+                      application.result,
                     )}`}
                   >
                     {application.result?.toUpperCase() || "N/A"}
@@ -282,7 +424,7 @@ const ApplicationDetailsModal = ({
                 <div className="flex items-center gap-2">
                   <span
                     className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                      application.interviewResult
+                      application.interviewResult,
                     )}`}
                   >
                     {application.interviewResult?.toUpperCase() || "N/A"}

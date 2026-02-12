@@ -5,6 +5,7 @@ import { useApplicationStore } from "../../store/applicationStore";
 import DashboardCard from "../../components/DashboardCard";
 import Button from "../../components/Button";
 import Modal from "../../components/Modal";
+import ApplicationDetailsModal from "../../components/ApplicationDetailsModal";
 import StatusBadge from "../../components/StatusBadge";
 import StatusTracker from "../../components/StatusTracker";
 import { formatDate, formatDateTime } from "../../utils/formatDate";
@@ -18,6 +19,18 @@ const ApplicantDashboard = () => {
 
   const [showNewApplicationModal, setShowNewApplicationModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewDetails = (app) => {
+    setSelectedApplication(app);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedApplication(null);
+  };
 
   // Use applicationHistory for applicant's own applications
   const userApplications = applicationHistory || [];
@@ -26,7 +39,7 @@ const ApplicantDashboard = () => {
   const currentApplication =
     userApplications.length > 0
       ? userApplications.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
         )[0]
       : null;
 
@@ -107,7 +120,7 @@ const ApplicantDashboard = () => {
     return (
       !currentApplication ||
       ["rejected", "completed"].includes(
-        currentApplication.status?.toLowerCase()
+        currentApplication.status?.toLowerCase(),
       )
     );
   };
@@ -273,7 +286,7 @@ const ApplicantDashboard = () => {
               <p className="text-3xl font-bold text-gray-900 mt-1">
                 {
                   userApplications.filter(
-                    (app) => app.status?.toLowerCase() === "pending"
+                    (app) => app.status?.toLowerCase() === "pending",
                   ).length
                 }
               </p>
@@ -306,8 +319,8 @@ const ApplicantDashboard = () => {
                 {
                   userApplications.filter((app) =>
                     ["approved", "completed"].includes(
-                      app.status?.toLowerCase()
-                    )
+                      app.status?.toLowerCase(),
+                    ),
                   ).length
                 }
               </p>
@@ -385,7 +398,7 @@ const ApplicantDashboard = () => {
                             }}
                           />
                         );
-                      }
+                      },
                     )}
                   </div>
 
@@ -524,7 +537,7 @@ const ApplicantDashboard = () => {
 
               <div className="flex space-x-3">
                 <Button
-                  onClick={() => navigate("/applicant/history")}
+                  onClick={() => handleViewDetails(currentApplication)}
                   variant="outline"
                   size="sm"
                 >
@@ -938,6 +951,12 @@ const ApplicantDashboard = () => {
           </div>
         </div>
       </Modal>
+
+      <ApplicationDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        application={selectedApplication}
+      />
     </div>
   );
 };
