@@ -102,6 +102,33 @@ body {
   color: #991b1b;
 }
 
+/* Sequential Marquee Animation */
+@keyframes label-marquee {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-marquee-sequential {
+  animation: label-marquee 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+/* Hide Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
 .status-completed {
   background-color: #dbeafe;
   color: #1e40af;

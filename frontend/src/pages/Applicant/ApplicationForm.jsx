@@ -78,14 +78,14 @@ const ApplicationForm = () => {
   }, [getCurrentApplication]);
 
   const requiredDocuments = [
-    { type: "diploma", label: "Diploma / Degree Certificate", required: true },
+    { type: "diploma", label: "Diploma / Degree Certificate", required: false },
     {
       type: "transcript",
       label: "Transcript of Records (TOR)",
       required: false,
     },
-    { type: "pds", label: "Personal Data Sheet (PDS)", required: true },
-    { type: "prc", label: "PRC License", required: true },
+    { type: "pds", label: "Personal Data Sheet (PDS)", required: false },
+    { type: "prc", label: "PRC License", required: false },
     { type: "certificates", label: "Training Certificates", required: false },
   ];
 
@@ -102,18 +102,6 @@ const ApplicationForm = () => {
 
     if (!applicationLetterFile) {
       errors.applicationLetter = "Please upload your application letter";
-    }
-
-    const requiredDocs = requiredDocuments.filter((doc) => doc.required);
-    const uploadedTypes = documentFiles.map((doc) => doc.type);
-    const missingRequired = requiredDocs.filter(
-      (doc) => !uploadedTypes.includes(doc.type),
-    );
-
-    if (missingRequired.length > 0) {
-      errors.documents = `Missing required documents: ${missingRequired
-        .map((doc) => doc.label)
-        .join(", ")}`;
     }
 
     setFormErrors(errors);
@@ -349,10 +337,10 @@ const ApplicationForm = () => {
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-gray-900">
-          Upload Required Documents
+          Upload Documents
         </h2>
         <p className="text-sm text-gray-600 mt-1">
-          Please upload all required documents for your application
+          Please upload relevant documents for your application
         </p>
       </div>
 
@@ -373,28 +361,13 @@ const ApplicationForm = () => {
             <div key={docType.type}>
               <div className="flex items-center justify-between mb-3">
                 <label className="text-sm font-medium text-gray-700 flex items-center space-x-2">
-                  <span>
-                    {docType.label}
-                    {docType.required && (
-                      <span className="text-red-500">*</span>
-                    )}
-                  </span>
+                  <span>{docType.label}</span>
                 </label>
-                <span
-                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                    uploadedCount > 0
-                      ? "bg-green-100 text-green-800"
-                      : docType.required
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {uploadedCount > 0
-                    ? `Uploaded (${uploadedCount})`
-                    : docType.required
-                      ? "Required"
-                      : "Optional"}
-                </span>
+                {uploadedCount > 0 && (
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800">
+                    Uploaded ({uploadedCount})
+                  </span>
+                )}
               </div>
 
               <UploadBox
@@ -412,13 +385,7 @@ const ApplicationForm = () => {
                   const toRemoveIndex = indices[index];
                   removeFile("documents", toRemoveIndex);
                 }}
-                statusBadge={
-                  uploadedCount > 0
-                    ? "Uploaded"
-                    : docType.required
-                      ? "Required"
-                      : "Optional"
-                }
+                statusBadge={uploadedCount > 0 ? "Uploaded" : ""}
                 variant="neutral"
               />
             </div>

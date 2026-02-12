@@ -106,9 +106,12 @@ const StatusTracker = ({
               </div>
 
               {/* Step Label */}
-              <div className="mt-3 text-center">
+              <div
+                className="mt-3 text-center animate-marquee-sequential overflow-x-auto no-scrollbar"
+                style={{ animationDelay: `${index * 0.5}s` }}
+              >
                 <p
-                  className={`text-sm font-medium ${
+                  className={`text-sm font-medium whitespace-nowrap ${
                     index <= currentIndex ? "text-blue-600" : "text-gray-500"
                   }`}
                 >
@@ -156,9 +159,12 @@ const StatusTracker = ({
               </div>
 
               {/* Step Info */}
-              <div className="flex-1">
+              <div
+                className="flex-1 animate-marquee-sequential overflow-x-auto no-scrollbar"
+                style={{ animationDelay: `${index * 0.5}s` }}
+              >
                 <p
-                  className={`text-sm font-medium ${
+                  className={`text-sm font-medium whitespace-nowrap ${
                     index <= currentIndex ? "text-blue-600" : "text-gray-500"
                   }`}
                 >

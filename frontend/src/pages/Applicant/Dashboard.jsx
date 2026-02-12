@@ -75,8 +75,10 @@ const ApplicantDashboard = () => {
   const getApplicationProgress = (application) => {
     const stages = [
       "Submitted",
+      "Acknowledged",
       "Demo Scheduled",
-      "Interview Scheduled",
+      "Initial Interview Scheduled",
+      "Final Interview Scheduled",
       "Completed",
     ];
 
@@ -84,16 +86,24 @@ const ApplicantDashboard = () => {
     // 1. Completed (highest)
     // 2. Interview scheduled
     // 3. Demo scheduled
-    // 4. Submitted
+    // 4. Acknowledged
+    // 5. Submitted
     let currentIndex = 0;
     if (!application) {
       currentIndex = 0;
     } else if (application.status?.toLowerCase() === "completed") {
       currentIndex = stages.length - 1;
     } else if (application.interviewSchedule) {
-      currentIndex = stages.indexOf("Interview Scheduled");
+      // Check if it's considered "Final" - for now we default to Initial
+      // unless we have specific criteria for Final
+      currentIndex = stages.indexOf("Initial Interview Scheduled");
     } else if (application.demoSchedule) {
       currentIndex = stages.indexOf("Demo Scheduled");
+    } else if (
+      application.status?.toUpperCase() === "ACKNOWLEDGED" ||
+      application.status?.toUpperCase() === "FOR_EVALUATION"
+    ) {
+      currentIndex = stages.indexOf("Acknowledged");
     } else {
       currentIndex = 0;
     }
@@ -104,15 +114,19 @@ const ApplicantDashboard = () => {
 
   // Color shades for each stage from light blue (submitted) to dark blue (completed)
   const stageBgColors = [
+    "bg-blue-100",
     "bg-blue-200",
     "bg-blue-400",
+    "bg-blue-500",
     "bg-blue-600",
     "bg-blue-800",
   ];
   const stageTextColors = [
+    "text-blue-600",
     "text-blue-700",
     "text-blue-700",
-    "text-blue-700",
+    "text-blue-800",
+    "text-blue-800",
     "text-blue-900",
   ];
 
@@ -418,33 +432,41 @@ const ApplicantDashboard = () => {
                           currentApplication.createdAt ||
                           currentApplication.created_at ||
                           currentApplication.submittedAt,
-                        "Under Review":
-                          currentApplication.updatedAt ||
-                          currentApplication.updated_at ||
-                          null,
+                        Acknowledged:
+                          currentApplication.status?.toUpperCase() !== "PENDING"
+                            ? currentApplication.updatedAt ||
+                              currentApplication.updated_at
+                            : null,
                         "Demo Scheduled":
                           typeof demoSchedule === "object"
                             ? demoSchedule.date ||
                               demoSchedule.datetime ||
                               demoSchedule.scheduledAt
                             : demoSchedule,
-                        "Interview Scheduled":
+                        "Initial Interview Scheduled":
                           typeof interviewSchedule === "object"
                             ? interviewSchedule.date ||
                               interviewSchedule.datetime ||
                               interviewSchedule.scheduledAt
                             : interviewSchedule,
+                        "Final Interview Scheduled": null, // Placeholder for future use
                         Completed:
-                          currentApplication.completedAt ||
-                          currentApplication.completed_at ||
-                          null,
+                          currentApplication.status?.toUpperCase() ===
+                          "COMPLETED"
+                            ? currentApplication.completedAt ||
+                              currentApplication.completed_at ||
+                              currentApplication.updatedAt
+                            : null,
                       };
 
                       return stages.map((stage, index) => (
                         <div
                           key={stage}
-                          style={{ width: stageWidth }}
-                          className={`text-center px-1 whitespace-nowrap truncate ${
+                          style={{
+                            width: stageWidth,
+                            animationDelay: `${index * 0.5}s`,
+                          }}
+                          className={`text-center px-1 whitespace-nowrap overflow-x-auto no-scrollbar animate-marquee-sequential ${
                             index <= currentIndex
                               ? `${stageTextColors[index]} font-medium`
                               : "text-gray-400"
@@ -475,26 +497,30 @@ const ApplicantDashboard = () => {
                         currentApplication.createdAt ||
                         currentApplication.created_at ||
                         currentApplication.submittedAt,
-                      "Under Review":
-                        currentApplication.under_review_at ||
-                        currentApplication.underReviewAt ||
-                        currentApplication.updatedAt ||
-                        currentApplication.updated_at,
+                      Acknowledged:
+                        currentApplication.status?.toUpperCase() !== "PENDING"
+                          ? currentApplication.updatedAt ||
+                            currentApplication.updated_at
+                          : null,
                       "Demo Scheduled":
                         typeof demoSchedule === "object"
                           ? demoSchedule.date ||
                             demoSchedule.datetime ||
                             demoSchedule.scheduledAt
                           : demoSchedule,
-                      "Interview Scheduled":
+                      "Initial Interview Scheduled":
                         typeof interviewSchedule === "object"
                           ? interviewSchedule.date ||
                             interviewSchedule.datetime ||
                             interviewSchedule.scheduledAt
                           : interviewSchedule,
+                      "Final Interview Scheduled": null,
                       Completed:
-                        currentApplication.completedAt ||
-                        currentApplication.completed_at,
+                        currentApplication.status?.toUpperCase() === "COMPLETED"
+                          ? currentApplication.completedAt ||
+                            currentApplication.completed_at ||
+                            currentApplication.updatedAt
+                          : null,
                     };
                     return (
                       <StatusTracker
