@@ -32,7 +32,7 @@ const sendEmail = async (options: EmailOptions): Promise<void> => {
   const transporter = createTransporter();
 
   const mailOptions = {
-    from: "ePTA Management System <hello@epta.io>",
+    from: `BCFI HR Application System <${process.env.EMAIL_USERNAME}>`,
     to: options.email,
     subject: options.subject,
     text: options.message,

@@ -114,11 +114,11 @@ const ApplicantDashboard = () => {
 
   // Color shades for each stage from light blue (submitted) to dark blue (completed)
   const stageBgColors = [
-    "bg-blue-100",
-    "bg-blue-200",
+    "bg-blue-300",
     "bg-blue-400",
     "bg-blue-500",
     "bg-blue-600",
+    "bg-blue-700",
     "bg-blue-800",
   ];
   const stageTextColors = [
@@ -391,7 +391,7 @@ const ApplicantDashboard = () => {
                   </div>
 
                   {/* Segmented progress bar with stage-specific shades */}
-                  <div className="w-full rounded-full h-3 bg-gray-200 flex overflow-hidden">
+                  <div className="w-full rounded-full h-3 bg-gray-400 flex overflow-hidden">
                     {getApplicationProgress(currentApplication).stages.map(
                       (_, idx) => {
                         const { currentIndex } =
