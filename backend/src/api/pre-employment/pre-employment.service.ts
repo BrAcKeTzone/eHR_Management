@@ -17,3 +17,9 @@ export const upsertPreEmployment = async (
     create: { ...data, userId },
   });
 };
+
+export const deletePreEmployment = async (userId: number) => {
+  return await prisma.preEmploymentRequirement.delete({
+    where: { userId },
+  });
+};

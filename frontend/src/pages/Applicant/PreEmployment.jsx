@@ -108,6 +108,12 @@ const PreEmployment = () => {
   const handleFileChange = (e, key) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      if (key !== "photo2x2" && file.type !== "application/pdf") {
+        alert("Invalid file type. Only PDF files are allowed.");
+        return;
+      }
+
       setFiles((prev) => ({
         ...prev,
         [key]: file,
@@ -127,6 +133,12 @@ const PreEmployment = () => {
   // Handle multiple file uploads for TESDA
   const handleTesdaUpload = (e) => {
     const newFiles = Array.from(e.target.files);
+    // Validate PDF only
+    const invalidFiles = newFiles.filter((f) => f.type !== "application/pdf");
+    if (invalidFiles.length > 0) {
+      alert("Some files have invalid types. Only PDF files are allowed.");
+      return;
+    }
     setTesdaFiles((prev) => [...prev, ...newFiles]);
   };
 
@@ -142,6 +154,58 @@ const PreEmployment = () => {
 
   const removeTesdaFile = (index) => {
     setTesdaFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClear = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to PERMANENTLY remove all uploaded records and documents from our system? This action cannot be undone.",
+      )
+    ) {
+      setLoading(true);
+      try {
+        await preEmploymentApi.clear();
+        alert("All pre-employment records have been cleared.");
+
+        // Reset all states
+        setIdentifiers({
+          sss: "",
+          philhealth: "",
+          tin: "",
+          pagibig: "",
+        });
+        setFiles({
+          photo2x2: null,
+          coe: null,
+          marriageContract: null,
+          prcLicense: null,
+          civilService: null,
+          mastersUnits: null,
+          car: null,
+          tor: null,
+          certificates: null,
+        });
+        setExistingFiles({
+          photo2x2: null,
+          coe: null,
+          marriageContract: null,
+          prcLicense: null,
+          civilService: null,
+          mastersUnits: null,
+          car: null,
+          tor: null,
+          certificates: null,
+        });
+        setTesdaFiles([]);
+        setExistingTesdaFiles([]);
+        setPhotoPreview(null);
+      } catch (error) {
+        console.error("Failed to clear records:", error);
+        alert("Failed to clear records. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -348,6 +412,8 @@ const PreEmployment = () => {
                   label={`Click to upload ${doc.label}`}
                   statusBadge={getStatusBadge(doc.key)}
                   variant={existingFiles[doc.key] ? "success" : "neutral"}
+                  accept=".pdf"
+                  subtitle="PDF up to 10MB"
                 />
                 {existingFiles[doc.key] && (
                   <div className="mt-1 flex items-center text-sm">
@@ -381,7 +447,8 @@ const PreEmployment = () => {
             files={tesdaFiles}
             onRemove={removeTesdaFile}
             statusBadge="Optional"
-            subtitle="Upload multiple files if needed"
+            subtitle="PDF up to 10MB"
+            accept=".pdf"
           />
 
           {existingTesdaFiles.length > 0 && (
@@ -407,7 +474,15 @@ const PreEmployment = () => {
           )}
         </div>
 
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end gap-3 pt-4">
+          <Button
+            onClick={handleClear}
+            variant="outline"
+            size="lg"
+            disabled={loading}
+          >
+            Clear Selected Files
+          </Button>
           <Button
             onClick={handleSubmit}
             variant="primary"

@@ -304,7 +304,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white h-full shadow-sm border-r border-gray-200 transform transition-transform lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white h-full shadow-sm border-r border-gray-200 transform transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 overflow-y-auto ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

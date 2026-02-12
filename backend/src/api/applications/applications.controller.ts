@@ -13,6 +13,41 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+// Helper function to append .pdf to Cloudinary URLs if missing and it's a PDF document
+const ensurePdfExtension = (url: string | null) => {
+  if (!url || typeof url !== "string") return url;
+  if (
+    url.includes("cloudinary.com") &&
+    !url.toLowerCase().endsWith(".pdf") &&
+    !url.toLowerCase().endsWith(".png") &&
+    !url.toLowerCase().endsWith(".jpg") &&
+    !url.toLowerCase().endsWith(".jpeg")
+  ) {
+    return `${url}.pdf`;
+  }
+  return url;
+};
+
+// Helper function to process application documents JSON
+const processApplicationDocuments = (application: any) => {
+  if (!application || !application.documents) return application;
+  try {
+    const documents = JSON.parse(application.documents);
+    if (Array.isArray(documents)) {
+      const processed = documents.map((doc: any) => {
+        if (doc.url) {
+          doc.url = ensurePdfExtension(doc.url);
+        }
+        return doc;
+      });
+      application.documents = JSON.stringify(processed);
+    }
+  } catch (e) {
+    console.error("Error processing application documents for retrieval:", e);
+  }
+  return application;
+};
+
 export const createApplication = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     console.log("=== Create Application Request ===");
@@ -55,7 +90,13 @@ export const createApplication = asyncHandler(
 
         // Get file extension from original filename
         const extension = file.originalname.split(".").pop() || "pdf";
-        const fullFormattedName = `${formattedFileName}.${extension}`;
+
+        // Only append extension if it's not already in the filename
+        const fullFormattedName = formattedFileName
+          .toLowerCase()
+          .endsWith(`.${extension.toLowerCase()}`)
+          ? formattedFileName
+          : `${formattedFileName}.${extension}`;
 
         return {
           originalName: file.originalname,
@@ -81,9 +122,9 @@ export const createApplication = asyncHandler(
     res
       .status(201)
       .json(
-        new ApiResponse(201, application, "Application created successfully")
+        new ApiResponse(201, application, "Application created successfully"),
       );
-  }
+  },
 );
 
 export const getMyApplications = asyncHandler(
@@ -94,14 +135,22 @@ export const getMyApplications = asyncHandler(
       throw new ApiError(403, "Only applicants can view their applications");
     }
 
-    const applications = await applicationService.getApplicationsByApplicant(
-      applicantId
+    const applications =
+      await applicationService.getApplicationsByApplicant(applicantId);
+
+    // Process documents to ensure .pdf extension for retrieval
+    const processedApplications = applications.map((app) =>
+      processApplicationDocuments(app),
     );
 
     res.json(
-      new ApiResponse(200, applications, "Applications retrieved successfully")
+      new ApiResponse(
+        200,
+        processedApplications,
+        "Applications retrieved successfully",
+      ),
     );
-  }
+  },
 );
 
 export const getMyActiveApplication = asyncHandler(
@@ -115,14 +164,17 @@ export const getMyActiveApplication = asyncHandler(
     const application =
       await applicationService.getActiveApplicationByApplicant(applicantId);
 
+    // Process documents for retrieval
+    const processedApplication = processApplicationDocuments(application);
+
     res.json(
       new ApiResponse(
         200,
-        application,
-        "Active application retrieved successfully"
-      )
+        processedApplication,
+        "Active application retrieved successfully",
+      ),
     );
-  }
+  },
 );
 
 export const getAllApplications = asyncHandler(
@@ -162,10 +214,17 @@ export const getAllApplications = asyncHandler(
 
     const result = await applicationService.getAllApplications(filters);
 
+    // Process documents for all applications
+    if (result.applications) {
+      result.applications = result.applications.map((app: any) =>
+        processApplicationDocuments(app),
+      );
+    }
+
     res.json(
-      new ApiResponse(200, result, "Applications retrieved successfully")
+      new ApiResponse(200, result, "Applications retrieved successfully"),
     );
-  }
+  },
 );
 
 export const getApplicationById = asyncHandler(
@@ -173,26 +232,32 @@ export const getApplicationById = asyncHandler(
     const { id } = req.params;
     const applicationId = parseInt(id);
 
-    const application = await applicationService.getApplicationById(
-      applicationId
-    );
+    const application =
+      await applicationService.getApplicationById(applicationId);
 
     if (!application) {
       throw new ApiError(404, "Application not found");
     }
 
+    // Process documents for retrieval
+    const processedApplication = processApplicationDocuments(application);
+
     // Check access permissions
     if (
       req.user!.role === "APPLICANT" &&
-      application.applicant.id !== req.user!.id
+      processedApplication.applicant.id !== req.user!.id
     ) {
       throw new ApiError(403, "You can only view your own applications");
     }
 
     res.json(
-      new ApiResponse(200, application, "Application retrieved successfully")
+      new ApiResponse(
+        200,
+        processedApplication,
+        "Application retrieved successfully",
+      ),
     );
-  }
+  },
 );
 
 export const approveApplication = asyncHandler(
@@ -207,13 +272,13 @@ export const approveApplication = asyncHandler(
 
     const application = await applicationService.approveApplication(
       applicationId,
-      hrNotes
+      hrNotes,
     );
 
     res.json(
-      new ApiResponse(200, application, "Application approved successfully")
+      new ApiResponse(200, application, "Application approved successfully"),
     );
-  }
+  },
 );
 
 export const rejectApplication = asyncHandler(
@@ -228,13 +293,13 @@ export const rejectApplication = asyncHandler(
 
     const application = await applicationService.rejectApplication(
       applicationId,
-      hrNotes
+      hrNotes,
     );
 
     res.json(
-      new ApiResponse(200, application, "Application rejected successfully")
+      new ApiResponse(200, application, "Application rejected successfully"),
     );
-  }
+  },
 );
 
 export const scheduleDemo = asyncHandler(
@@ -258,15 +323,14 @@ export const scheduleDemo = asyncHandler(
     }
 
     // Determine if this is a reschedule so we can validate the input
-    const existingApp = await applicationService.getApplicationById(
-      applicationId
-    );
+    const existingApp =
+      await applicationService.getApplicationById(applicationId);
     const isReschedule = existingApp?.demoSchedule;
 
     if (isReschedule && !rescheduleReason) {
       throw new ApiError(
         400,
-        "Reschedule reason is required when updating an existing demo schedule"
+        "Reschedule reason is required when updating an existing demo schedule",
       );
     }
 
@@ -275,7 +339,7 @@ export const scheduleDemo = asyncHandler(
     if (rescheduleReason && !allowedReasons.includes(rescheduleReason)) {
       throw new ApiError(
         400,
-        `Invalid reschedule reason. Allowed: ${allowedReasons.join(", ")}`
+        `Invalid reschedule reason. Allowed: ${allowedReasons.join(", ")}`,
       );
     }
 
@@ -285,11 +349,11 @@ export const scheduleDemo = asyncHandler(
       demoLocation,
       demoDuration ? parseInt(demoDuration) : undefined,
       demoNotes,
-      rescheduleReason
+      rescheduleReason,
     );
 
     res.json(new ApiResponse(200, application, "Demo scheduled successfully"));
-  }
+  },
 );
 
 export const updateApplication = asyncHandler(
@@ -304,13 +368,13 @@ export const updateApplication = asyncHandler(
 
     const application = await applicationService.updateApplication(
       applicationId,
-      updateData
+      updateData,
     );
 
     res.json(
-      new ApiResponse(200, application, "Application updated successfully")
+      new ApiResponse(200, application, "Application updated successfully"),
     );
-  }
+  },
 );
 
 export const deleteApplication = asyncHandler(
@@ -325,7 +389,7 @@ export const deleteApplication = asyncHandler(
     await applicationService.deleteApplication(applicationId);
 
     res.json(new ApiResponse(200, null, "Application deleted successfully"));
-  }
+  },
 );
 
 export const completeApplication = asyncHandler(
@@ -368,17 +432,17 @@ export const completeApplication = asyncHandler(
 
     const application = await applicationService.updateApplication(
       applicationId,
-      updateData
+      updateData,
     );
 
     res.json(
       new ApiResponse(
         200,
         application,
-        "Application scoring saved successfully"
-      )
+        "Application scoring saved successfully",
+      ),
     );
-  }
+  },
 );
 
 export const rateInterview = asyncHandler(
@@ -402,18 +466,21 @@ export const rateInterview = asyncHandler(
       applicationId,
       interviewScore ? parseFloat(interviewScore) : null,
       interviewResult.toUpperCase() as "PASS" | "FAIL",
-      interviewNotes
+      interviewNotes,
     );
 
     // Get the full application with applicant details and format it
-    const formattedApplication = await applicationService.getApplicationById(
-      applicationId
-    );
+    const formattedApplication =
+      await applicationService.getApplicationById(applicationId);
 
     res.json(
-      new ApiResponse(200, formattedApplication, "Interview rated successfully")
+      new ApiResponse(
+        200,
+        formattedApplication,
+        "Interview rated successfully",
+      ),
     );
-  }
+  },
 );
 
 export const getApplicationDocuments = asyncHandler(
@@ -422,9 +489,8 @@ export const getApplicationDocuments = asyncHandler(
     const applicationId = parseInt(id);
 
     // Get the application with documents
-    const application = await applicationService.getApplicationById(
-      applicationId
-    );
+    const application =
+      await applicationService.getApplicationById(applicationId);
 
     if (!application) {
       throw new ApiError(404, "Application not found");
@@ -437,7 +503,7 @@ export const getApplicationDocuments = asyncHandler(
     ) {
       throw new ApiError(
         403,
-        "You can only view documents from your own applications"
+        "You can only view documents from your own applications",
       );
     }
 
@@ -456,10 +522,10 @@ export const getApplicationDocuments = asyncHandler(
       new ApiResponse(
         200,
         { documents, applicationId: application.id },
-        "Documents retrieved successfully"
-      )
+        "Documents retrieved successfully",
+      ),
     );
-  }
+  },
 );
 
 export const scheduleInterview = asyncHandler(
@@ -479,22 +545,21 @@ export const scheduleInterview = asyncHandler(
     const application = await applicationService.scheduleInterview(
       applicationId,
       new Date(interviewSchedule),
-      rescheduleReason
+      rescheduleReason,
     );
 
     // Get the full application with applicant details and format it
-    const formattedApplication = await applicationService.getApplicationById(
-      applicationId
-    );
+    const formattedApplication =
+      await applicationService.getApplicationById(applicationId);
 
     res.json(
       new ApiResponse(
         200,
         formattedApplication,
-        "Interview scheduled successfully"
-      )
+        "Interview scheduled successfully",
+      ),
     );
-  }
+  },
 );
 
 export const downloadDocument = asyncHandler(
@@ -504,9 +569,8 @@ export const downloadDocument = asyncHandler(
     const docIndex = parseInt(documentIndex);
 
     // Get the application
-    const application = await applicationService.getApplicationById(
-      applicationId
-    );
+    const application =
+      await applicationService.getApplicationById(applicationId);
 
     if (!application) {
       throw new ApiError(404, "Application not found");
@@ -519,7 +583,7 @@ export const downloadDocument = asyncHandler(
     ) {
       throw new ApiError(
         403,
-        "You can only download documents from your own applications"
+        "You can only download documents from your own applications",
       );
     }
 
@@ -543,5 +607,5 @@ export const downloadDocument = asyncHandler(
     // Redirect to Cloudinary URL
     // Cloudinary URLs are already public and accessible
     res.redirect(document.url);
-  }
+  },
 );

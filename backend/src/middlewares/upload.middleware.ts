@@ -14,9 +14,9 @@ const formatFileName = (
   const cleanLastName = lastName.replace(/[^a-zA-Z0-9]/g, "");
   const cleanFirstName = firstName.replace(/[^a-zA-Z0-9]/g, "");
 
-  // Format: DocumentType_LastNameFirstName_DateTime
+  // Format: DocumentType_LastNameFirstName_DateTime.extension
   const dateTime = new Date(timestamp).toISOString().replace(/[:.]/g, "-");
-  return `${documentType}_${cleanLastName}${cleanFirstName}_${dateTime}`;
+  return `${documentType}_${cleanLastName}${cleanFirstName}_${dateTime}.${extension}`;
 };
 
 // Helper function to determine document type from fieldname or filename
@@ -134,7 +134,10 @@ const storage = new CloudinaryStorage({
 
     // Determine resource type based on mimetype
     let resourceType: "image" | "video" | "raw" = "raw";
-    if (file.mimetype.startsWith("image/")) {
+    if (
+      file.mimetype.startsWith("image/") ||
+      file.mimetype === "application/pdf"
+    ) {
       resourceType = "image";
     } else if (file.mimetype.startsWith("video/")) {
       resourceType = "video";
@@ -197,14 +200,14 @@ const upload = multer({
 export const uploadDocuments = upload.array("documents", 10);
 
 // File filter specifically for applicant application documents (PDF, JPG/JPEG, PNG only)
-const applicationAllowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+const applicationAllowedTypes = ["application/pdf"];
 const applicationFileFilter = (req: any, file: any, cb: any) => {
   if (applicationAllowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(
       new Error(
-        `File type ${file.mimetype} is not allowed. Only PDF, JPG and PNG files are permitted.`,
+        `File type ${file.mimetype} is not allowed. Only PDF files are permitted.`,
       ),
       false,
     );

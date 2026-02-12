@@ -52,4 +52,15 @@ export const preEmploymentApi = {
       throw error;
     }
   },
+
+  // Delete all requirements
+  clear: async () => {
+    try {
+      const response = await fetchClient.delete(API_BASE_URL);
+      return response.data;
+    } catch (error) {
+      console.error("Error clearing pre-employment requirements:", error);
+      throw error;
+    }
+  },
 };

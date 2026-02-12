@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getPreEmploymentHandler,
   upsertPreEmploymentHandler,
+  deletePreEmploymentHandler,
 } from "./pre-employment.controller";
 import authMiddleware from "../../middlewares/auth.middleware";
 import upload from "../../middlewares/upload.middleware";
@@ -31,5 +32,6 @@ const setUploadFolder = (req: any, res: any, next: any) => {
 };
 
 router.post("/", setUploadFolder, uploadFields, upsertPreEmploymentHandler);
+router.delete("/", deletePreEmploymentHandler);
 
 export default router;

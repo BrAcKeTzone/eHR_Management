@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import {
   getPreEmployment,
   upsertPreEmployment,
+  deletePreEmployment,
 } from "./pre-employment.service";
 import ApiError from "../../utils/ApiError";
 import ApiResponse from "../../utils/ApiResponse";
@@ -10,7 +11,58 @@ import asyncHandler from "../../utils/asyncHandler";
 export const getPreEmploymentHandler = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = (req as any).user.id;
-    const requirements = await getPreEmployment(userId);
+    const requirements: any = await getPreEmployment(userId);
+
+    if (requirements) {
+      // Helper function to append .pdf to Cloudinary URLs if missing
+      const appendPdfExtension = (url: string | null) => {
+        if (!url || typeof url !== "string") return url;
+        // Only append for documents, and only if not already there
+        if (
+          url.includes("cloudinary.com") &&
+          !url.toLowerCase().endsWith(".pdf") &&
+          !url.toLowerCase().endsWith(".png") &&
+          !url.toLowerCase().endsWith(".jpg") &&
+          !url.toLowerCase().endsWith(".jpeg")
+        ) {
+          return `${url}.pdf`;
+        }
+        return url;
+      };
+
+      // Apply to document fields
+      const docFields = [
+        "coe",
+        "marriageContract",
+        "prcLicense",
+        "civilService",
+        "mastersUnits",
+        "car",
+        "tor",
+        "otherCert",
+      ];
+
+      docFields.forEach((field) => {
+        if (requirements[field]) {
+          requirements[field] = appendPdfExtension(requirements[field]);
+        }
+      });
+
+      // Handle tesdaCerts (JSON array)
+      if (requirements.tesdaCerts) {
+        try {
+          const certs = JSON.parse(requirements.tesdaCerts);
+          if (Array.isArray(certs)) {
+            requirements.tesdaCerts = JSON.stringify(
+              certs.map((url) => appendPdfExtension(url)),
+            );
+          }
+        } catch (e) {
+          // Keep as is if invalid JSON
+        }
+      }
+    }
+
     res
       .status(200)
       .json(
@@ -95,6 +147,28 @@ export const upsertPreEmploymentHandler = asyncHandler(
           200,
           result,
           "Pre-employment requirements saved successfully",
+        ),
+      );
+  },
+);
+
+export const deletePreEmploymentHandler = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = (req as any).user.id;
+
+    try {
+      await deletePreEmployment(userId);
+    } catch (error) {
+      // If record doesn't exist, we don't need to do anything
+    }
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          null,
+          "Pre-employment records cleared successfully",
         ),
       );
   },

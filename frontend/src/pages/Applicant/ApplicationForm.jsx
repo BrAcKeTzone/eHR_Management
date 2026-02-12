@@ -120,17 +120,17 @@ const ApplicationForm = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png"];
+  const ALLOWED_MIME_PDF = ["application/pdf"];
 
   // Handle resume upload
   const handleResumeUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       // Validate file type
-      if (!ALLOWED_MIME.includes(file.type)) {
+      if (!ALLOWED_MIME_PDF.includes(file.type)) {
         setFormErrors((prev) => ({
           ...prev,
-          resume: "Invalid file type. Only PDF, JPG, PNG are allowed.",
+          resume: "Invalid file type. Only PDF files are allowed.",
         }));
         return;
       }
@@ -152,11 +152,10 @@ const ApplicationForm = () => {
     const file = e.target.files[0];
     if (file) {
       // Validate file type
-      if (!ALLOWED_MIME.includes(file.type)) {
+      if (!ALLOWED_MIME_PDF.includes(file.type)) {
         setFormErrors((prev) => ({
           ...prev,
-          applicationLetter:
-            "Invalid file type. Only PDF, JPG, PNG are allowed.",
+          applicationLetter: "Invalid file type. Only PDF files are allowed.",
         }));
         return;
       }
@@ -177,13 +176,14 @@ const ApplicationForm = () => {
   const handleDocumentUpload = (e, documentType) => {
     const files = Array.from(e.target.files);
 
-    // Validate files - only allow PDF/JPG/PNG
-    const invalidFiles = files.filter((f) => !ALLOWED_MIME.includes(f.type));
+    // Validate files - only allow PDF
+    const invalidFiles = files.filter(
+      (f) => !ALLOWED_MIME_PDF.includes(f.type),
+    );
     if (invalidFiles.length > 0) {
       setFormErrors((prev) => ({
         ...prev,
-        documents:
-          "Some files have invalid types. Only PDF, JPG, PNG are allowed.",
+        documents: "Some files have invalid types. Only PDF files are allowed.",
       }));
       return;
     }
@@ -295,10 +295,10 @@ const ApplicationForm = () => {
 
       <UploadBox
         id="resume-upload"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
         onChange={handleResumeUpload}
         label="Click to upload resume"
-        subtitle="PDF, JPG, PNG up to 10MB"
+        subtitle="PDF up to 10MB"
         file={resumeFile}
         onRemove={() => removeFile("resume")}
         statusBadge={formErrors.resume ? "Error" : resumeFile ? "Uploaded" : ""}
@@ -327,10 +327,10 @@ const ApplicationForm = () => {
 
       <UploadBox
         id="application-letter-upload"
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept=".pdf"
         onChange={handleApplicationLetterUpload}
         label="Click to upload application letter"
-        subtitle="PDF, JPG, PNG up to 10MB"
+        subtitle="PDF up to 10MB"
         file={applicationLetterFile}
         onRemove={() => removeFile("applicationLetter")}
         statusBadge={
@@ -399,10 +399,10 @@ const ApplicationForm = () => {
 
               <UploadBox
                 id={`doc-${docType.type}`}
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept=".pdf"
                 onChange={(e) => handleDocumentUpload(e, docType.type)}
                 label={`Click to upload ${docType.label}`}
-                subtitle="PDF, JPG, PNG up to 10MB"
+                subtitle="PDF up to 10MB"
                 files={documentFiles.filter((doc) => doc.type === docType.type)}
                 onRemove={(index) => {
                   const indices = documentFiles.reduce((acc, doc, i) => {
