@@ -57,7 +57,7 @@ const ApplicationReview = () => {
       const res = await updateApplicationStatus(
         selectedApplication.id,
         decision,
-        reason
+        reason,
       );
 
       setShowDecisionModal(false);
@@ -136,7 +136,7 @@ const ApplicationReview = () => {
       cell: (row) => (
         <span
           className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-            row.status
+            row.status,
           )}`}
         >
           {row.status?.toUpperCase()}
@@ -259,7 +259,7 @@ const ApplicationReview = () => {
                     </div>
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                        app.status
+                        app.status,
                       )}`}
                     >
                       {app.status?.toUpperCase()}

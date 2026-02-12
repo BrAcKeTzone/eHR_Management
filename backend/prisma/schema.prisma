@@ -19,6 +19,8 @@ enum UserRole {
 
 enum ApplicationStatus {
   PENDING
+  ACKNOWLEDGED
+  FOR_EVALUATION
   APPROVED
   REJECTED
   COMPLETED
@@ -43,9 +45,42 @@ model User {
 
   // Applicant relations
   applications Application[]
+  preEmployment PreEmploymentRequirement?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// PRE-EMPLOYMENT REQUIREMENTS
+model PreEmploymentRequirement {
+  id              Int      @id @default(autoincrement())
+  
+  // Government IDs
+  sss             String?
+  philhealth      String?
+  tin             String?
+  pagibig         String?
+  
+  // Documents (URLs or Paths)
+  photo2x2        String?
+  coe             String? // Certificate of Employment
+  marriageContract String?
+  prcLicense      String?
+  civilService    String?
+  mastersUnits    String?
+  car             String? // Complete Academic Requirements
+  tor             String? // Transcript of Records
+  otherCert       String? // Other single certificate
+  
+  // Multiple Documents
+  tesdaCerts      String? @db.LongText // JSON array of file paths/URLs
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int      @unique
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 // TEACHER APPLICATION SYSTEM

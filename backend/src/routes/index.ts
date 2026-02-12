@@ -7,6 +7,7 @@ import applicationRouter from "../api/applications/applications.route";
 import reportsRouter from "../api/reports/reports.route";
 import uploadsRouter from "./uploads.route";
 import specializationRouter from "../api/specializations/specializations.route";
+import preEmploymentRouter from "../api/pre-employment/pre-employment.routes";
 
 router.use("/auth", authRouter);
 router.use("/users", userRouter);
@@ -14,5 +15,6 @@ router.use("/applications", applicationRouter);
 router.use("/reports", reportsRouter);
 router.use("/uploads", uploadsRouter);
 router.use("/specializations", specializationRouter);
+router.use("/pre-employment", preEmploymentRouter);
 
 export default router;

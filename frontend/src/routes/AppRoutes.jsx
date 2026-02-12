@@ -11,6 +11,7 @@ import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import ApplicantDashboard from "../pages/Applicant/Dashboard";
 import ApplicationForm from "../pages/Applicant/ApplicationForm";
 import ApplicationHistory from "../pages/Applicant/History";
+import PreEmployment from "../pages/Applicant/PreEmployment";
 
 // HR pages
 import HRDashboard from "../pages/HR/Dashboard";
@@ -149,6 +150,7 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<ApplicantDashboard />} />
         <Route path="application" element={<ApplicationForm />} />
         <Route path="history" element={<ApplicationHistory />} />
+        <Route path="pre-employment" element={<PreEmployment />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
 

@@ -8,7 +8,7 @@ const formatFileName = (
   lastName: string,
   firstName: string,
   timestamp: number,
-  extension: string
+  extension: string,
 ): string => {
   // Clean names - remove special characters and spaces
   const cleanLastName = lastName.replace(/[^a-zA-Z0-9]/g, "");
@@ -24,7 +24,7 @@ const getDocumentType = (
   req: any,
   fileIndex: number,
   fieldname: string,
-  originalname: string
+  originalname: string,
 ): string => {
   // First, try to get type from documentTypes metadata
   try {
@@ -51,6 +51,18 @@ const getDocumentType = (
   if (fieldname.includes("resume")) return "Resume";
   if (fieldname.includes("applicationLetter") || fieldname.includes("letter"))
     return "ApplicationLetter";
+
+  // Pre-employment mappings
+  if (fieldname === "photo2x2") return "IDPicture";
+  if (fieldname === "coe") return "COE";
+  if (fieldname === "marriageContract") return "MarriageContract";
+  if (fieldname === "prcLicense") return "PRCLicense";
+  if (fieldname === "civilService") return "CivilServiceEligibility";
+  if (fieldname === "mastersUnits") return "MastersUnits";
+  if (fieldname === "car") return "CAR";
+  if (fieldname === "tor") return "TOR";
+  if (fieldname === "certificates") return "Certificate";
+  if (fieldname === "tesdaFiles") return "TESDACertificate";
 
   // Extract from filename if available
   const lowerName = originalname.toLowerCase();
@@ -91,7 +103,7 @@ const storage = new CloudinaryStorage({
       req,
       req.fileIndex,
       file.fieldname,
-      file.originalname
+      file.originalname,
     );
 
     // Increment file index for next file
@@ -101,13 +113,24 @@ const storage = new CloudinaryStorage({
     const extension = file.originalname.split(".").pop() || "pdf";
 
     // Generate formatted filename
-    const formattedName = formatFileName(
+    let formattedName = formatFileName(
       documentType,
       lastName,
       firstName,
       timestamp,
-      extension
+      extension,
     );
+
+    // Append index for multiple files (like TESDA) to prevent potential overwrites
+    if (
+      documentType === "TESDACertificate" ||
+      Array.isArray(req.files) ||
+      (req.files &&
+        req.files[file.fieldname] &&
+        req.files[file.fieldname].length > 1)
+    ) {
+      formattedName += `_${req.fileIndex}`;
+    }
 
     // Determine resource type based on mimetype
     let resourceType: "image" | "video" | "raw" = "raw";
@@ -124,10 +147,13 @@ const storage = new CloudinaryStorage({
       applicant: `${firstName} ${lastName}`,
       mimetype: file.mimetype,
       resourceType: resourceType,
+      folder:
+        (req as any).uploadFolder || "hr-applications/applicants-attachments",
     });
 
     return {
-      folder: "hr-applications/applicants-attachments", // Folder in Cloudinary for applicant documents
+      folder:
+        (req as any).uploadFolder || "hr-applications/applicants-attachments", // Folder in Cloudinary for applicant documents
       public_id: formattedName,
       resource_type: resourceType, // Use determined resource type instead of auto
       // Don't specify allowed_formats - let Cloudinary handle all formats for the resource type
@@ -151,9 +177,9 @@ const fileFilter = (req: any, file: any, cb: any) => {
   } else {
     cb(
       new Error(
-        `File type ${file.mimetype} is not allowed. Only JPG, PNG, PDF, DOC, DOCX, and TXT files are permitted.`
+        `File type ${file.mimetype} is not allowed. Only JPG, PNG, PDF, DOC, DOCX, and TXT files are permitted.`,
       ),
-      false
+      false,
     );
   }
 };
@@ -178,9 +204,9 @@ const applicationFileFilter = (req: any, file: any, cb: any) => {
   } else {
     cb(
       new Error(
-        `File type ${file.mimetype} is not allowed. Only PDF, JPG and PNG files are permitted.`
+        `File type ${file.mimetype} is not allowed. Only PDF, JPG and PNG files are permitted.`,
       ),
-      false
+      false,
     );
   }
 };
@@ -195,14 +221,14 @@ const applicationUpload = multer({
 
 export const uploadApplicationDocuments = applicationUpload.array(
   "documents",
-  10
+  10,
 );
 
 // Middleware to inject applicant name into request body before file upload
 export const injectApplicantInfo = async (
   req: any,
   res: any,
-  next: any
+  next: any,
 ): Promise<void> => {
   try {
     // If user info is available from auth middleware, add it to body
@@ -222,7 +248,7 @@ export const injectApplicantInfo = async (
           console.log(
             "Injected applicant info:",
             user.firstName,
-            user.lastName
+            user.lastName,
           );
         }
 
@@ -248,7 +274,7 @@ export const handleUploadError = (
   error: any,
   req: any,
   res: any,
-  next: any
+  next: any,
 ) => {
   if (error instanceof multer.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
