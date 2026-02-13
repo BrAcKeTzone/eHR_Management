@@ -14,7 +14,7 @@ export const useNotificationStore = create((set, get) => ({
     try {
       set({ loading: true, error: null });
       const response = await notificationApi.getUserNotifications();
-      
+
       set({
         notifications: response.data.data.notifications,
         unreadCount: response.data.data.unreadCount,
@@ -31,19 +31,21 @@ export const useNotificationStore = create((set, get) => ({
   markAsRead: async (notificationId) => {
     try {
       await notificationApi.markAsRead(notificationId);
-      
+
       // Update local state
       set((state) => ({
         notifications: state.notifications.map((notification) =>
           notification.id === notificationId
             ? { ...notification, status: "READ" }
-            : notification
+            : notification,
         ),
         unreadCount: Math.max(0, state.unreadCount - 1),
       }));
     } catch (error) {
       set({
-        error: error.response?.data?.message || "Failed to mark notification as read",
+        error:
+          error.response?.data?.message ||
+          "Failed to mark notification as read",
       });
     }
   },
@@ -51,7 +53,7 @@ export const useNotificationStore = create((set, get) => ({
   markAllAsRead: async () => {
     try {
       await notificationApi.markAllAsRead();
-      
+
       // Update local state
       set((state) => ({
         notifications: state.notifications.map((notification) => ({
@@ -62,7 +64,9 @@ export const useNotificationStore = create((set, get) => ({
       }));
     } catch (error) {
       set({
-        error: error.response?.data?.message || "Failed to mark all notifications as read",
+        error:
+          error.response?.data?.message ||
+          "Failed to mark all notifications as read",
       });
     }
   },
@@ -70,20 +74,21 @@ export const useNotificationStore = create((set, get) => ({
   deleteNotifications: async (ids) => {
     try {
       await notificationApi.deleteNotifications(ids);
-      
+
       // Update local state
       set((state) => ({
         notifications: state.notifications.filter(
-          (notification) => !ids.includes(notification.id)
+          (notification) => !ids.includes(notification.id),
         ),
         selectedNotificationIds: [],
       }));
-      
+
       // Refresh to get updated unread count
       get().fetchNotifications();
     } catch (error) {
       set({
-        error: error.response?.data?.message || "Failed to delete notifications",
+        error:
+          error.response?.data?.message || "Failed to delete notifications",
       });
     }
   },
@@ -91,7 +96,7 @@ export const useNotificationStore = create((set, get) => ({
   toggleSelectNotification: (notificationId) => {
     set((state) => {
       const isSelected = state.selectedNotificationIds.includes(notificationId);
-      
+
       return {
         selectedNotificationIds: isSelected
           ? state.selectedNotificationIds.filter((id) => id !== notificationId)

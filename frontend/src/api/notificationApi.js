@@ -2,7 +2,7 @@ import { fetchClient } from "../utils/fetchClient";
 
 /**
  * Notification API
- * 
+ *
  * Handles all notification-related operations including:
  * - Fetching notifications (filtered by user role)
  * - Marking notifications as read

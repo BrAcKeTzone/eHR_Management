@@ -20,7 +20,7 @@ const Navbar = ({ onMenuClick }) => {
     toggleSelectNotification,
     clearSelection,
   } = useNotificationStore();
-  
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -41,12 +41,12 @@ const Navbar = ({ onMenuClick }) => {
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotifications();
-      
+
       // Poll for new notifications every 30 seconds
       const interval = setInterval(() => {
         fetchNotifications();
       }, 30000);
-      
+
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, fetchNotifications]);
@@ -75,7 +75,7 @@ const Navbar = ({ onMenuClick }) => {
   const handleNotificationClick = async (notification) => {
     setSelectedNotification(notification);
     setShowNotificationModal(true);
-    
+
     // Mark as read
     if (notification.status === "UNREAD") {
       await markAsRead(notification.id);
@@ -88,7 +88,7 @@ const Navbar = ({ onMenuClick }) => {
 
   const handleDeleteSelected = async () => {
     if (selectedNotificationIds.length === 0) return;
-    
+
     await deleteNotifications(selectedNotificationIds);
     clearSelection();
   };
@@ -105,7 +105,7 @@ const Navbar = ({ onMenuClick }) => {
     if (diffInMins < 60) return `${diffInMins}m ago`;
     if (diffInHours < 24) return `${diffInHours}h ago`;
     if (diffInDays < 7) return `${diffInDays}d ago`;
-    
+
     return date.toLocaleDateString();
   };
 
@@ -214,7 +214,7 @@ const Navbar = ({ onMenuClick }) => {
                 <div className="flex items-center space-x-2">
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
-                      user?.role
+                      user?.role,
                     )}`}
                   >
                     {getRoleDisplayName(user?.role)}
@@ -226,7 +226,9 @@ const Navbar = ({ onMenuClick }) => {
               {/* Notification Icon */}
               <div className="relative">
                 <button
-                  onClick={() => setIsNotificationPanelOpen(!isNotificationPanelOpen)}
+                  onClick={() =>
+                    setIsNotificationPanelOpen(!isNotificationPanelOpen)
+                  }
                   className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   title="Notifications"
                 >
@@ -308,7 +310,9 @@ const Navbar = ({ onMenuClick }) => {
                             <div
                               key={notification.id}
                               className={`px-4 py-3 hover:bg-gray-50 transition-colors ${
-                                notification.status === "UNREAD" ? "bg-blue-50" : ""
+                                notification.status === "UNREAD"
+                                  ? "bg-blue-50"
+                                  : ""
                               }`}
                             >
                               <div className="flex items-start space-x-3">
@@ -316,7 +320,7 @@ const Navbar = ({ onMenuClick }) => {
                                 <input
                                   type="checkbox"
                                   checked={selectedNotificationIds.includes(
-                                    notification.id
+                                    notification.id,
                                   )}
                                   onChange={() =>
                                     toggleSelectNotification(notification.id)
@@ -328,7 +332,9 @@ const Navbar = ({ onMenuClick }) => {
                                 {/* Notification Content */}
                                 <div
                                   className="flex-1 cursor-pointer"
-                                  onClick={() => handleNotificationClick(notification)}
+                                  onClick={() =>
+                                    handleNotificationClick(notification)
+                                  }
                                 >
                                   <div className="flex items-start justify-between">
                                     <div className="flex items-start space-x-2 flex-1">
@@ -343,7 +349,9 @@ const Navbar = ({ onMenuClick }) => {
                                           {notification.message}
                                         </p>
                                         <p className="text-xs text-gray-400 mt-1">
-                                          {formatNotificationDate(notification.createdAt)}
+                                          {formatNotificationDate(
+                                            notification.createdAt,
+                                          )}
                                         </p>
                                       </div>
                                     </div>
@@ -402,7 +410,7 @@ const Navbar = ({ onMenuClick }) => {
                       <div className="flex items-center justify-between">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
-                            user?.role
+                            user?.role,
                           )}`}
                         >
                           {getRoleDisplayName(user?.role)}
@@ -550,7 +558,7 @@ const Navbar = ({ onMenuClick }) => {
               >
                 {selectedNotification.status}
               </span>
-              
+
               <Button
                 variant="outline"
                 onClick={() => {
