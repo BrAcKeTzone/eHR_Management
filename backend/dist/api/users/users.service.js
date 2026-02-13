@@ -46,7 +46,7 @@ const client_2 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 // Get all users with pagination and filtering
 const getAllUsers = async (options = {}) => {
-    const { page = 1, limit = 10, role, search, sortBy = "createdAt", sortOrder = "desc", } = options;
+    const { page = 1, limit = 10, role, search, sortBy = "createdAt", sortOrder = "desc", specialization, } = options;
     const skip = (page - 1) * limit;
     // Only allow valid sort fields
     const validSortFields = [
@@ -68,6 +68,13 @@ const getAllUsers = async (options = {}) => {
     const where = {};
     if (role) {
         where.role = role;
+    }
+    if (specialization) {
+        where.applications = {
+            some: {
+                specializationId: specialization,
+            },
+        };
     }
     if (search) {
         // Use case-insensitive search for MySQL

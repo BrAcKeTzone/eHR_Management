@@ -36,6 +36,7 @@ exports.getUsersQuery = joi_1.default.object().keys({
         .valid("firstName", "lastName", "name", "email", "role", "createdAt")
         .optional(),
     sortOrder: joi_1.default.string().valid("asc", "desc").optional(),
+    specialization: joi_1.default.number().integer().min(1).optional(),
 });
 exports.verifyOtpForDeletion = joi_1.default.object().keys({
     otp: joi_1.default.string().length(6).pattern(/^\d+$/).required(),

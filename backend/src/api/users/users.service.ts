@@ -31,6 +31,7 @@ interface GetUsersOptions {
   search?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  specialization?: number;
 }
 
 interface UsersResponse {
@@ -44,7 +45,7 @@ interface UsersResponse {
 
 // Get all users with pagination and filtering
 export const getAllUsers = async (
-  options: GetUsersOptions = {}
+  options: GetUsersOptions = {},
 ): Promise<UsersResponse> => {
   const {
     page = 1,
@@ -53,6 +54,7 @@ export const getAllUsers = async (
     search,
     sortBy = "createdAt",
     sortOrder = "desc",
+    specialization,
   } = options;
 
   const skip = (page - 1) * limit;
@@ -81,6 +83,13 @@ export const getAllUsers = async (
   const where: any = {};
   if (role) {
     where.role = role;
+  }
+  if (specialization) {
+    where.applications = {
+      some: {
+        specializationId: specialization,
+      },
+    };
   }
   if (search) {
     // Use case-insensitive search for MySQL
@@ -151,7 +160,7 @@ export const getAllUsers = async (
 
 // Get user by ID
 export const getUserById = async (
-  userId: number
+  userId: number,
 ): Promise<Omit<User, "password">> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -178,7 +187,7 @@ export const getUserById = async (
 
 // Create new user
 export const createUser = async (
-  userData: CreateUserData
+  userData: CreateUserData,
 ): Promise<Omit<User, "password">> => {
   const {
     email,
@@ -231,7 +240,7 @@ export const updateUser = async (
   userId: number,
   userData: UpdateUserData,
   requestingUserId?: number,
-  requestingUserRole?: UserRole
+  requestingUserRole?: UserRole,
 ): Promise<Omit<User, "password">> => {
   const { email, firstName, lastName, phone, role } = userData;
 
@@ -314,7 +323,7 @@ export const updateUser = async (
 export const updateUserPassword = async (
   userId: number,
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<{ message: string }> => {
   // Get user with password
   const user = await prisma.user.findUnique({
@@ -328,7 +337,7 @@ export const updateUserPassword = async (
   // Verify current password
   const isCurrentPasswordValid = await bcrypt.compare(
     currentPassword,
-    user.password
+    user.password,
   );
   if (!isCurrentPasswordValid) {
     throw new ApiError(400, "Current password is incorrect");
@@ -348,7 +357,7 @@ export const updateUserPassword = async (
 
 // Delete user
 export const deleteUser = async (
-  userId: number
+  userId: number,
 ): Promise<{ message: string }> => {
   // Check if user exists
   const user = await prisma.user.findUnique({
@@ -402,7 +411,7 @@ export const getUserStats = async (): Promise<{
 
 // Send OTP for HR deletion confirmation
 export const sendOtpForHrDeletion = async (
-  hrEmail: string
+  hrEmail: string,
 ): Promise<{ message: string }> => {
   // Verify HR user exists
   const hrUser = await prisma.user.findUnique({
@@ -451,7 +460,7 @@ export const sendOtpForHrDeletion = async (
     console.error(error);
     throw new ApiError(
       500,
-      "There was an error sending the email. Please try again later."
+      "There was an error sending the email. Please try again later.",
     );
   }
 
@@ -464,7 +473,7 @@ export const verifyOtpAndDeleteHr = async (
   requestingHrEmail: string,
   otp: string,
   requestingHrId: number,
-  requestingUserRole: UserRole
+  requestingUserRole: UserRole,
 ): Promise<{ message: string }> => {
   // Check if requesting user is HR
   if (requestingUserRole !== UserRole.HR) {
@@ -484,7 +493,7 @@ export const verifyOtpAndDeleteHr = async (
   if (userToDelete.role !== UserRole.HR) {
     throw new ApiError(
       403,
-      "This user is not an HR. Use regular delete instead."
+      "This user is not an HR. Use regular delete instead.",
     );
   }
 
@@ -541,7 +550,7 @@ export const checkEmailExists = async (email: string): Promise<boolean> => {
 // Update profile picture
 export const updateProfilePicture = async (
   userId: number,
-  file: any
+  file: any,
 ): Promise<Omit<User, "password">> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -587,7 +596,7 @@ export const updateProfilePicture = async (
 
 // Delete profile picture
 export const deleteProfilePicture = async (
-  userId: number
+  userId: number,
 ): Promise<Omit<User, "password">> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },

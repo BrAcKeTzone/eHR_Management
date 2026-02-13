@@ -25,6 +25,8 @@ export const userApi = {
     if (options.search) params.append("search", options.search);
     if (options.sortBy) params.append("sortBy", options.sortBy);
     if (options.sortOrder) params.append("sortOrder", options.sortOrder);
+    if (options.specialization)
+      params.append("specialization", options.specialization.toString());
 
     const queryString = params.toString();
     const url = queryString ? `${API_BASE}?${queryString}` : API_BASE;
@@ -61,7 +63,7 @@ export const userApi = {
   updateUserPassword: async (userId, passwordData) => {
     const response = await fetchClient.put(
       `${API_BASE}/${userId}/password`,
-      passwordData
+      passwordData,
     );
     return response.data;
   },
@@ -76,7 +78,7 @@ export const userApi = {
   sendOtpForHrDeletion: async () => {
     const response = await fetchClient.post(
       `${API_BASE}/hr-deletion/send-otp`,
-      {}
+      {},
     );
     return response.data;
   },
@@ -85,7 +87,7 @@ export const userApi = {
   verifyOtpAndDeleteHr: async (userId, otp) => {
     const response = await fetchClient.post(
       `${API_BASE}/${userId}/verify-and-delete-hr`,
-      { otp }
+      { otp },
     );
     return response.data;
   },
@@ -93,7 +95,7 @@ export const userApi = {
   // Check if email exists
   checkEmailExists: async (email) => {
     const response = await fetchClient.get(
-      `${API_BASE}/check-email?email=${encodeURIComponent(email)}`
+      `${API_BASE}/check-email?email=${encodeURIComponent(email)}`,
     );
     return response.data;
   },
@@ -110,7 +112,7 @@ export const userApi = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   },

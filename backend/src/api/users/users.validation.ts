@@ -34,6 +34,7 @@ export const getUsersQuery = Joi.object().keys({
     .valid("firstName", "lastName", "name", "email", "role", "createdAt")
     .optional(),
   sortOrder: Joi.string().valid("asc", "desc").optional(),
+  specialization: Joi.number().integer().min(1).optional(),
 });
 
 export const verifyOtpForDeletion = Joi.object().keys({

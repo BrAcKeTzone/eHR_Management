@@ -12,6 +12,9 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
     search: req.query.search as string,
     sortBy: req.query.sortBy as string,
     sortOrder: req.query.sortOrder as "asc" | "desc",
+    specialization: req.query.specialization
+      ? parseInt(req.query.specialization as string)
+      : undefined,
   };
 
   const result = await usersService.getAllUsers(options);
@@ -28,7 +31,7 @@ export const getCurrentUser = asyncHandler(
     res
       .status(200)
       .json(new ApiResponse(200, user, "Profile retrieved successfully"));
-  }
+  },
 );
 
 // Get user by ID
@@ -54,12 +57,12 @@ export const updateCurrentUser = asyncHandler(
       requestingUser.id,
       req.body,
       requestingUser.id,
-      requestingUser.role
+      requestingUser.role,
     );
     res
       .status(200)
       .json(new ApiResponse(200, user, "Profile updated successfully"));
-  }
+  },
 );
 
 // Update user
@@ -70,7 +73,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
     userId,
     req.body,
     requestingUser?.id,
-    requestingUser?.role
+    requestingUser?.role,
   );
   res.status(200).json(new ApiResponse(200, user, "User updated successfully"));
 });
@@ -84,12 +87,12 @@ export const updateUserPassword = asyncHandler(
     const result = await usersService.updateUserPassword(
       userId,
       currentPassword,
-      newPassword
+      newPassword,
     );
     res
       .status(200)
       .json(new ApiResponse(200, result, "Password updated successfully"));
-  }
+  },
 );
 
 // Delete user
@@ -106,7 +109,7 @@ export const sendOtpForHrDeletion = asyncHandler(
   async (req: Request, res: Response) => {
     const requestingUser = (req as any).user;
     const result = await usersService.sendOtpForHrDeletion(
-      requestingUser.email
+      requestingUser.email,
     );
     res
       .status(200)
@@ -114,10 +117,10 @@ export const sendOtpForHrDeletion = asyncHandler(
         new ApiResponse(
           200,
           result,
-          "OTP sent to your email for HR deletion confirmation"
-        )
+          "OTP sent to your email for HR deletion confirmation",
+        ),
       );
-  }
+  },
 );
 
 // Verify OTP and delete HR user
@@ -132,7 +135,7 @@ export const verifyOtpAndDeleteHr = asyncHandler(
       requestingUser.email,
       otp,
       requestingUser.id,
-      requestingUser.role
+      requestingUser.role,
     );
     res
       .status(200)
@@ -140,10 +143,10 @@ export const verifyOtpAndDeleteHr = asyncHandler(
         new ApiResponse(
           200,
           result,
-          "HR user deleted successfully after OTP verification"
-        )
+          "HR user deleted successfully after OTP verification",
+        ),
       );
-  }
+  },
 );
 
 // Check if email exists
@@ -163,10 +166,10 @@ export const checkEmailExists = asyncHandler(
         new ApiResponse(
           200,
           { exists },
-          exists ? "Email already exists" : "Email is available"
-        )
+          exists ? "Email already exists" : "Email is available",
+        ),
       );
-  }
+  },
 );
 
 // Get user statistics
@@ -176,9 +179,9 @@ export const getUserStats = asyncHandler(
     res
       .status(200)
       .json(
-        new ApiResponse(200, stats, "User statistics retrieved successfully")
+        new ApiResponse(200, stats, "User statistics retrieved successfully"),
       );
-  }
+  },
 );
 
 // Upload profile picture
@@ -195,14 +198,14 @@ export const uploadProfilePicture = asyncHandler(
 
     const result = await usersService.updateProfilePicture(
       requestingUser.id,
-      file
+      file,
     );
     res
       .status(200)
       .json(
-        new ApiResponse(200, result, "Profile picture updated successfully")
+        new ApiResponse(200, result, "Profile picture updated successfully"),
       );
-  }
+  },
 );
 
 // Delete profile picture
@@ -213,7 +216,7 @@ export const deleteProfilePicture = asyncHandler(
     res
       .status(200)
       .json(
-        new ApiResponse(200, result, "Profile picture deleted successfully")
+        new ApiResponse(200, result, "Profile picture deleted successfully"),
       );
-  }
+  },
 );

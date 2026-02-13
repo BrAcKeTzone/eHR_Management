@@ -49,6 +49,7 @@ exports.getAllUsers = (0, asyncHandler_1.default)(async (req, res) => {
         search: req.query.search,
         sortBy: req.query.sortBy,
         sortOrder: req.query.sortOrder,
+        specialization: req.query.specialization ? parseInt(req.query.specialization) : undefined,
     };
     const result = await usersService.getAllUsers(options);
     res
