@@ -68,12 +68,22 @@ const ApplicationHistoryModal = ({
                   </h4>
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded-full w-fit ${getStatusColor(
-                      app.status
+                      app.status,
                     )}`}
                   >
                     {app.status?.toUpperCase()}
                   </span>
                 </div>
+
+                {/* Specialization */}
+                {app.specialization && (
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-500 mb-1">Specialization</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {app.specialization.name}
+                    </p>
+                  </div>
+                )}
 
                 {/* Demo and Interview Schedule/Results Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -96,7 +106,7 @@ const ApplicationHistoryModal = ({
                         </p>
                         <span
                           className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                            app.result
+                            app.result,
                           )}`}
                         >
                           {app.result?.toUpperCase()}
@@ -124,7 +134,7 @@ const ApplicationHistoryModal = ({
                         </p>
                         <span
                           className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                            app.interviewResult
+                            app.interviewResult,
                           )}`}
                         >
                           {app.interviewResult?.toUpperCase()}
