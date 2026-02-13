@@ -16,7 +16,9 @@ export const useNotificationStore = create((set, get) => ({
       const response = await notificationApi.getUserNotifications();
 
       set({
-        notifications: response.data.data.notifications,
+        notifications: response.data.data.notifications.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+        ),
         unreadCount: response.data.data.unreadCount,
         loading: false,
       });

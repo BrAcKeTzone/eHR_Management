@@ -27,7 +27,7 @@ const Navbar = ({ onMenuClick }) => {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -35,6 +35,18 @@ const Navbar = ({ onMenuClick }) => {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  // Check if mobile screen
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile);
+
+    return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
   // Fetch notifications when authenticated
@@ -226,9 +238,13 @@ const Navbar = ({ onMenuClick }) => {
               {/* Notification Icon */}
               <div className="relative">
                 <button
-                  onClick={() =>
-                    setIsNotificationPanelOpen(!isNotificationPanelOpen)
-                  }
+                  onClick={() => {
+                    if (isMobile) {
+                      setIsNotificationPanelOpen(true);
+                    } else {
+                      setIsNotificationPanelOpen(!isNotificationPanelOpen);
+                    }
+                  }}
                   className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   title="Notifications"
                 >
@@ -253,8 +269,8 @@ const Navbar = ({ onMenuClick }) => {
                   )}
                 </button>
 
-                {/* Notification Panel */}
-                {isNotificationPanelOpen && (
+                {/* Notification Panel - Desktop Only */}
+                {!isMobile && isNotificationPanelOpen && (
                   <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[32rem] flex flex-col">
                     {/* Panel Header */}
                     <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50 rounded-t-lg">
@@ -498,16 +514,135 @@ const Navbar = ({ onMenuClick }) => {
         ></div>
       )}
 
-      {/* Click outside to close notification panel */}
-      {isNotificationPanelOpen && (
+      {/* Click outside to close notification panel - Desktop Only */}
+      {!isMobile && isNotificationPanelOpen && (
         <div
           className="fixed inset-0 z-40"
           onClick={() => setIsNotificationPanelOpen(false)}
         ></div>
       )}
 
-      {/* Notification Detail Modal */}
-      {showNotificationModal && selectedNotification && (
+      {/* Notification Panel Modal - Mobile Only */}
+      {isMobile && (
+        <Modal
+          isOpen={isNotificationPanelOpen}
+          onClose={() => setIsNotificationPanelOpen(false)}
+          title="Notifications"
+          size="lg"
+        >
+          <div className="flex flex-col h-full">
+            {/* Panel Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Notifications
+              </h3>
+              <div className="flex items-center space-x-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllAsRead}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+                {selectedNotificationIds.length > 0 && (
+                  <button
+                    onClick={handleDeleteSelected}
+                    className="text-sm text-red-600 hover:text-red-800 font-medium"
+                  >
+                    Delete ({selectedNotificationIds.length})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Notifications List */}
+            <div className="overflow-y-auto flex-1 py-2">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                    />
+                  </svg>
+                  <p className="mt-2">No notifications</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`px-2 py-3 hover:bg-gray-50 transition-colors ${
+                        notification.status === "UNREAD" ? "bg-blue-50" : ""
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3">
+                        {/* Checkbox */}
+                        <input
+                          type="checkbox"
+                          checked={selectedNotificationIds.includes(
+                            notification.id,
+                          )}
+                          onChange={() =>
+                            toggleSelectNotification(notification.id)
+                          }
+                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+
+                        {/* Notification Content */}
+                        <div
+                          className="flex-1 cursor-pointer"
+                          onClick={() => handleNotificationClick(notification)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-2 flex-1">
+                              <span className="text-xl">
+                                {getNotificationIcon(notification.type)}
+                              </span>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {notification.subject}
+                                </p>
+                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                  {notification.message}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {formatNotificationDate(
+                                    notification.createdAt,
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            {notification.status === "UNREAD" && (
+                              <span className="inline-block w-2 h-2 bg-blue-600 rounded-full ml-2 mt-1"></span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Notification Details Modal */}
+      {showNotificationModal && (
         <Modal
           isOpen={showNotificationModal}
           onClose={() => {
