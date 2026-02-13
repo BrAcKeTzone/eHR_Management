@@ -13,6 +13,7 @@ import Pagination from "../../components/Pagination";
 import ApplicationHistoryModal from "../../components/ApplicationHistoryModal";
 import { formatDate } from "../../utils/formatDate";
 import userApi from "../../api/userApi";
+import { specializationApi } from "../../api/specializationApi";
 
 const UserManagement = () => {
   const { user: currentUser } = useAuthStore();
@@ -51,6 +52,7 @@ const UserManagement = () => {
 
   const [filters, setFilters] = useState({
     role: "",
+    specialization: "",
     search: "",
     page: 1,
     limit: 10,
@@ -61,6 +63,10 @@ const UserManagement = () => {
   // Separate state for search input to avoid triggering API calls on every keystroke
   const [searchInput, setSearchInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+
+  // Specializations state
+  const [specializations, setSpecializations] = useState([]);
+  const [loadingSpecializations, setLoadingSpecializations] = useState(false);
 
   const [newUserData, setNewUserData] = useState({
     firstName: "",
@@ -78,6 +84,7 @@ const UserManagement = () => {
   useEffect(() => {
     loadUsers();
     loadStats();
+    loadSpecializations();
   }, []);
 
   // Debounced search effect
@@ -99,6 +106,7 @@ const UserManagement = () => {
     loadUsers();
   }, [
     filters.role,
+    filters.specialization,
     filters.page,
     filters.limit,
     filters.sortBy,
@@ -112,6 +120,9 @@ const UserManagement = () => {
         page: filters.page,
         limit: filters.limit,
         ...(filters.role && { role: filters.role }),
+        ...(filters.specialization && {
+          specialization: filters.specialization,
+        }),
         ...(filters.search &&
           filters.search.trim() && { search: filters.search.trim() }),
         sortBy: filters.sortBy,
@@ -130,6 +141,19 @@ const UserManagement = () => {
       setUserStats(statsData);
     } catch (error) {
       console.error("Failed to load user stats:", error);
+    }
+  };
+
+  const loadSpecializations = async () => {
+    try {
+      setLoadingSpecializations(true);
+      const response = await specializationApi.getSpecializations();
+      setSpecializations(response.data || []);
+    } catch (error) {
+      console.error("Failed to load specializations:", error);
+      setSpecializations([]);
+    } finally {
+      setLoadingSpecializations(false);
     }
   };
 
@@ -336,7 +360,7 @@ const UserManagement = () => {
       cell: (row) => (
         <span
           className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(
-            row.role
+            row.role,
           )}`}
         >
           {getRoleDisplayName(row.role)}
@@ -461,20 +485,58 @@ const UserManagement = () => {
 
       {/* Filters */}
       <DashboardCard title="Filter Users" className="mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Role
-            </label>
-            <select
-              value={filters.role}
-              onChange={(e) => handleFilterChange({ role: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Roles</option>
-              <option value="HR">Human Resources</option>
-              <option value="APPLICANT">Applicant</option>
-            </select>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="flex flex-col space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Role
+              </label>
+              <select
+                value={filters.role}
+                onChange={(e) =>
+                  handleFilterChange({
+                    role: e.target.value,
+                    specialization:
+                      e.target.value === "APPLICANT"
+                        ? filters.specialization
+                        : "",
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Roles</option>
+                <option value="HR">Human Resources</option>
+                <option value="APPLICANT">Applicant</option>
+              </select>
+            </div>
+
+            {filters.role === "APPLICANT" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Specialization
+                </label>
+                <select
+                  value={filters.specialization}
+                  onChange={(e) =>
+                    handleFilterChange({ specialization: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loadingSpecializations}
+                >
+                  <option value="">All Specializations</option>
+                  {specializations.map((spec) => (
+                    <option key={spec.id} value={spec.id}>
+                      {spec.name}
+                    </option>
+                  ))}
+                </select>
+                {loadingSpecializations && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Loading specializations...
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="relative">
@@ -530,6 +592,7 @@ const UserManagement = () => {
             onClick={() => {
               setFilters({
                 role: "",
+                specialization: "",
                 search: "",
                 page: 1,
                 limit: 10,
@@ -548,7 +611,9 @@ const UserManagement = () => {
       {/* Users Table */}
       <DashboardCard
         title={`Users (${totalCount || 0})${
-          filters.search || filters.role ? " - Filtered" : ""
+          filters.search || filters.role || filters.specialization
+            ? " - Filtered"
+            : ""
         }`}
       >
         {users && users.length > 0 ? (
@@ -580,7 +645,7 @@ const UserManagement = () => {
                     <div className="flex flex-col items-end space-y-1">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(
-                          user.role
+                          user.role,
                         )}`}
                       >
                         {getRoleDisplayName(user.role)}
@@ -643,28 +708,31 @@ const UserManagement = () => {
               {loading || isSearching
                 ? "Loading users..."
                 : filters.search
-                ? `No users found matching "${filters.search}"`
-                : "No users found matching your criteria."}
+                  ? `No users found matching "${filters.search}"`
+                  : "No users found matching your criteria."}
             </p>
-            {!loading && !isSearching && (filters.search || filters.role) && (
-              <Button
-                onClick={() => {
-                  setFilters({
-                    role: "",
-                    search: "",
-                    page: 1,
-                    limit: 10,
-                    sortBy: "createdAt",
-                    sortOrder: "desc",
-                  });
-                  setSearchInput("");
-                }}
-                variant="outline"
-                className="mt-3"
-              >
-                Clear Filters
-              </Button>
-            )}
+            {!loading &&
+              !isSearching &&
+              (filters.search || filters.role || filters.specialization) && (
+                <Button
+                  onClick={() => {
+                    setFilters({
+                      role: "",
+                      specialization: "",
+                      search: "",
+                      page: 1,
+                      limit: 10,
+                      sortBy: "createdAt",
+                      sortOrder: "desc",
+                    });
+                    setSearchInput("");
+                  }}
+                  variant="outline"
+                  className="mt-3"
+                >
+                  Clear Filters
+                </Button>
+              )}
           </div>
         )}
       </DashboardCard>

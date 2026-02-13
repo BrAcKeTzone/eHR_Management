@@ -35,7 +35,9 @@ exports.getNotifications = (0, asyncHandler_1.default)(async (req, res) => {
             status: client_1.NotificationStatus.UNREAD,
         },
     });
-    res.status(200).json(new ApiResponse_1.default(200, { notifications, unreadCount }, "Notifications retrieved successfully"));
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, { notifications, unreadCount }, "Notifications retrieved successfully"));
 });
 // Get a single notification by ID
 exports.getNotificationById = (0, asyncHandler_1.default)(async (req, res) => {
@@ -45,7 +47,9 @@ exports.getNotificationById = (0, asyncHandler_1.default)(async (req, res) => {
         where: { id: notificationId },
     });
     if (!notification) {
-        res.status(404).json(new ApiResponse_1.default(404, null, "Notification not found"));
+        res
+            .status(404)
+            .json(new ApiResponse_1.default(404, null, "Notification not found"));
         return;
     }
     // Check if user has permission to view this notification
@@ -61,7 +65,9 @@ exports.getNotificationById = (0, asyncHandler_1.default)(async (req, res) => {
             return;
         }
     }
-    res.status(200).json(new ApiResponse_1.default(200, notification, "Notification retrieved successfully"));
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, notification, "Notification retrieved successfully"));
 });
 // Mark a notification as read
 exports.markAsRead = (0, asyncHandler_1.default)(async (req, res) => {
@@ -91,7 +97,9 @@ exports.markAsRead = (0, asyncHandler_1.default)(async (req, res) => {
         where: { id: notificationId },
         data: { status: client_1.NotificationStatus.READ },
     });
-    res.status(200).json(new ApiResponse_1.default(200, updatedNotification, "Notification marked as read"));
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, updatedNotification, "Notification marked as read"));
 });
 // Mark all notifications as read
 exports.markAllAsRead = (0, asyncHandler_1.default)(async (req, res) => {
@@ -108,14 +116,18 @@ exports.markAllAsRead = (0, asyncHandler_1.default)(async (req, res) => {
         where: whereClause,
         data: { status: client_1.NotificationStatus.READ },
     });
-    res.status(200).json(new ApiResponse_1.default(200, { count: result.count }, "All notifications marked as read"));
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, { count: result.count }, "All notifications marked as read"));
 });
 // Delete notifications
 exports.deleteNotifications = (0, asyncHandler_1.default)(async (req, res) => {
     const requestingUser = req.user;
     const { ids } = req.body; // Array of notification IDs to delete
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
-        res.status(400).json(new ApiResponse_1.default(400, null, "Invalid notification IDs"));
+        res
+            .status(400)
+            .json(new ApiResponse_1.default(400, null, "Invalid notification IDs"));
         return;
     }
     // Get notifications to verify permissions
@@ -126,13 +138,17 @@ exports.deleteNotifications = (0, asyncHandler_1.default)(async (req, res) => {
     for (const notification of notifications) {
         if (requestingUser.role === "HR" || requestingUser.role === "ADMIN") {
             if (notification.type !== "hr_alert") {
-                res.status(403).json(new ApiResponse_1.default(403, null, "Access denied for some notifications"));
+                res
+                    .status(403)
+                    .json(new ApiResponse_1.default(403, null, "Access denied for some notifications"));
                 return;
             }
         }
         else {
             if (notification.email !== requestingUser.email) {
-                res.status(403).json(new ApiResponse_1.default(403, null, "Access denied for some notifications"));
+                res
+                    .status(403)
+                    .json(new ApiResponse_1.default(403, null, "Access denied for some notifications"));
                 return;
             }
         }
@@ -140,6 +156,8 @@ exports.deleteNotifications = (0, asyncHandler_1.default)(async (req, res) => {
     const result = await prisma_1.default.notification.deleteMany({
         where: { id: { in: ids } },
     });
-    res.status(200).json(new ApiResponse_1.default(200, { count: result.count }, "Notifications deleted successfully"));
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, { count: result.count }, "Notifications deleted successfully"));
 });
 //# sourceMappingURL=notifications.controller.js.map

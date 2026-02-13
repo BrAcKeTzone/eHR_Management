@@ -32,13 +32,16 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const notificationsController = __importStar(require("./notifications.controller"));
-const auth_middleware_1 = require("../../middlewares/auth.middleware");
+const auth_middleware_1 = __importDefault(require("../../middlewares/auth.middleware"));
 const router = (0, express_1.Router)();
 // All routes require authentication
-router.use(auth_middleware_1.authenticateToken);
+router.use(auth_middleware_1.default);
 // Mark all notifications as read (must come before :id routes)
 router.patch("/mark-all-read", notificationsController.markAllAsRead);
 // Get all notifications for the current user
