@@ -68,10 +68,22 @@ class ApplicationService {
             : 1;
         const application = await prisma_1.default.application.create({
             data: {
-                ...data,
+                documents: data.documents,
                 applicantId: applicantId,
+                specializationId: data.specializationId
+                    ? Number(data.specializationId)
+                    : undefined,
                 attemptNumber,
                 status: client_1.ApplicationStatus.PENDING,
+                // Save additional fields
+                program: data.program,
+                subjectSpecialization: data.subjectSpecialization,
+                educationalBackground: data.educationalBackground,
+                teachingExperience: data.teachingExperience,
+                motivation: data.motivation,
+            },
+            include: {
+                specialization: true,
             },
         });
         // Get applicant details for notifications
@@ -112,6 +124,19 @@ class ApplicationService {
         const applications = await prisma_1.default.application.findMany({
             where: { applicantId: id },
             orderBy: { attemptNumber: "desc" },
+            include: {
+                specialization: true,
+                applicant: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                        phone: true,
+                        profilePicture: true,
+                    },
+                },
+            },
         });
         return applications.map((app) => formatApplicationForFrontend(app));
     }
@@ -157,6 +182,7 @@ class ApplicationService {
                             phone: true,
                         },
                     },
+                    specialization: true,
                 },
                 orderBy: { createdAt: "desc" },
                 skip: (page - 1) * limit,
@@ -241,6 +267,11 @@ class ApplicationService {
         const enforcedDuration = 60;
         // Determine whether this is an initial schedule or a reschedule
         const isReschedule = !!application.demoSchedule;
+        // Prevent scheduling/rescheduling if a demo result already exists (i.e., scored and finalized).
+        // Having a raw totalScore without a result should not prevent re-scheduling.
+        if (application.result) {
+            throw new ApiError_1.default(400, "Cannot schedule or reschedule demo for an application that already has a demo result");
+        }
         const currentRescheduleCount = application.demoRescheduleCount || 0;
         // If attempting to reschedule and reschedule count already reached 1, prevent further reschedules
         if (isReschedule && currentRescheduleCount >= 1) {
@@ -284,6 +315,10 @@ class ApplicationService {
         const application = await prisma_1.default.application.findUnique({ where: { id } });
         if (!application) {
             throw new ApiError_1.default(404, "Application not found");
+        }
+        // Prevent scheduling/rescheduling if interview result already exists
+        if (application.interviewResult) {
+            throw new ApiError_1.default(400, "Cannot schedule or reschedule interview for an application that already has an interview result");
         }
         // Require application to be interviewEligible or have passing score
         const appAny = application;
@@ -347,12 +382,16 @@ class ApplicationService {
         // When a score is submitted and result is PASS with a score >= 75,
         // mark the application as interviewEligible so it can appear in the Interview Scheduling queue.
         const interviewEligible = totalScore >= 75;
-        return await this.updateApplication(id, {
-            status: client_1.ApplicationStatus.COMPLETED,
+        const updateData = {
             totalScore,
             result: result,
             interviewEligible,
-        });
+        };
+        // If demo failed, mark the application as REJECTED
+        if ((result || "").toUpperCase() === "FAIL") {
+            updateData.status = client_1.ApplicationStatus.REJECTED;
+        }
+        return await this.updateApplication(id, updateData);
     }
     async rateInterview(id, interviewScore, interviewResult, interviewNotes) {
         const application = await prisma_1.default.application.findUnique({ where: { id } });
@@ -367,12 +406,22 @@ class ApplicationService {
             (interviewScore < 0 || interviewScore > 100)) {
             throw new ApiError_1.default(400, "Interview score must be between 0 and 100");
         }
-        const updatedApplication = await this.updateApplication(id, {
+        const updateData = {
             ...(interviewScore !== null && { interviewScore }),
             interviewResult: interviewResult,
             interviewNotes,
-            status: client_1.ApplicationStatus.COMPLETED,
-        });
+        };
+        // If interview is PASS, mark status as COMPLETED; if FAIL, mark as REJECTED
+        if (interviewResult &&
+            ["PASS", "FAIL"].includes(interviewResult.toUpperCase())) {
+            if (interviewResult.toUpperCase() === "PASS") {
+                updateData.status = client_1.ApplicationStatus.COMPLETED;
+            }
+            else if (interviewResult.toUpperCase() === "FAIL") {
+                updateData.status = client_1.ApplicationStatus.REJECTED;
+            }
+        }
+        const updatedApplication = await this.updateApplication(id, updateData);
         // Note: Interview result notification can be added when notification service is extended
         // For now, the interview rating is saved successfully
         return updatedApplication;

@@ -113,7 +113,7 @@ exports.completeApplicationScoring = (0, asyncHandler_1.default)(async (req, res
     }
     const { applicationId } = req.params;
     const application = await scoring_service_1.default.completeApplicationScoring(parseInt(applicationId));
-    res.json(new ApiResponse_1.default(200, application, "Application scoring completed successfully"));
+    res.json(new ApiResponse_1.default(200, application, "Application scoring saved successfully"));
 });
 exports.getApplicationScoresSummary = (0, asyncHandler_1.default)(async (req, res) => {
     const { applicationId } = req.params;

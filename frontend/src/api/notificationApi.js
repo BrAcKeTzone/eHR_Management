@@ -1,61 +1,39 @@
 import { fetchClient } from "../utils/fetchClient";
 
 /**
- * IMPORTANT: The backend does NOT have REST API endpoints for notifications.
- * Notifications are sent automatically via email by the backend notification service.
- * This file is kept for potential future expansion or client-side notification management.
- *
- * For now, notifications are handled entirely server-side:
- * - Application submission → emails sent automatically
- * - Application approval → emails sent automatically
- * - Application rejection → emails sent automatically
- * - Demo scheduling → emails sent automatically
- * - Results → emails sent automatically
+ * Notification API
+ * 
+ * Handles all notification-related operations including:
+ * - Fetching notifications (filtered by user role)
+ * - Marking notifications as read
+ * - Deleting notifications
  */
-
-// Note: These functions are placeholders and will return empty data
-// since there are no actual backend endpoints for these operations
 
 const API_BASE = "/api/notifications";
 
 export const notificationApi = {
-  // Placeholder: Backend sends emails automatically, no API needed
+  // Get all notifications for the current user
   getUserNotifications: async () => {
-    console.warn(
-      "Notifications are sent via email by backend, no API endpoint available"
-    );
-    return { data: [] };
+    return await fetchClient.get(API_BASE);
   },
 
-  // Placeholder
+  // Get a single notification by ID
+  getNotificationById: async (notificationId) => {
+    return await fetchClient.get(`${API_BASE}/${notificationId}`);
+  },
+
+  // Mark a notification as read
   markAsRead: async (notificationId) => {
-    console.warn(
-      "Notifications are sent via email by backend, no API endpoint available"
-    );
-    return { data: null };
+    return await fetchClient.patch(`${API_BASE}/${notificationId}/read`);
   },
 
-  // Placeholder
+  // Mark all notifications as read
   markAllAsRead: async () => {
-    console.warn(
-      "Notifications are sent via email by backend, no API endpoint available"
-    );
-    return { data: null };
+    return await fetchClient.patch(`${API_BASE}/mark-all-read`);
   },
 
-  // Placeholder
-  deleteNotification: async (notificationId) => {
-    console.warn(
-      "Notifications are sent via email by backend, no API endpoint available"
-    );
-    return { data: null };
-  },
-
-  // Placeholder
-  getUnreadCount: async () => {
-    console.warn(
-      "Notifications are sent via email by backend, no API endpoint available"
-    );
-    return { data: { count: 0 } };
+  // Delete multiple notifications
+  deleteNotifications: async (ids) => {
+    return await fetchClient.delete(API_BASE, { data: { ids } });
   },
 };

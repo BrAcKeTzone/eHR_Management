@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const client_1 = require("@prisma/client");
 const prisma_1 = __importDefault(require("../../configs/prisma"));
 const ApiError_1 = __importDefault(require("../../utils/ApiError"));
 const notifications_service_1 = __importDefault(require("../notifications/notifications.service"));
@@ -189,14 +190,22 @@ class ScoringService {
     async completeApplicationScoring(applicationId) {
         const calculation = await this.calculateApplicationScore(applicationId);
         // Update application with calculated scores and mark as completed
+        const updateData = {
+            totalScore: calculation.percentage, // Store as percentage
+            result: calculation.result,
+            updatedAt: new Date(),
+        };
+        // Mark as REJECTED if demo result is FAIL; do not mark as COMPLETED on demo PASS
+        if ((calculation.result || "").toUpperCase() === "FAIL") {
+            updateData.status = client_1.ApplicationStatus.REJECTED;
+        }
+        // If demo passed, mark as interview eligible
+        if ((calculation.result || "").toUpperCase() === "PASS") {
+            updateData.interviewEligible = true;
+        }
         const application = await prisma_1.default.application.update({
             where: { id: applicationId },
-            data: {
-                totalScore: calculation.percentage, // Store as percentage
-                result: calculation.result,
-                status: "COMPLETED",
-                updatedAt: new Date(),
-            },
+            data: updateData,
         });
         // Get applicant details for notification
         const applicant = await prisma_1.default.user.findUnique({

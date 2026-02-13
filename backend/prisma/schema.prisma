@@ -31,6 +31,11 @@ enum ApplicationResult {
   FAIL
 }
 
+enum NotificationStatus {
+  UNREAD
+  READ
+}
+
 // AUTHENTICATION & USER MANAGEMENT
 model User {
   id              Int      @id @default(autoincrement())
@@ -132,7 +137,8 @@ model Notification {
   email       String
   subject     String
   message     String   @db.Text
-  type        String   // "submission", "approval", "rejection", "schedule", "result"
+  type        String   // "submission", "approval", "rejection", "schedule", "result", "hr_alert"
+  status      NotificationStatus @default(UNREAD)
   sentAt      DateTime @default(now())
   
   applicationId Int?
@@ -140,6 +146,7 @@ model Notification {
   createdAt DateTime @default(now())
   
   @@index([email])
+  @@index([status])
 }
 
 // OTP

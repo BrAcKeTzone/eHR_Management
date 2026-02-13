@@ -1,14 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useNotificationStore } from "../store/notificationStore";
 import Button from "./Button";
 import Modal from "./Modal";
 
 const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotifications,
+    selectedNotificationIds,
+    toggleSelectNotification,
+    clearSelection,
+  } = useNotificationStore();
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -19,6 +36,20 @@ const Navbar = ({ onMenuClick }) => {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch notifications when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+      
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(() => {
+        fetchNotifications();
+      }, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, fetchNotifications]);
 
   const handleLogoutClick = () => {
     setShowLogoutModal(true);
@@ -39,6 +70,63 @@ const Navbar = ({ onMenuClick }) => {
 
   const handleCancelLogout = () => {
     setShowLogoutModal(false);
+  };
+
+  const handleNotificationClick = async (notification) => {
+    setSelectedNotification(notification);
+    setShowNotificationModal(true);
+    
+    // Mark as read
+    if (notification.status === "UNREAD") {
+      await markAsRead(notification.id);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedNotificationIds.length === 0) return;
+    
+    await deleteNotifications(selectedNotificationIds);
+    clearSelection();
+  };
+
+  const formatNotificationDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInMins = Math.floor(diffInMs / 60000);
+    const diffInHours = Math.floor(diffInMs / 3600000);
+    const diffInDays = Math.floor(diffInMs / 86400000);
+
+    if (diffInMins < 1) return "Just now";
+    if (diffInMins < 60) return `${diffInMins}m ago`;
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    
+    return date.toLocaleDateString();
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case "submission":
+        return "📝";
+      case "approval":
+        return "✅";
+      case "rejection":
+        return "❌";
+      case "schedule":
+      case "reschedule":
+        return "📅";
+      case "result":
+        return "📊";
+      case "hr_alert":
+        return "🔔";
+      default:
+        return "📬";
+    }
   };
 
   const getRoleDisplayName = (role) => {
@@ -133,6 +221,145 @@ const Navbar = ({ onMenuClick }) => {
                   </span>
                 </div>
                 <span className="text-xs text-gray-400">{user?.email}</span>
+              </div>
+
+              {/* Notification Icon */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsNotificationPanelOpen(!isNotificationPanelOpen)}
+                  className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  title="Notifications"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                  {/* Unread counter badge */}
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full min-w-[1.25rem]">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notification Panel */}
+                {isNotificationPanelOpen && (
+                  <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[32rem] flex flex-col">
+                    {/* Panel Header */}
+                    <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50 rounded-t-lg">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Notifications
+                      </h3>
+                      <div className="flex items-center space-x-2">
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAllAsRead}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            Mark all as read
+                          </button>
+                        )}
+                        {selectedNotificationIds.length > 0 && (
+                          <button
+                            onClick={handleDeleteSelected}
+                            className="text-xs text-red-600 hover:text-red-800 font-medium"
+                          >
+                            Delete ({selectedNotificationIds.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Notifications List */}
+                    <div className="overflow-y-auto flex-1">
+                      {loading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                            />
+                          </svg>
+                          <p className="mt-2">No notifications</p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-gray-200">
+                          {notifications.map((notification) => (
+                            <div
+                              key={notification.id}
+                              className={`px-4 py-3 hover:bg-gray-50 transition-colors ${
+                                notification.status === "UNREAD" ? "bg-blue-50" : ""
+                              }`}
+                            >
+                              <div className="flex items-start space-x-3">
+                                {/* Checkbox */}
+                                <input
+                                  type="checkbox"
+                                  checked={selectedNotificationIds.includes(
+                                    notification.id
+                                  )}
+                                  onChange={() =>
+                                    toggleSelectNotification(notification.id)
+                                  }
+                                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+
+                                {/* Notification Content */}
+                                <div
+                                  className="flex-1 cursor-pointer"
+                                  onClick={() => handleNotificationClick(notification)}
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex items-start space-x-2 flex-1">
+                                      <span className="text-xl">
+                                        {getNotificationIcon(notification.type)}
+                                      </span>
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-900">
+                                          {notification.subject}
+                                        </p>
+                                        <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                          {notification.message}
+                                        </p>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                          {formatNotificationDate(notification.createdAt)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    {notification.status === "UNREAD" && (
+                                      <span className="inline-block w-2 h-2 bg-blue-600 rounded-full ml-2 mt-1"></span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* User avatar */}
@@ -261,6 +488,81 @@ const Navbar = ({ onMenuClick }) => {
           className="fixed inset-0 z-40"
           onClick={() => setIsMenuOpen(false)}
         ></div>
+      )}
+
+      {/* Click outside to close notification panel */}
+      {isNotificationPanelOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsNotificationPanelOpen(false)}
+        ></div>
+      )}
+
+      {/* Notification Detail Modal */}
+      {showNotificationModal && selectedNotification && (
+        <Modal
+          isOpen={showNotificationModal}
+          onClose={() => {
+            setShowNotificationModal(false);
+            setSelectedNotification(null);
+          }}
+          title="Notification Details"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
+              <span className="text-3xl">
+                {getNotificationIcon(selectedNotification.type)}
+              </span>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {selectedNotification.subject}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {formatNotificationDate(selectedNotification.createdAt)} •{" "}
+                  {new Date(selectedNotification.createdAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <div className="prose max-w-none">
+              <p className="text-gray-700 whitespace-pre-wrap">
+                {selectedNotification.message}
+              </p>
+            </div>
+
+            {selectedNotification.applicationId && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">Application ID:</span>{" "}
+                  {selectedNotification.applicationId}
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                  selectedNotification.status === "UNREAD"
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {selectedNotification.status}
+              </span>
+              
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowNotificationModal(false);
+                  setSelectedNotification(null);
+                }}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Logout Confirmation Modal */}

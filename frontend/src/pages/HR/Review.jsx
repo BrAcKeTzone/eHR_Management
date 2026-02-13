@@ -168,30 +168,49 @@ const ApplicationReview = () => {
       header: "Actions",
       accessor: "actions",
       cell: (row) => (
-        <div className="flex space-x-2">
+        <div className="grid grid-cols-2 gap-2">
           <Button
             onClick={() => setSelectedApplication(row)}
             variant="outline"
             size="sm"
+            className="text-xs"
           >
             View
           </Button>
           {row.status === APPLICATION_STATUS.PENDING && (
             <>
               <Button
-                onClick={() => openDecisionModal(row, "approved")}
+                onClick={() => {}}
                 variant="primary"
                 size="sm"
+                className="text-xs"
+              >
+                Acknowledge
+              </Button>
+              <Button
+                onClick={() => openDecisionModal(row, "approved")}
+                variant="success"
+                size="sm"
+                className="text-xs"
               >
                 Approve
               </Button>
               <Button
+                onClick={() => {}}
+                variant="secondary"
+                size="sm"
+                className="text-xs"
+              >
+                Pending for Evaluation
+              </Button>
+              {/* <Button
                 onClick={() => openDecisionModal(row, "rejected")}
                 variant="danger"
                 size="sm"
+                className="text-xs"
               >
                 Reject
-              </Button>
+              </Button> */}
             </>
           )}
         </div>
@@ -289,33 +308,49 @@ const ApplicationReview = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
                       onClick={() => setSelectedApplication(app)}
                       variant="outline"
                       size="sm"
-                      className="flex-1 min-w-0"
+                      className="text-xs"
                     >
                       View
                     </Button>
                     {app.status === APPLICATION_STATUS.PENDING && (
                       <>
                         <Button
-                          onClick={() => openDecisionModal(app, "approved")}
+                          onClick={() => {}}
                           variant="primary"
                           size="sm"
-                          className="flex-1 min-w-0"
+                          className="text-xs"
+                        >
+                          Acknowledge
+                        </Button>
+                        <Button
+                          onClick={() => openDecisionModal(app, "approved")}
+                          variant="success"
+                          size="sm"
+                          className="text-xs"
                         >
                           Approve
                         </Button>
                         <Button
+                          onClick={() => {}}
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          Pending for Evaluation
+                        </Button>
+                        {/* <Button
                           onClick={() => openDecisionModal(app, "rejected")}
                           variant="danger"
                           size="sm"
-                          className="flex-1 min-w-0"
+                          className="text-xs"
                         >
                           Reject
-                        </Button>
+                        </Button> */}
                       </>
                     )}
                   </div>

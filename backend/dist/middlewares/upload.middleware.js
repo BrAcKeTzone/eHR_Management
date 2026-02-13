@@ -45,9 +45,9 @@ const formatFileName = (documentType, lastName, firstName, timestamp, extension)
     // Clean names - remove special characters and spaces
     const cleanLastName = lastName.replace(/[^a-zA-Z0-9]/g, "");
     const cleanFirstName = firstName.replace(/[^a-zA-Z0-9]/g, "");
-    // Format: DocumentType_LastNameFirstName_DateTime
+    // Format: DocumentType_LastNameFirstName_DateTime.extension
     const dateTime = new Date(timestamp).toISOString().replace(/[:.]/g, "-");
-    return `${documentType}_${cleanLastName}${cleanFirstName}_${dateTime}`;
+    return `${documentType}_${cleanLastName}${cleanFirstName}_${dateTime}.${extension}`;
 };
 // Helper function to determine document type from fieldname or filename
 const getDocumentType = (req, fileIndex, fieldname, originalname) => {
@@ -84,6 +84,27 @@ const getDocumentType = (req, fileIndex, fieldname, originalname) => {
         return "Resume";
     if (fieldname.includes("applicationLetter") || fieldname.includes("letter"))
         return "ApplicationLetter";
+    // Pre-employment mappings
+    if (fieldname === "photo2x2")
+        return "IDPicture";
+    if (fieldname === "coe")
+        return "COE";
+    if (fieldname === "marriageContract")
+        return "MarriageContract";
+    if (fieldname === "prcLicense")
+        return "PRCLicense";
+    if (fieldname === "civilService")
+        return "CivilServiceEligibility";
+    if (fieldname === "mastersUnits")
+        return "MastersUnits";
+    if (fieldname === "car")
+        return "CAR";
+    if (fieldname === "tor")
+        return "TOR";
+    if (fieldname === "certificates")
+        return "Certificate";
+    if (fieldname === "tesdaFiles")
+        return "TESDACertificate";
     // Extract from filename if available
     const lowerName = originalname.toLowerCase();
     if (lowerName.includes("resume") || lowerName.includes("cv"))
@@ -122,10 +143,19 @@ const storage = new multer_storage_cloudinary_1.CloudinaryStorage({
         // Get file extension
         const extension = file.originalname.split(".").pop() || "pdf";
         // Generate formatted filename
-        const formattedName = formatFileName(documentType, lastName, firstName, timestamp, extension);
+        let formattedName = formatFileName(documentType, lastName, firstName, timestamp, extension);
+        // Append index for multiple files (like TESDA) to prevent potential overwrites
+        if (documentType === "TESDACertificate" ||
+            Array.isArray(req.files) ||
+            (req.files &&
+                req.files[file.fieldname] &&
+                req.files[file.fieldname].length > 1)) {
+            formattedName += `_${req.fileIndex}`;
+        }
         // Determine resource type based on mimetype
         let resourceType = "raw";
-        if (file.mimetype.startsWith("image/")) {
+        if (file.mimetype.startsWith("image/") ||
+            file.mimetype === "application/pdf") {
             resourceType = "image";
         }
         else if (file.mimetype.startsWith("video/")) {
@@ -138,9 +168,10 @@ const storage = new multer_storage_cloudinary_1.CloudinaryStorage({
             applicant: `${firstName} ${lastName}`,
             mimetype: file.mimetype,
             resourceType: resourceType,
+            folder: req.uploadFolder || "hr-applications/applicants-attachments",
         });
         return {
-            folder: "hr-applications/applicants-attachments", // Folder in Cloudinary for applicant documents
+            folder: req.uploadFolder || "hr-applications/applicants-attachments", // Folder in Cloudinary for applicant documents
             public_id: formattedName,
             resource_type: resourceType, // Use determined resource type instead of auto
             // Don't specify allowed_formats - let Cloudinary handle all formats for the resource type
@@ -175,13 +206,13 @@ const upload = (0, multer_1.default)({
 // Middleware for multiple file uploads (up to 10 files)
 exports.uploadDocuments = upload.array("documents", 10);
 // File filter specifically for applicant application documents (PDF, JPG/JPEG, PNG only)
-const applicationAllowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+const applicationAllowedTypes = ["application/pdf"];
 const applicationFileFilter = (req, file, cb) => {
     if (applicationAllowedTypes.includes(file.mimetype)) {
         cb(null, true);
     }
     else {
-        cb(new Error(`File type ${file.mimetype} is not allowed. Only PDF, JPG and PNG files are permitted.`), false);
+        cb(new Error(`File type ${file.mimetype} is not allowed. Only PDF files are permitted.`), false);
     }
 };
 const applicationUpload = (0, multer_1.default)({

@@ -49,8 +49,21 @@ const getAllUsers = async (options = {}) => {
     const { page = 1, limit = 10, role, search, sortBy = "createdAt", sortOrder = "desc", } = options;
     const skip = (page - 1) * limit;
     // Only allow valid sort fields
-    const validSortFields = ["name", "email", "role", "createdAt"];
-    const sortField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const validSortFields = [
+        "firstName",
+        "lastName",
+        "name",
+        "email",
+        "role",
+        "createdAt",
+    ];
+    let sortField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+    // Map firstName, lastName, and name to lastName for name sorting (standard practice)
+    if (sortField === "firstName" ||
+        sortField === "lastName" ||
+        sortField === "name") {
+        sortField = "lastName";
+    }
     // Build where clause
     const where = {};
     if (role) {
@@ -61,7 +74,12 @@ const getAllUsers = async (options = {}) => {
         const searchLower = search.toLowerCase();
         where.OR = [
             {
-                name: {
+                firstName: {
+                    contains: searchLower,
+                },
+            },
+            {
+                lastName: {
                     contains: searchLower,
                 },
             },
@@ -75,12 +93,22 @@ const getAllUsers = async (options = {}) => {
     try {
         // Get total count for pagination
         const totalCount = await prisma.user.count({ where });
+        // Build order by clause
+        let orderByClause;
+        if (sortField === "lastName") {
+            // When sorting by name, sort by lastName then firstName
+            orderByClause = [{ lastName: sortOrder }, { firstName: sortOrder }];
+        }
+        else {
+            // For other fields, sort normally
+            orderByClause = { [sortField]: sortOrder };
+        }
         // Get users
         const users = await prisma.user.findMany({
             where,
             skip,
             take: limit,
-            orderBy: { [sortField]: sortOrder },
+            orderBy: orderByClause,
             select: {
                 id: true,
                 email: true,

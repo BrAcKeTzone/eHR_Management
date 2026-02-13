@@ -9,6 +9,40 @@ const applications_service_1 = __importDefault(require("./applications.service")
 const ApiResponse_1 = __importDefault(require("../../utils/ApiResponse"));
 const ApiError_1 = __importDefault(require("../../utils/ApiError"));
 const asyncHandler_1 = __importDefault(require("../../utils/asyncHandler"));
+// Helper function to append .pdf to Cloudinary URLs if missing and it's a PDF document
+const ensurePdfExtension = (url) => {
+    if (!url || typeof url !== "string")
+        return url;
+    if (url.includes("cloudinary.com") &&
+        !url.toLowerCase().endsWith(".pdf") &&
+        !url.toLowerCase().endsWith(".png") &&
+        !url.toLowerCase().endsWith(".jpg") &&
+        !url.toLowerCase().endsWith(".jpeg")) {
+        return `${url}.pdf`;
+    }
+    return url;
+};
+// Helper function to process application documents JSON
+const processApplicationDocuments = (application) => {
+    if (!application || !application.documents)
+        return application;
+    try {
+        const documents = JSON.parse(application.documents);
+        if (Array.isArray(documents)) {
+            const processed = documents.map((doc) => {
+                if (doc.url) {
+                    doc.url = ensurePdfExtension(doc.url);
+                }
+                return doc;
+            });
+            application.documents = JSON.stringify(processed);
+        }
+    }
+    catch (e) {
+        console.error("Error processing application documents for retrieval:", e);
+    }
+    return application;
+};
 exports.createApplication = (0, asyncHandler_1.default)(async (req, res) => {
     console.log("=== Create Application Request ===");
     console.log("User:", req.user?.id, req.user?.role);
@@ -39,7 +73,12 @@ exports.createApplication = (0, asyncHandler_1.default)(async (req, res) => {
                 : file.originalname;
             // Get file extension from original filename
             const extension = file.originalname.split(".").pop() || "pdf";
-            const fullFormattedName = `${formattedFileName}.${extension}`;
+            // Only append extension if it's not already in the filename
+            const fullFormattedName = formattedFileName
+                .toLowerCase()
+                .endsWith(`.${extension.toLowerCase()}`)
+                ? formattedFileName
+                : `${formattedFileName}.${extension}`;
             return {
                 originalName: file.originalname,
                 fileName: fullFormattedName, // Use formatted name with extension
@@ -69,7 +108,9 @@ exports.getMyApplications = (0, asyncHandler_1.default)(async (req, res) => {
         throw new ApiError_1.default(403, "Only applicants can view their applications");
     }
     const applications = await applications_service_1.default.getApplicationsByApplicant(applicantId);
-    res.json(new ApiResponse_1.default(200, applications, "Applications retrieved successfully"));
+    // Process documents to ensure .pdf extension for retrieval
+    const processedApplications = applications.map((app) => processApplicationDocuments(app));
+    res.json(new ApiResponse_1.default(200, processedApplications, "Applications retrieved successfully"));
 });
 exports.getMyActiveApplication = (0, asyncHandler_1.default)(async (req, res) => {
     const applicantId = req.user.id;
@@ -77,7 +118,9 @@ exports.getMyActiveApplication = (0, asyncHandler_1.default)(async (req, res) =>
         throw new ApiError_1.default(403, "Only applicants can view their applications");
     }
     const application = await applications_service_1.default.getActiveApplicationByApplicant(applicantId);
-    res.json(new ApiResponse_1.default(200, application, "Active application retrieved successfully"));
+    // Process documents for retrieval
+    const processedApplication = processApplicationDocuments(application);
+    res.json(new ApiResponse_1.default(200, processedApplication, "Active application retrieved successfully"));
 });
 exports.getAllApplications = (0, asyncHandler_1.default)(async (req, res) => {
     if (!["HR", "ADMIN"].includes(req.user.role)) {
@@ -102,6 +145,10 @@ exports.getAllApplications = (0, asyncHandler_1.default)(async (req, res) => {
         ...(limit && { limit: parseInt(limit) }),
     };
     const result = await applications_service_1.default.getAllApplications(filters);
+    // Process documents for all applications
+    if (result.applications) {
+        result.applications = result.applications.map((app) => processApplicationDocuments(app));
+    }
     res.json(new ApiResponse_1.default(200, result, "Applications retrieved successfully"));
 });
 exports.getApplicationById = (0, asyncHandler_1.default)(async (req, res) => {
@@ -111,12 +158,14 @@ exports.getApplicationById = (0, asyncHandler_1.default)(async (req, res) => {
     if (!application) {
         throw new ApiError_1.default(404, "Application not found");
     }
+    // Process documents for retrieval
+    const processedApplication = processApplicationDocuments(application);
     // Check access permissions
     if (req.user.role === "APPLICANT" &&
-        application.applicant.id !== req.user.id) {
+        processedApplication.applicant.id !== req.user.id) {
         throw new ApiError_1.default(403, "You can only view your own applications");
     }
-    res.json(new ApiResponse_1.default(200, application, "Application retrieved successfully"));
+    res.json(new ApiResponse_1.default(200, processedApplication, "Application retrieved successfully"));
 });
 exports.approveApplication = (0, asyncHandler_1.default)(async (req, res) => {
     if (!["HR", "ADMIN"].includes(req.user.role)) {
@@ -198,7 +247,6 @@ exports.completeApplication = (0, asyncHandler_1.default)(async (req, res) => {
     const updateData = {
         totalScore: parseFloat(totalScore),
         result: result.toUpperCase(),
-        status: client_1.ApplicationStatus.COMPLETED,
     };
     if (hrNotes) {
         updateData.hrNotes = hrNotes;
@@ -208,8 +256,12 @@ exports.completeApplication = (0, asyncHandler_1.default)(async (req, res) => {
     if (!isNaN(numericScore)) {
         updateData.interviewEligible = numericScore >= 75;
     }
+    // If demo result is FAIL, mark the application as REJECTED. If PASS, keep the application in its current status (e.g., APPROVED), so it can be scheduled for interview.
+    if ((result || "").toUpperCase() === "FAIL") {
+        updateData.status = client_1.ApplicationStatus.REJECTED;
+    }
     const application = await applications_service_1.default.updateApplication(applicationId, updateData);
-    res.json(new ApiResponse_1.default(200, application, "Application completed successfully"));
+    res.json(new ApiResponse_1.default(200, application, "Application scoring saved successfully"));
 });
 exports.rateInterview = (0, asyncHandler_1.default)(async (req, res) => {
     if (!["HR", "ADMIN"].includes(req.user.role)) {

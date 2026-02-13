@@ -32,7 +32,9 @@ exports.getUsersQuery = joi_1.default.object().keys({
     limit: joi_1.default.number().integer().min(1).max(100).optional(),
     role: joi_1.default.string().valid("APPLICANT", "HR").optional(),
     search: joi_1.default.string().optional(),
-    sortBy: joi_1.default.string().valid("name", "email", "role", "createdAt").optional(),
+    sortBy: joi_1.default.string()
+        .valid("firstName", "lastName", "name", "email", "role", "createdAt")
+        .optional(),
     sortOrder: joi_1.default.string().valid("asc", "desc").optional(),
 });
 exports.verifyOtpForDeletion = joi_1.default.object().keys({
