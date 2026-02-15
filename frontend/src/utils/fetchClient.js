@@ -26,7 +26,7 @@ fetchClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor to handle common responses
@@ -70,7 +70,7 @@ fetchClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export { fetchClient };

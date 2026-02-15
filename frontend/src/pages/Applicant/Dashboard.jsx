@@ -72,10 +72,16 @@ const ApplicantDashboard = () => {
     }
   };
 
+  const getAcknowledgedStageName = (application) =>
+    application?.status?.toUpperCase() === "FOR_EVALUATION"
+      ? "For Evaluation"
+      : "Acknowledged";
+
   const getApplicationProgress = (application) => {
+    const acknowledgedStage = getAcknowledgedStageName(application);
     const stages = [
       "Submitted",
-      "Acknowledged",
+      acknowledgedStage,
       "Demo Scheduled",
       "Initial Interview Scheduled",
       "Final Interview Scheduled",
@@ -103,7 +109,7 @@ const ApplicantDashboard = () => {
       application.status?.toUpperCase() === "ACKNOWLEDGED" ||
       application.status?.toUpperCase() === "FOR_EVALUATION"
     ) {
-      currentIndex = stages.indexOf("Acknowledged");
+      currentIndex = stages.indexOf(acknowledgedStage);
     } else {
       currentIndex = 0;
     }
@@ -420,6 +426,8 @@ const ApplicantDashboard = () => {
                     {(() => {
                       const { stages, currentIndex } =
                         getApplicationProgress(currentApplication);
+                      const acknowledgedStage =
+                        getAcknowledgedStageName(currentApplication);
                       const stageWidth = `${100 / stages.length}%`;
                       const demoSchedule =
                         currentApplication.demoSchedule ||
@@ -432,7 +440,7 @@ const ApplicantDashboard = () => {
                           currentApplication.createdAt ||
                           currentApplication.created_at ||
                           currentApplication.submittedAt,
-                        Acknowledged:
+                        [acknowledgedStage]:
                           currentApplication.status?.toUpperCase() !== "PENDING"
                             ? currentApplication.updatedAt ||
                               currentApplication.updated_at
@@ -486,6 +494,8 @@ const ApplicantDashboard = () => {
                   {(() => {
                     const { stages, currentIndex } =
                       getApplicationProgress(currentApplication);
+                    const acknowledgedStage =
+                      getAcknowledgedStageName(currentApplication);
                     const demoSchedule =
                       currentApplication.demoSchedule ||
                       currentApplication.demo_schedule;
@@ -497,7 +507,7 @@ const ApplicantDashboard = () => {
                         currentApplication.createdAt ||
                         currentApplication.created_at ||
                         currentApplication.submittedAt,
-                      Acknowledged:
+                      [acknowledgedStage]:
                         currentApplication.status?.toUpperCase() !== "PENDING"
                           ? currentApplication.updatedAt ||
                             currentApplication.updated_at

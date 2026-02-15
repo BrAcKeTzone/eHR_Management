@@ -117,7 +117,7 @@ export const useAuthStore = create(
           const response = await authApi.verifyLoginOtp(
             loginData.email,
             otp,
-            finalRole
+            finalRole,
           );
 
           // Extract user and token from response
@@ -371,7 +371,7 @@ export const useAuthStore = create(
           // Call backend API
           const response = await authApi.verifyOtpForReset(
             forgotPasswordData.email,
-            otp
+            otp,
           );
 
           set({
@@ -408,7 +408,7 @@ export const useAuthStore = create(
           const response = await authApi.resetPassword(
             forgotPasswordData.email,
             forgotPasswordData.otp,
-            passwordData.newPassword
+            passwordData.newPassword,
           );
 
           set({
@@ -548,7 +548,7 @@ export const useAuthStore = create(
           // Call backend API
           const response = await authApi.sendOtpForChange(
             user.email,
-            currentPassword
+            currentPassword,
           );
 
           set({
@@ -590,7 +590,7 @@ export const useAuthStore = create(
             user.email,
             currentPassword,
             otp,
-            newPassword
+            newPassword,
           );
 
           // Update user state with password change timestamp
@@ -709,7 +709,7 @@ export const useAuthStore = create(
             // If API call fails, fall back to JWT decoding for basic validation
             console.warn(
               "Failed to fetch user from API, falling back to JWT decode:",
-              apiError
+              apiError,
             );
 
             try {
@@ -722,7 +722,7 @@ export const useAuthStore = create(
 
               // Only use static data as absolute fallback
               const user = usersData.find(
-                (u) => u.id === payload.id.toString()
+                (u) => u.id === payload.id.toString(),
               );
 
               if (!user) {
@@ -793,6 +793,6 @@ export const useAuthStore = create(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+    },
+  ),
 );

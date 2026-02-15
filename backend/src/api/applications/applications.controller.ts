@@ -403,6 +403,7 @@ export const completeApplication = asyncHandler(
       totalScore, // deprecated; kept for backward compatibility
       result: resultFromBody, // deprecated; computed server-side
       hrNotes,
+      feedback,
       studentLearningActionsScore,
       knowledgeOfSubjectScore,
       teachingMethodScore,
@@ -460,6 +461,7 @@ export const completeApplication = asyncHandler(
         instructorAttributesScore: attributes,
       },
       hrNotes,
+      feedback,
     );
 
     res.json(
@@ -479,7 +481,7 @@ export const rateInterview = asyncHandler(
     }
 
     const { id } = req.params;
-    const { interviewScore, interviewResult, interviewNotes } = req.body;
+    const { interviewScore, interviewResult, interviewNotes, stage } = req.body;
     const applicationId = parseInt(id);
 
     if (
@@ -494,6 +496,7 @@ export const rateInterview = asyncHandler(
       interviewScore ? parseFloat(interviewScore) : null,
       interviewResult.toUpperCase() as "PASS" | "FAIL",
       interviewNotes,
+      stage === "final" ? "final" : "initial",
     );
 
     // Get the full application with applicant details and format it

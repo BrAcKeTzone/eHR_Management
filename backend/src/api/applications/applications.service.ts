@@ -605,6 +605,7 @@ class ApplicationService {
       instructorAttributesScore: number;
     },
     hrNotes?: string,
+    demoFeedback?: string,
   ): Promise<Application> {
     const {
       studentLearningActionsScore,
@@ -635,6 +636,9 @@ class ApplicationService {
     if (hrNotes) {
       updateData.hrNotes = hrNotes;
     }
+    if (demoFeedback) {
+      updateData.demoFeedback = demoFeedback;
+    }
 
     // If demo failed, mark the application as REJECTED
     if (result === "FAIL") {
@@ -649,6 +653,7 @@ class ApplicationService {
     interviewScore: number | null,
     interviewResult: "PASS" | "FAIL",
     interviewNotes?: string,
+    stage: "initial" | "final" = "initial",
   ): Promise<Application> {
     const application = await prisma.application.findUnique({ where: { id } });
 
@@ -671,20 +676,27 @@ class ApplicationService {
       throw new ApiError(400, "Interview score must be between 0 and 100");
     }
 
-    const updateData: any = {
-      ...(interviewScore !== null && { interviewScore }),
-      interviewResult: interviewResult as any,
-      interviewNotes,
-    };
+    const updateData: any = {};
 
-    // If interview is PASS, mark status as COMPLETED; if FAIL, mark as REJECTED
-    if (
-      interviewResult &&
-      ["PASS", "FAIL"].includes(interviewResult.toUpperCase())
-    ) {
-      if (interviewResult.toUpperCase() === "PASS") {
+    if (stage === "final") {
+      if (interviewScore !== null) {
+        updateData.interviewScore = interviewScore;
+      }
+      updateData.interviewResult = interviewResult as any;
+      updateData.interviewNotes = interviewNotes;
+      updateData.finalInterviewResult = interviewResult === "PASS";
+      updateData.finalInterviewFeedback = interviewNotes;
+      updateData.finalInterviewScore = interviewScore ?? undefined;
+    } else {
+      updateData.initialInterviewResult = interviewResult === "PASS";
+      updateData.initialInterviewFeedback = interviewNotes;
+      updateData.initialInterviewScore = interviewScore ?? undefined;
+    }
+
+    if (stage === "final") {
+      if (interviewResult === "PASS") {
         updateData.status = ApplicationStatus.COMPLETED;
-      } else if (interviewResult.toUpperCase() === "FAIL") {
+      } else {
         updateData.status = ApplicationStatus.REJECTED;
       }
     }

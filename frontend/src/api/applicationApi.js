@@ -316,8 +316,13 @@ export const applicationApi = {
     }
   },
 
-  // Complete application with score and result (HR only)
-  completeApplication: async (applicationId, scores, hrNotes = "") => {
+  // Complete application with score, demo feedback, and result (HR only)
+  completeApplication: async (
+    applicationId,
+    scores,
+    demoFeedback = "",
+    hrNotes = "",
+  ) => {
     try {
       const response = await fetchClient.put(
         `${API_BASE_URL}/applications/${applicationId}/complete`,
@@ -331,6 +336,7 @@ export const applicationApi = {
             scores?.instructorAttributesScore,
           ),
           hrNotes,
+          feedback: demoFeedback,
         },
       );
       return { application: response.data.data };

@@ -109,6 +109,13 @@ model Application {
   knowledgeOfSubjectScore Float? // 0-30
   teachingMethodScore Float? // 0-30
   instructorAttributesScore Float? // 0-10
+  demoFeedback String? @db.Text // Feedback provided during demo scoring
+  initialInterviewResult Boolean?
+  initialInterviewFeedback String? @db.Text
+  finalInterviewResult Boolean?
+  finalInterviewFeedback String? @db.Text
+  initialInterviewScore Float?
+  finalInterviewScore Float?
   interviewScore     Float?            // Interview score (0-100)
   interviewResult    ApplicationResult? // Interview result (PASS/FAIL)
   interviewNotes     String?           @db.Text // Interview feedback/notes
