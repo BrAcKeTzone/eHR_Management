@@ -330,6 +330,9 @@ class ApplicationService {
         ...data,
         updatedAt: new Date(),
       },
+      include: {
+        specialization: true,
+      },
     });
   }
 

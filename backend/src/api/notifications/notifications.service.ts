@@ -31,6 +31,7 @@ class NotificationService {
   // Helper to return a program/name value for the application if present
   private getApplicationProgram(application: any) {
     return (
+      application?.specialization?.name ||
       application?.program ||
       application?.position ||
       application?.subjectSpecialization ||
@@ -83,12 +84,12 @@ class NotificationService {
     const message = `
 Dear ${applicantFullName},
 
-Thank you for submitting your teacher application for the ${programName} program at Blancia College Foundation Inc.
+Thank you for submitting your teacher application for the ${programName} specialization at Blancia College Foundation Inc.
 
 Application Details:
 - Application ID: ${application.id}
 - Attempt Number: ${application.attemptNumber}
-- Program: ${programName}
+- Specialization: ${programName}
 - Submission Date: ${application.createdAt.toLocaleDateString()}
 - Status: Pending Review
 
@@ -133,7 +134,7 @@ Blancia College Foundation Inc.
   Application Details:
   - Application ID: ${application.id}
   - Attempt Number: ${application.attemptNumber}
-  - Program: ${programName}
+  - Specialization: ${programName}
   - Submission Date: ${application.createdAt.toLocaleDateString()}
 
   Please log into the HR portal to review this application and take appropriate action.
@@ -165,15 +166,15 @@ Blancia College Foundation Inc.
     const message = `
   Dear ${applicantFullName},
 
-  Congratulations! Your teacher application for the ${programName} program has been approved.
+  Congratulations! Your teacher application for the ${programName} specialization has been approved.
 
 Application Details:
 - Application ID: ${application.id}
-- Program: ${programName}
+- Specialization: ${programName}
 - Approval Date: ${new Date().toLocaleDateString()}
 
 Next Steps:
-Our HR team will contact you shortly to schedule your teaching demonstration. Please ensure you're available for the demo as this is a crucial part of our evaluation process.
+You will be notified on your account regarding the schedule of your teaching demonstration. Please ensure you're available for the demo as this is a crucial part of our evaluation process.
 
 ${application.hrNotes ? `\nHR Notes: ${application.hrNotes}` : ""}
 
@@ -206,13 +207,13 @@ Blancia College Foundation Inc.
     const message = `
   Dear ${applicantFullName},
 
-  Thank you for your interest in the teaching position for the ${programName} program at Blancia College Foundation Inc.
+  Thank you for your interest in the teaching position for the ${programName} specialization at Blancia College Foundation Inc.
 
 After careful review of your application, we regret to inform you that we will not be moving forward with your application at this time.
 
 Application Details:
 - Application ID: ${application.id}
-- Program: ${programName}
+- Specialization: ${programName}
 - Review Date: ${new Date().toLocaleDateString()}
 
 ${application.hrNotes ? `\nFeedback: ${application.hrNotes}` : ""}
@@ -255,12 +256,12 @@ Blancia College Foundation Inc.
     const message = `
 Dear ${applicantFullName},
 
-Your application for the ${programName} position has been approved.
+Your application for the ${programName} specialization has been approved.
 
 DEMONSTRATION DETAILS:
 - Date: ${demoDate}
 - Time: ${demoTime}
-- Program: ${programName}
+- Specialization: ${programName}
 - Application ID: ${application.id}
 
 Please prepare a 1-hour lesson for your demonstration.
@@ -306,7 +307,7 @@ Blancia College Foundation Inc.
     const message = `
 Dear ${applicantFullName},
 
-Your application for the ${programName} position has been scheduled for an interview.
+Your application for the ${programName} specialization has been scheduled for an interview.
 
 INTERVIEW DETAILS:
 - Date: ${interviewDate}
@@ -349,16 +350,16 @@ Blancia College Foundation Inc.
 
     if (reason === "APPLICANT_NO_SHOW" || reason === "applicant_no_show") {
       subject = "Action Required: Rescheduling Your Teaching Demo - BCFI";
-      message += `We were unable to proceed with your scheduled teaching demonstration for the ${programName} program because you did not appear at the scheduled time. We have rescheduled another demo for you as indicated below. Please make sure to attend the scheduled demo to avoid further rescheduling.\n\n`;
+      message += `We were unable to proceed with your scheduled teaching demonstration for the ${programName} specialization because you did not appear at the scheduled time. We have rescheduled another demo for you as indicated below. Please make sure to attend the scheduled demo to avoid further rescheduling.\n\n`;
     } else if (reason === "SCHOOL" || reason === "school_reschedule") {
       subject = "Notice: Teaching Demo Rescheduled by HR - BCFI";
-      message += `Your teaching demonstration for the ${programName} program has been rescheduled by our HR team due to scheduling or administrative reasons. We apologize for the inconvenience. Please see the updated schedule below.\n\n`;
+      message += `Your teaching demonstration for the ${programName} specialization has been rescheduled by our HR team due to scheduling or administrative reasons. We apologize for the inconvenience. Please see the updated schedule below.\n\n`;
     } else {
       // Generic reschedule message
-      message += `Your teaching demonstration for the ${programName} program has been rescheduled. Please see the updated schedule below.\n\n`;
+      message += `Your teaching demonstration for the ${programName} specialization has been rescheduled. Please see the updated schedule below.\n\n`;
     }
 
-    message += `DEMONSTRATION DETAILS:\n- Date: ${demoDate}\n- Time: ${demoTime}\n- Program: ${programName}\n- Application ID: ${application.id}\n\n`;
+    message += `DEMONSTRATION DETAILS:\n- Date: ${demoDate}\n- Time: ${demoTime}\n- Specialization: ${programName}\n- Application ID: ${application.id}\n\n`;
 
     message += `Please prepare a 1-hour lesson for your demonstration.\nDress appropriately.\n\n`;
 
@@ -383,7 +384,7 @@ Blancia College Foundation Inc.
       application.id
     }\nApplicant: ${applicantFullName} (${
       applicant.email
-    })\nProgram: ${programName}\nNew Demo: ${demoDate} at ${demoTime}\nReason: ${
+    })\nSpecialization: ${programName}\nNew Demo: ${demoDate} at ${demoTime}\nReason: ${
       reason || "Not specified"
     }\n\nPlease review the schedule in the HR portal.`;
     for (const hrEmail of hrEmails) {
@@ -430,7 +431,7 @@ Blancia College Foundation Inc.
     const message = `
   Dear ${applicantFullName},
 
-  Your teaching demonstration for the ${programName} program has been evaluated.
+  Your teaching demonstration for the ${programName} specialization has been evaluated.
 
 ${resultText} the teaching demonstration evaluation.
 
@@ -443,7 +444,7 @@ ${scoresBreakdown}
 
 ${
   application.result === "PASS"
-    ? `Congratulations! Our HR team will contact you soon regarding the next steps in the hiring process.`
+    ? `Congratulations! You will be notified on your account regarding the next steps in the hiring process.`
     : `We appreciate your effort and encourage you to continue developing your teaching skills. You are welcome to apply again in the future.`
 }
 

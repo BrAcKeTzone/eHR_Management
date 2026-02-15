@@ -151,7 +151,7 @@ class ScoringService {
   }
 
   async getScoresByApplication(
-    applicationId: number
+    applicationId: number,
   ): Promise<(Score & { rubric: Rubric })[]> {
     return await prisma.score.findMany({
       where: { applicationId },
@@ -164,7 +164,7 @@ class ScoringService {
     applicationId: number,
     rubricId: number,
     scoreValue: number,
-    comments?: string
+    comments?: string,
   ): Promise<Score> {
     const score = await prisma.score.findUnique({
       where: {
@@ -184,7 +184,7 @@ class ScoringService {
     if (scoreValue < 0 || scoreValue > score.rubric.maxScore) {
       throw new ApiError(
         400,
-        `Score must be between 0 and ${score.rubric.maxScore}`
+        `Score must be between 0 and ${score.rubric.maxScore}`,
       );
     }
 
@@ -257,7 +257,7 @@ class ScoringService {
 
     // Determine pass/fail (assuming 70% is passing)
     const passingPercentage = parseFloat(
-      process.env.PASSING_SCORE_PERCENTAGE || "70"
+      process.env.PASSING_SCORE_PERCENTAGE || "70",
     );
     const result: ApplicationResult =
       percentage >= passingPercentage ? "PASS" : "FAIL";
@@ -272,7 +272,7 @@ class ScoringService {
   }
 
   async completeApplicationScoring(
-    applicationId: number
+    applicationId: number,
   ): Promise<Application> {
     const calculation = await this.calculateApplicationScore(applicationId);
 
@@ -296,6 +296,9 @@ class ScoringService {
     const application = await prisma.application.update({
       where: { id: applicationId },
       data: updateData,
+      include: {
+        specialization: true,
+      },
     });
 
     // Get applicant details for notification
@@ -308,7 +311,7 @@ class ScoringService {
       notificationService
         .sendResultsNotification(application, applicant, calculation.scores)
         .catch((error) =>
-          console.error("Failed to send results notification:", error)
+          console.error("Failed to send results notification:", error),
         );
     }
 
