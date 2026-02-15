@@ -598,20 +598,46 @@ class ApplicationService {
 
   async completeApplication(
     id: number,
-    totalScore: number,
-    result: "PASS" | "FAIL",
+    scores: {
+      studentLearningActionsScore: number;
+      knowledgeOfSubjectScore: number;
+      teachingMethodScore: number;
+      instructorAttributesScore: number;
+    },
+    hrNotes?: string,
   ): Promise<Application> {
-    // When a score is submitted and result is PASS with a score >= 75,
-    // mark the application as interviewEligible so it can appear in the Interview Scheduling queue.
-    const interviewEligible = totalScore >= 75;
+    const {
+      studentLearningActionsScore,
+      knowledgeOfSubjectScore,
+      teachingMethodScore,
+      instructorAttributesScore,
+    } = scores;
+
+    const totalScore =
+      studentLearningActionsScore +
+      knowledgeOfSubjectScore +
+      teachingMethodScore +
+      instructorAttributesScore;
+
+    // Pass when total score >= 75
+    const result: ApplicationResult = totalScore >= 75 ? "PASS" : "FAIL";
+
     const updateData: any = {
+      studentLearningActionsScore,
+      knowledgeOfSubjectScore,
+      teachingMethodScore,
+      instructorAttributesScore,
       totalScore,
-      result: result as any,
-      interviewEligible,
+      result,
+      interviewEligible: totalScore >= 75,
     };
 
+    if (hrNotes) {
+      updateData.hrNotes = hrNotes;
+    }
+
     // If demo failed, mark the application as REJECTED
-    if ((result || "").toUpperCase() === "FAIL") {
+    if (result === "FAIL") {
       updateData.status = ApplicationStatus.REJECTED;
     }
 

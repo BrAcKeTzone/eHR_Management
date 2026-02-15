@@ -104,6 +104,11 @@ model Application {
   interviewSchedule DateTime?     // Interview date/time
   interviewRescheduleCount Int @default(0) // Number of times the interview has been rescheduled
   interviewRescheduleReason String?
+  // Demo scoring breakdown
+  studentLearningActionsScore Float? // 0-30
+  knowledgeOfSubjectScore Float? // 0-30
+  teachingMethodScore Float? // 0-30
+  instructorAttributesScore Float? // 0-10
   interviewScore     Float?            // Interview score (0-100)
   interviewResult    ApplicationResult? // Interview result (PASS/FAIL)
   interviewNotes     String?           @db.Text // Interview feedback/notes

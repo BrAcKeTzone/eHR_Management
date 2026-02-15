@@ -28,6 +28,7 @@ const Navbar = ({ onMenuClick }) => {
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => {

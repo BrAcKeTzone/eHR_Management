@@ -34,7 +34,7 @@ export const applicationApi = {
               "Size:",
               doc.file.size,
               "Type:",
-              doc.type
+              doc.type,
             );
             formData.append("documents", doc.file);
           }
@@ -56,7 +56,7 @@ export const applicationApi = {
             "Content-Type": undefined,
           },
           timeout: 60000, // 60 seconds for file uploads
-        }
+        },
       );
 
       return { application: response.data.data };
@@ -74,7 +74,7 @@ export const applicationApi = {
   getCurrentApplication: async () => {
     try {
       const response = await fetchClient.get(
-        `${API_BASE_URL}/applications/my-active-application`
+        `${API_BASE_URL}/applications/my-active-application`,
       );
       return { application: response.data.data };
     } catch (error) {
@@ -91,7 +91,7 @@ export const applicationApi = {
   getHistory: async () => {
     try {
       const response = await fetchClient.get(
-        `${API_BASE_URL}/applications/my-applications`
+        `${API_BASE_URL}/applications/my-applications`,
       );
       return { applications: response.data.data };
     } catch (error) {
@@ -108,7 +108,7 @@ export const applicationApi = {
   getById: async (applicationId) => {
     try {
       const response = await fetchClient.get(
-        `${API_BASE_URL}/applications/${applicationId}`
+        `${API_BASE_URL}/applications/${applicationId}`,
       );
       return { application: response.data.data };
     } catch (error) {
@@ -190,7 +190,7 @@ export const applicationApi = {
   getDocuments: async (applicationId) => {
     try {
       const response = await fetchClient.get(
-        `${API_BASE_URL}/applications/${applicationId}/documents`
+        `${API_BASE_URL}/applications/${applicationId}/documents`,
       );
       return response.data.data;
     } catch (error) {
@@ -261,7 +261,7 @@ export const applicationApi = {
     try {
       const response = await fetchClient.put(
         `${API_BASE_URL}/applications/${applicationId}/schedule`,
-        { demoSchedule, rescheduleReason } // ISO date string and optional reason
+        { demoSchedule, rescheduleReason }, // ISO date string and optional reason
       );
       return { application: response.data.data };
     } catch (error) {
@@ -278,12 +278,12 @@ export const applicationApi = {
   scheduleInterview: async (
     applicationId,
     interviewSchedule,
-    rescheduleReason
+    rescheduleReason,
   ) => {
     try {
       const response = await fetchClient.put(
         `${API_BASE_URL}/applications/${applicationId}/interview`,
-        { interviewSchedule, rescheduleReason }
+        { interviewSchedule, rescheduleReason },
       );
       return { application: response.data.data };
     } catch (error) {
@@ -303,7 +303,7 @@ export const applicationApi = {
         `${API_BASE_URL}/applications/${applicationId}`,
         {
           status: "PENDING",
-        }
+        },
       );
       return { application: response.data.data };
     } catch (error) {
@@ -317,20 +317,21 @@ export const applicationApi = {
   },
 
   // Complete application with score and result (HR only)
-  completeApplication: async (
-    applicationId,
-    totalScore,
-    result,
-    hrNotes = ""
-  ) => {
+  completeApplication: async (applicationId, scores, hrNotes = "") => {
     try {
       const response = await fetchClient.put(
         `${API_BASE_URL}/applications/${applicationId}/complete`,
         {
-          totalScore: parseFloat(totalScore),
-          result: result.toUpperCase(),
+          studentLearningActionsScore: parseFloat(
+            scores?.studentLearningActionsScore,
+          ),
+          knowledgeOfSubjectScore: parseFloat(scores?.knowledgeOfSubjectScore),
+          teachingMethodScore: parseFloat(scores?.teachingMethodScore),
+          instructorAttributesScore: parseFloat(
+            scores?.instructorAttributesScore,
+          ),
           hrNotes,
-        }
+        },
       );
       return { application: response.data.data };
     } catch (error) {
@@ -348,7 +349,7 @@ export const applicationApi = {
     applicationId,
     interviewScore,
     interviewResult,
-    interviewNotes = ""
+    interviewNotes = "",
   ) => {
     try {
       const response = await fetchClient.put(
@@ -357,7 +358,7 @@ export const applicationApi = {
           interviewScore: interviewScore ? parseFloat(interviewScore) : null,
           interviewResult: interviewResult.toUpperCase(),
           interviewNotes,
-        }
+        },
       );
       return { application: response.data.data };
     } catch (error) {

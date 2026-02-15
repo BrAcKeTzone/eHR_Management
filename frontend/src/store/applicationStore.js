@@ -99,7 +99,7 @@ export const useApplicationStore = create((set, get) => ({
       const result = await applicationApi.updateStatus(
         applicationId,
         status,
-        reason
+        reason,
       );
 
       // If the API did not include applicant details, fetch the full application
@@ -119,7 +119,7 @@ export const useApplicationStore = create((set, get) => ({
       // Update the applications array with the updated application
       const { applications } = get();
       const updatedApplications = applications.map((app) =>
-        app.id === applicationId ? updatedApplication : app
+        app.id === applicationId ? updatedApplication : app,
       );
 
       // Update current application if it matches
@@ -154,15 +154,14 @@ export const useApplicationStore = create((set, get) => ({
     });
   },
 
-  // Add scores to application (submits total score & result via API)
-  addScores: async (applicationId, totalScore, result, hrNotes = "") => {
+  // Add scores to application (submits per-category scores via API)
+  addScores: async (applicationId, scores, hrNotes = "") => {
     try {
       set({ loading: true, error: null });
       const res = await applicationApi.completeApplication(
         applicationId,
-        totalScore,
-        result,
-        hrNotes
+        scores,
+        hrNotes,
       );
 
       // Update applications array similarly to updateApplicationStatus
@@ -179,7 +178,7 @@ export const useApplicationStore = create((set, get) => ({
 
       const { applications } = get();
       const updatedApplications = applications.map((app) =>
-        app.id === applicationId ? updatedApplication : app
+        app.id === applicationId ? updatedApplication : app,
       );
 
       const { currentApplication } = get();
@@ -288,7 +287,7 @@ export const useApplicationStore = create((set, get) => ({
   getApplicationsByStatus: (status) => {
     const { applications } = get();
     return applications.filter(
-      (app) => app.status.toLowerCase() === status.toLowerCase()
+      (app) => app.status.toLowerCase() === status.toLowerCase(),
     );
   },
 
@@ -320,7 +319,7 @@ export const useApplicationStore = create((set, get) => ({
         app.subjectSpecialization?.toLowerCase().includes(term) ||
         app.applicantEmail?.toLowerCase().includes(term) ||
         app.firstName?.toLowerCase().includes(term) ||
-        app.lastName?.toLowerCase().includes(term)
+        app.lastName?.toLowerCase().includes(term),
     );
   },
 
@@ -331,19 +330,19 @@ export const useApplicationStore = create((set, get) => ({
     return {
       total: applications.length,
       pending: applications.filter(
-        (app) => app.status.toLowerCase() === "pending"
+        (app) => app.status.toLowerCase() === "pending",
       ).length,
       underReview: applications.filter(
-        (app) => app.status.toLowerCase() === "under review"
+        (app) => app.status.toLowerCase() === "under review",
       ).length,
       approved: applications.filter(
-        (app) => app.status.toLowerCase() === "approved"
+        (app) => app.status.toLowerCase() === "approved",
       ).length,
       completed: applications.filter(
-        (app) => app.status.toLowerCase() === "completed"
+        (app) => app.status.toLowerCase() === "completed",
       ).length,
       rejected: applications.filter(
-        (app) => app.status.toLowerCase() === "rejected"
+        (app) => app.status.toLowerCase() === "rejected",
       ).length,
     };
   },
@@ -357,16 +356,16 @@ export const useApplicationStore = create((set, get) => ({
       pending: userApps.filter((app) => app.status.toLowerCase() === "pending")
         .length,
       underReview: userApps.filter(
-        (app) => app.status.toLowerCase() === "under review"
+        (app) => app.status.toLowerCase() === "under review",
       ).length,
       approved: userApps.filter(
-        (app) => app.status.toLowerCase() === "approved"
+        (app) => app.status.toLowerCase() === "approved",
       ).length,
       completed: userApps.filter(
-        (app) => app.status.toLowerCase() === "completed"
+        (app) => app.status.toLowerCase() === "completed",
       ).length,
       rejected: userApps.filter(
-        (app) => app.status.toLowerCase() === "rejected"
+        (app) => app.status.toLowerCase() === "rejected",
       ).length,
     };
   },
@@ -379,7 +378,7 @@ export const useApplicationStore = create((set, get) => ({
 
       const { applications, currentApplication } = get();
       const updatedApplications = applications.filter(
-        (app) => app.id !== applicationId
+        (app) => app.id !== applicationId,
       );
 
       // Clear current application if it was the deleted one
@@ -492,7 +491,7 @@ export const useApplicationStore = create((set, get) => ({
       const rows = applications.map((app) =>
         Object.values(app)
           .map((value) => (typeof value === "string" ? `"${value}"` : value))
-          .join(",")
+          .join(","),
       );
 
       return [headers, ...rows].join("\n");

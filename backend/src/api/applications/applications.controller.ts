@@ -399,40 +399,67 @@ export const completeApplication = asyncHandler(
     }
 
     const { id } = req.params;
-    const { totalScore, result, hrNotes } = req.body;
+    const {
+      totalScore, // deprecated; kept for backward compatibility
+      result: resultFromBody, // deprecated; computed server-side
+      hrNotes,
+      studentLearningActionsScore,
+      knowledgeOfSubjectScore,
+      teachingMethodScore,
+      instructorAttributesScore,
+    } = req.body;
     const applicationId = parseInt(id);
 
-    if (totalScore === undefined || totalScore === null) {
-      throw new ApiError(400, "Total score is required");
-    }
-
-    if (!result || !["PASS", "FAIL"].includes(result.toUpperCase())) {
-      throw new ApiError(400, "Valid result (PASS or FAIL) is required");
-    }
-
-    // Update application with score, result, and optional notes
-    const updateData: any = {
-      totalScore: parseFloat(totalScore),
-      result: result.toUpperCase() as ApplicationResult,
+    const asNumber = (value: any) => {
+      const num = parseFloat(value);
+      return Number.isFinite(num) ? num : NaN;
     };
 
-    if (hrNotes) {
-      updateData.hrNotes = hrNotes;
-    }
-    // mark the application as interviewEligible if score is >= 75
-    const numericScore = parseFloat(totalScore);
-    if (!isNaN(numericScore)) {
-      updateData.interviewEligible = numericScore >= 75;
+    const studentLearning = asNumber(studentLearningActionsScore);
+    const knowledge = asNumber(knowledgeOfSubjectScore);
+    const teaching = asNumber(teachingMethodScore);
+    const attributes = asNumber(instructorAttributesScore);
+
+    if (
+      [studentLearning, knowledge, teaching, attributes].some((v) => isNaN(v))
+    ) {
+      throw new ApiError(
+        400,
+        "All scoring categories are required and must be numbers",
+      );
     }
 
-    // If demo result is FAIL, mark the application as REJECTED. If PASS, keep the application in its current status (e.g., APPROVED), so it can be scheduled for interview.
-    if ((result || "").toUpperCase() === "FAIL") {
-      updateData.status = ApplicationStatus.REJECTED;
+    const validators = [
+      { value: studentLearning, max: 30, label: "Student Learning Actions" },
+      { value: knowledge, max: 30, label: "Knowledge of the Subject Matter" },
+      { value: teaching, max: 30, label: "Teaching Method" },
+      {
+        value: attributes,
+        max: 10,
+        label: "Instructor's Personal & Professional Attributes",
+      },
+    ];
+
+    const invalid = validators.find(
+      ({ value, max }) => value < 0 || value > max,
+    );
+
+    if (invalid) {
+      throw new ApiError(
+        400,
+        `${invalid.label} must be between 0 and ${invalid.max}`,
+      );
     }
 
-    const application = await applicationService.updateApplication(
+    const application = await applicationService.completeApplication(
       applicationId,
-      updateData,
+      {
+        studentLearningActionsScore: studentLearning,
+        knowledgeOfSubjectScore: knowledge,
+        teachingMethodScore: teaching,
+        instructorAttributesScore: attributes,
+      },
+      hrNotes,
     );
 
     res.json(

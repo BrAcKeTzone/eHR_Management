@@ -21,28 +21,68 @@ const Scoring = () => {
 
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showScoringModal, setShowScoringModal] = useState(false);
-  const [totalScore, setTotalScore] = useState("");
+  const [studentLearningScore, setStudentLearningScore] = useState("");
+  const [knowledgeScore, setKnowledgeScore] = useState("");
+  const [teachingMethodScore, setTeachingMethodScore] = useState("");
+  const [attributesScore, setAttributesScore] = useState("");
+  const [totalScore, setTotalScore] = useState(0);
   const [result, setResult] = useState("");
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const passingScore = 75; // Minimum passing score
+  const maxScores = {
+    studentLearning: 30,
+    knowledge: 30,
+    teachingMethod: 30,
+    attributes: 10,
+  };
+  const hasAllScores = [
+    studentLearningScore,
+    knowledgeScore,
+    teachingMethodScore,
+    attributesScore,
+  ].every((v) => v !== "");
 
   useEffect(() => {
     // Load applications with scheduled demos
     getAllApplications({ status: "APPROVED" });
   }, [getAllApplications]);
 
-  // Auto-calculate result when totalScore changes
+  // Auto-calculate total and result when category scores change
   useEffect(() => {
-    if (totalScore !== "") {
-      const score = parseFloat(totalScore);
-      if (!isNaN(score)) {
-        setResult(score >= passingScore ? "PASS" : "FAIL");
-      }
+    const toNumber = (val) => {
+      const num = parseFloat(val);
+      return Number.isFinite(num) ? num : 0;
+    };
+
+    const s = toNumber(studentLearningScore);
+    const k = toNumber(knowledgeScore);
+    const t = toNumber(teachingMethodScore);
+    const a = toNumber(attributesScore);
+    const sum = s + k + t + a;
+    setTotalScore(sum);
+
+    // Only set result when all fields have values
+    const allProvided = [
+      studentLearningScore,
+      knowledgeScore,
+      teachingMethodScore,
+      attributesScore,
+    ].every((v) => v !== "");
+
+    if (allProvided) {
+      setResult(sum >= passingScore ? "PASS" : "FAIL");
+    } else {
+      setResult("");
     }
-  }, [totalScore]);
+  }, [
+    studentLearningScore,
+    knowledgeScore,
+    teachingMethodScore,
+    attributesScore,
+  ]);
 
   // Only include applications that are approved, have a demo scheduled,
   // and have NOT been scored yet (totalScore null/undefined)
@@ -51,7 +91,7 @@ const Scoring = () => {
       (app) =>
         app.status === "APPROVED" &&
         app.demoSchedule &&
-        (app.totalScore === null || app.totalScore === undefined)
+        (app.totalScore === null || app.totalScore === undefined),
     ) || [];
 
   const handleScoreApplication = (application) => {
@@ -63,12 +103,24 @@ const Scoring = () => {
       application.totalScore !== null &&
       application.totalScore !== undefined
     ) {
-      setTotalScore(application.totalScore.toString());
+      setStudentLearningScore(
+        application.studentLearningActionsScore?.toString() ?? "",
+      );
+      setKnowledgeScore(application.knowledgeOfSubjectScore?.toString() ?? "");
+      setTeachingMethodScore(application.teachingMethodScore?.toString() ?? "");
+      setAttributesScore(
+        application.instructorAttributesScore?.toString() ?? "",
+      );
       setResult(application.result || "");
+      setTotalScore(application.totalScore || 0);
       setFeedback(application.hrNotes || "");
     } else {
-      setTotalScore("");
+      setStudentLearningScore("");
+      setKnowledgeScore("");
+      setTeachingMethodScore("");
+      setAttributesScore("");
       setResult("");
+      setTotalScore(0);
       setFeedback("");
     }
     setError(null);
@@ -82,14 +134,44 @@ const Scoring = () => {
   };
 
   const handleSubmitScores = async () => {
-    if (!selectedApplication || totalScore === "") {
-      setError("Please enter a total score");
+    const parsed = (val) => {
+      const num = parseFloat(val);
+      return Number.isFinite(num) ? num : NaN;
+    };
+
+    const scores = {
+      studentLearningActionsScore: parsed(studentLearningScore),
+      knowledgeOfSubjectScore: parsed(knowledgeScore),
+      teachingMethodScore: parsed(teachingMethodScore),
+      instructorAttributesScore: parsed(attributesScore),
+    };
+
+    if (!selectedApplication) {
+      setError("No application selected");
       return;
     }
 
-    const score = parseFloat(totalScore);
-    if (isNaN(score) || score < 0 || score > 100) {
-      setError("Total score must be between 0 and 100");
+    const missing = Object.values(scores).some((v) => isNaN(v));
+    if (missing) {
+      setError("Please enter all category scores");
+      return;
+    }
+
+    const validators = [
+      {
+        value: scores.studentLearningActionsScore,
+        max: maxScores.studentLearning,
+      },
+      { value: scores.knowledgeOfSubjectScore, max: maxScores.knowledge },
+      { value: scores.teachingMethodScore, max: maxScores.teachingMethod },
+      { value: scores.instructorAttributesScore, max: maxScores.attributes },
+    ];
+
+    const invalid = validators.find(
+      ({ value, max }) => value < 0 || value > max,
+    );
+    if (invalid) {
+      setError("Scores must be within their allowed ranges");
       return;
     }
 
@@ -99,14 +181,17 @@ const Scoring = () => {
 
       const res = await applicationApi.completeApplication(
         selectedApplication.id,
-        score,
-        result,
-        feedback
+        scores,
+        feedback,
       );
 
       setShowScoringModal(false);
       setSelectedApplication(null);
-      setTotalScore("");
+      setStudentLearningScore("");
+      setKnowledgeScore("");
+      setTeachingMethodScore("");
+      setAttributesScore("");
+      setTotalScore(0);
       setResult("");
       setFeedback("");
 
@@ -398,25 +483,65 @@ const Scoring = () => {
               </div>
             )}
 
-            {/* Total Score Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total Score (0-100)
-                <span className="text-red-500 ml-1">*</span>
-              </label>
+            {/* Category Scores */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
+                label={`Student Learning Actions (0-${maxScores.studentLearning})`}
                 type="number"
                 min="0"
-                max="100"
+                max={maxScores.studentLearning}
                 step="0.01"
-                value={totalScore}
-                onChange={(e) => setTotalScore(e.target.value)}
-                placeholder="Enter total score (e.g., 85.5)"
-                className="w-full"
+                value={studentLearningScore}
+                onChange={(e) => setStudentLearningScore(e.target.value)}
+                required
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Minimum passing score: {passingScore}
-              </p>
+              <Input
+                label={`Knowledge of the Subject Matter (0-${maxScores.knowledge})`}
+                type="number"
+                min="0"
+                max={maxScores.knowledge}
+                step="0.01"
+                value={knowledgeScore}
+                onChange={(e) => setKnowledgeScore(e.target.value)}
+                required
+              />
+              <Input
+                label={`Teaching Method (0-${maxScores.teachingMethod})`}
+                type="number"
+                min="0"
+                max={maxScores.teachingMethod}
+                step="0.01"
+                value={teachingMethodScore}
+                onChange={(e) => setTeachingMethodScore(e.target.value)}
+                required
+              />
+              <Input
+                label={`Instructor's Personal & Professional Attributes (0-${maxScores.attributes})`}
+                type="number"
+                min="0"
+                max={maxScores.attributes}
+                step="0.01"
+                value={attributesScore}
+                onChange={(e) => setAttributesScore(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Totals */}
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div>
+                  <h4 className="font-medium text-blue-900">Overall Total</h4>
+                  <p className="text-sm text-blue-700">
+                    Sum of all categories (max 100)
+                  </p>
+                </div>
+                <div className="text-center sm:text-right">
+                  <span className="inline-block px-4 py-2 text-lg font-medium rounded-full bg-white text-blue-900 border border-blue-200">
+                    {totalScore.toFixed(2)} / 100
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Result Display */}
@@ -499,15 +624,15 @@ const Scoring = () => {
               <Button
                 onClick={handleSubmitScores}
                 variant="primary"
-                disabled={!totalScore || loading}
+                disabled={!hasAllScores || loading}
                 className="w-full sm:w-auto"
               >
                 {loading
                   ? "Saving..."
                   : selectedApplication.totalScore !== null &&
-                    selectedApplication.totalScore !== undefined
-                  ? "Update Score"
-                  : "Submit Score"}
+                      selectedApplication.totalScore !== undefined
+                    ? "Update Score"
+                    : "Submit Score"}
               </Button>
             </div>
           </div>
