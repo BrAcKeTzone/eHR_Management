@@ -12,6 +12,8 @@ export const USER_ROLES = {
 // Application Status (from backend: enum ApplicationStatus)
 export const APPLICATION_STATUS = {
   PENDING: "PENDING",
+  ACKNOWLEDGED: "ACKNOWLEDGED",
+  FOR_EVALUATION: "FOR_EVALUATION",
   APPROVED: "APPROVED",
   REJECTED: "REJECTED",
   COMPLETED: "COMPLETED",
@@ -36,6 +38,8 @@ export const NOTIFICATION_TYPES = {
 // Status Display Labels
 export const STATUS_LABELS = {
   [APPLICATION_STATUS.PENDING]: "Pending Review",
+  [APPLICATION_STATUS.ACKNOWLEDGED]: "Acknowledged",
+  [APPLICATION_STATUS.FOR_EVALUATION]: "For Evaluation",
   [APPLICATION_STATUS.APPROVED]: "Approved",
   [APPLICATION_STATUS.REJECTED]: "Rejected",
   [APPLICATION_STATUS.COMPLETED]: "Completed",
@@ -56,6 +60,8 @@ export const ROLE_LABELS = {
 // Status Colors for UI
 export const STATUS_COLORS = {
   [APPLICATION_STATUS.PENDING]: "yellow",
+  [APPLICATION_STATUS.ACKNOWLEDGED]: "blue",
+  [APPLICATION_STATUS.FOR_EVALUATION]: "purple",
   [APPLICATION_STATUS.APPROVED]: "green",
   [APPLICATION_STATUS.REJECTED]: "red",
   [APPLICATION_STATUS.COMPLETED]: "blue",

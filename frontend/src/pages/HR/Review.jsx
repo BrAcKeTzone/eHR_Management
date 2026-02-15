@@ -7,6 +7,7 @@ import Button from "../../components/Button";
 import Table from "../../components/Table";
 import Modal from "../../components/Modal";
 import ApplicationDetailsModal from "../../components/ApplicationDetailsModal";
+import Input from "../../components/Input";
 import { formatDate } from "../../utils/formatDate";
 import { APPLICATION_STATUS } from "../../utils/constants";
 
@@ -29,14 +30,25 @@ const ApplicationReview = () => {
     search: "",
   });
 
+  // Draft inputs for controlled filters (applied only on button click)
+  const [statusDraft, setStatusDraft] = useState(APPLICATION_STATUS.PENDING);
+  const [searchDraft, setSearchDraft] = useState("");
+
+  // Initial load with default filters
   useEffect(() => {
     getAllApplications(filters);
-  }, [getAllApplications, filters]);
+    // We intentionally avoid re-fetching on every filter change; apply button triggers fetch
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "pending":
         return "bg-yellow-100 text-yellow-800";
+      case "acknowledged":
+        return "bg-blue-100 text-blue-800";
+      case "for_evaluation":
+        return "bg-purple-100 text-purple-800";
       case "approved":
         return "bg-green-100 text-green-800";
       case "rejected":
@@ -93,6 +105,33 @@ const ApplicationReview = () => {
       alert("Failed to download document. Please try again.");
     } finally {
       setDownloadingDoc(null);
+    }
+  };
+
+  const handleStatusChange = (status) => {
+    setStatusDraft(status);
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchDraft(value);
+  };
+
+  const applyFilters = () => {
+    const nextFilters = {
+      status: statusDraft,
+      search: searchDraft,
+    };
+    setFilters(nextFilters);
+    getAllApplications(nextFilters);
+  };
+
+  const handleStatusUpdate = async (application, status) => {
+    try {
+      await updateApplicationStatus(application.id, status);
+      // Refresh list to ensure filters stay in sync
+      getAllApplications(filters);
+    } catch (err) {
+      console.error(`Failed to update application to ${status}:`, err);
     }
   };
 
@@ -180,7 +219,9 @@ const ApplicationReview = () => {
           {row.status === APPLICATION_STATUS.PENDING && (
             <>
               <Button
-                onClick={() => {}}
+                onClick={() =>
+                  handleStatusUpdate(row, APPLICATION_STATUS.ACKNOWLEDGED)
+                }
                 variant="primary"
                 size="sm"
                 className="text-xs"
@@ -188,30 +229,38 @@ const ApplicationReview = () => {
                 Acknowledge
               </Button>
               <Button
-                onClick={() => openDecisionModal(row, "approved")}
-                variant="success"
-                size="sm"
-                className="text-xs"
-              >
-                Approve
-              </Button>
-              <Button
-                onClick={() => {}}
+                onClick={() =>
+                  handleStatusUpdate(row, APPLICATION_STATUS.FOR_EVALUATION)
+                }
                 variant="secondary"
                 size="sm"
                 className="text-xs"
               >
-                Pending for Evaluation
+                For Evaluation
               </Button>
-              {/* <Button
-                onClick={() => openDecisionModal(row, "rejected")}
-                variant="danger"
-                size="sm"
-                className="text-xs"
-              >
-                Reject
-              </Button> */}
             </>
+          )}
+          {row.status === APPLICATION_STATUS.ACKNOWLEDGED && (
+            <Button
+              onClick={() => openDecisionModal(row, APPLICATION_STATUS.APPROVED)}
+              variant="success"
+              size="sm"
+              className="text-xs"
+            >
+              Approve
+            </Button>
+          )}
+          {row.status === APPLICATION_STATUS.FOR_EVALUATION && (
+            <Button
+              onClick={() =>
+                handleStatusUpdate(row, APPLICATION_STATUS.ACKNOWLEDGED)
+              }
+              variant="primary"
+              size="sm"
+              className="text-xs"
+            >
+              Acknowledge
+            </Button>
           )}
         </div>
       ),
@@ -247,6 +296,40 @@ const ApplicationReview = () => {
 
       {/* Applications Table */}
       <DashboardCard title={`Applications (${filteredApplications.length})`}>
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <select
+              value={statusDraft}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All</option>
+              <option value={APPLICATION_STATUS.PENDING}>Pending</option>
+              <option value={APPLICATION_STATUS.ACKNOWLEDGED}>Acknowledged</option>
+              <option value={APPLICATION_STATUS.FOR_EVALUATION}>For Evaluation</option>
+            </select>
+          </div>
+          <Input
+            label="Search"
+            value={searchDraft}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search applicant name or email"
+          />
+          <div className="flex items-end">
+            <Button
+              onClick={applyFilters}
+              variant="primary"
+              className="w-full"
+              disabled={loading}
+            >
+              Apply Filters
+            </Button>
+          </div>
+        </div>
         {filteredApplications.length > 0 ? (
           <div className="mt-4">
             {/* Desktop Table View */}
@@ -320,7 +403,9 @@ const ApplicationReview = () => {
                     {app.status === APPLICATION_STATUS.PENDING && (
                       <>
                         <Button
-                          onClick={() => {}}
+                          onClick={() =>
+                            handleStatusUpdate(app, APPLICATION_STATUS.ACKNOWLEDGED)
+                          }
                           variant="primary"
                           size="sm"
                           className="text-xs"
@@ -328,30 +413,43 @@ const ApplicationReview = () => {
                           Acknowledge
                         </Button>
                         <Button
-                          onClick={() => openDecisionModal(app, "approved")}
-                          variant="success"
-                          size="sm"
-                          className="text-xs"
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          onClick={() => {}}
+                          onClick={() =>
+                            handleStatusUpdate(
+                              app,
+                              APPLICATION_STATUS.FOR_EVALUATION,
+                            )
+                          }
                           variant="secondary"
                           size="sm"
                           className="text-xs"
                         >
-                          Pending for Evaluation
+                          For Evaluation
                         </Button>
-                        {/* <Button
-                          onClick={() => openDecisionModal(app, "rejected")}
-                          variant="danger"
-                          size="sm"
-                          className="text-xs"
-                        >
-                          Reject
-                        </Button> */}
                       </>
+                    )}
+                    {app.status === APPLICATION_STATUS.ACKNOWLEDGED && (
+                      <Button
+                        onClick={() =>
+                          openDecisionModal(app, APPLICATION_STATUS.APPROVED)
+                        }
+                        variant="success"
+                        size="sm"
+                        className="text-xs"
+                      >
+                        Approve
+                      </Button>
+                    )}
+                    {app.status === APPLICATION_STATUS.FOR_EVALUATION && (
+                      <Button
+                        onClick={() =>
+                          handleStatusUpdate(app, APPLICATION_STATUS.ACKNOWLEDGED)
+                        }
+                        variant="primary"
+                        size="sm"
+                        className="text-xs"
+                      >
+                        Acknowledge
+                      </Button>
                     )}
                   </div>
                 </div>
