@@ -242,7 +242,9 @@ const ApplicationReview = () => {
           )}
           {row.status === APPLICATION_STATUS.ACKNOWLEDGED && (
             <Button
-              onClick={() => openDecisionModal(row, APPLICATION_STATUS.APPROVED)}
+              onClick={() =>
+                openDecisionModal(row, APPLICATION_STATUS.APPROVED)
+              }
               variant="success"
               size="sm"
               className="text-xs"
@@ -309,8 +311,12 @@ const ApplicationReview = () => {
             >
               <option value="">All</option>
               <option value={APPLICATION_STATUS.PENDING}>Pending</option>
-              <option value={APPLICATION_STATUS.ACKNOWLEDGED}>Acknowledged</option>
-              <option value={APPLICATION_STATUS.FOR_EVALUATION}>For Evaluation</option>
+              <option value={APPLICATION_STATUS.ACKNOWLEDGED}>
+                Acknowledged
+              </option>
+              <option value={APPLICATION_STATUS.FOR_EVALUATION}>
+                For Evaluation
+              </option>
             </select>
           </div>
           <Input
@@ -404,7 +410,10 @@ const ApplicationReview = () => {
                       <>
                         <Button
                           onClick={() =>
-                            handleStatusUpdate(app, APPLICATION_STATUS.ACKNOWLEDGED)
+                            handleStatusUpdate(
+                              app,
+                              APPLICATION_STATUS.ACKNOWLEDGED,
+                            )
                           }
                           variant="primary"
                           size="sm"
@@ -442,7 +451,10 @@ const ApplicationReview = () => {
                     {app.status === APPLICATION_STATUS.FOR_EVALUATION && (
                       <Button
                         onClick={() =>
-                          handleStatusUpdate(app, APPLICATION_STATUS.ACKNOWLEDGED)
+                          handleStatusUpdate(
+                            app,
+                            APPLICATION_STATUS.ACKNOWLEDGED,
+                          )
                         }
                         variant="primary"
                         size="sm"
