@@ -14,6 +14,20 @@ export const preEmploymentApi = {
     }
   },
 
+  // Get requirements for a specific user (HR only)
+  getByUserId: async (userId) => {
+    try {
+      const response = await fetchClient.get(`${API_BASE_URL}/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error fetching pre-employment requirements for user:",
+        error,
+      );
+      throw error;
+    }
+  },
+
   // Save requirements (upsert)
   save: async (identifiers, files, tesdaFiles) => {
     try {

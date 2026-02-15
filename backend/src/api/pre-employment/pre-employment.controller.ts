@@ -173,3 +173,56 @@ export const deletePreEmploymentHandler = asyncHandler(
       );
   },
 );
+
+export const getPreEmploymentByUserIdHandler = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = parseInt(req.params.userId || "0");
+    const requirements: any = await getPreEmployment(userId);
+
+    if (requirements) {
+      // Helper function to append .pdf to Cloudinary URLs if missing
+      const appendPdfExtension = (url: string | null) => {
+        if (!url || typeof url !== "string") return url;
+        // Only append for documents, and only if not already there
+        if (
+          url.includes("cloudinary.com") &&
+          !url.toLowerCase().endsWith(".pdf") &&
+          !url.toLowerCase().endsWith(".png") &&
+          !url.toLowerCase().endsWith(".jpg") &&
+          !url.toLowerCase().endsWith(".jpeg")
+        ) {
+          return `${url}.pdf`;
+        }
+        return url;
+      };
+
+      // Apply to document fields
+      const docFields = [
+        "coe",
+        "marriageContract",
+        "prcLicense",
+        "civilService",
+        "mastersUnits",
+        "car",
+        "tor",
+        "otherCert",
+      ];
+
+      docFields.forEach((field) => {
+        if (requirements[field]) {
+          requirements[field] = appendPdfExtension(requirements[field]);
+        }
+      });
+    }
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          requirements || {},
+          "Pre-employment requirements fetched successfully",
+        ),
+      );
+  },
+);

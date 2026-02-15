@@ -186,6 +186,7 @@ export const getAllApplications = asyncHandler(
     const {
       status,
       result: resultFilter,
+      finalInterviewResult,
       interviewEligible,
       search,
       page,
@@ -201,9 +202,16 @@ export const getAllApplications = asyncHandler(
       ? ((resultFilter as string).toUpperCase() as ApplicationResult)
       : undefined;
 
+    const normalizedFinalInterviewResult = finalInterviewResult
+      ? ((finalInterviewResult as string).toUpperCase() as ApplicationResult)
+      : undefined;
+
     const filters = {
       ...(normalizedStatus && { status: normalizedStatus }),
       ...(normalizedResult && { result: normalizedResult }),
+      ...(normalizedFinalInterviewResult && {
+        finalInterviewResult: normalizedFinalInterviewResult,
+      }),
       ...(typeof interviewEligible !== "undefined" && {
         interviewEligible: interviewEligible === "true",
       }),

@@ -25,6 +25,7 @@ import FinalInterviewScheduling from "../pages/HR/FinalInterviewScheduling";
 import FinalInterviewRating from "../pages/HR/FinalInterviewRating";
 import Reports from "../pages/HR/Reports";
 import UserManagement from "../pages/HR/UserManagement";
+import PreEmploymentRequirements from "../pages/HR/PreEmploymentRequirements";
 
 // Shared pages
 import ProfilePage from "../pages/ProfilePage";
@@ -182,6 +183,10 @@ const AppRoutes = () => {
         />
         <Route path="reports" element={<Reports />} />
         <Route path="users" element={<UserManagement />} />
+        <Route
+          path="pre-employment-requirements"
+          element={<PreEmploymentRequirements />}
+        />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
 

@@ -1,10 +1,12 @@
 import { Router } from "express";
 import {
   getPreEmploymentHandler,
+  getPreEmploymentByUserIdHandler,
   upsertPreEmploymentHandler,
   deletePreEmploymentHandler,
 } from "./pre-employment.controller";
 import authMiddleware from "../../middlewares/auth.middleware";
+import { requireHR } from "../../middlewares/rbac.middleware";
 import upload from "../../middlewares/upload.middleware";
 
 const router = Router();
@@ -25,6 +27,7 @@ const uploadFields = upload.fields([
 ]);
 
 router.get("/", getPreEmploymentHandler);
+router.get("/:userId", requireHR, getPreEmploymentByUserIdHandler);
 
 const setUploadFolder = (req: any, res: any, next: any) => {
   req.uploadFolder = "hr-applications/pre-employment";

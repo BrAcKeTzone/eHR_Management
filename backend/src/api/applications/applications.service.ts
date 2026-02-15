@@ -255,6 +255,7 @@ class ApplicationService {
   async getAllApplications(filters?: {
     status?: ApplicationStatus;
     result?: ApplicationResult;
+    finalInterviewResult?: ApplicationResult;
     interviewEligible?: boolean;
     search?: string;
     page?: number;
@@ -263,6 +264,7 @@ class ApplicationService {
     const {
       status,
       result,
+      finalInterviewResult,
       interviewEligible,
       search,
       page = 1,
@@ -272,6 +274,7 @@ class ApplicationService {
     const where: Prisma.ApplicationWhereInput = {
       ...(status && { status }),
       ...(result && { result }),
+      ...(finalInterviewResult && { finalInterviewResult }),
       ...(typeof interviewEligible === "boolean" && { interviewEligible }),
       ...(search && {
         applicant: {
