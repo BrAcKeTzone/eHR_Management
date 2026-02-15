@@ -135,8 +135,10 @@ const InterviewRating = () => {
       setLoading(true);
       setError(null);
 
+      const applicationId = selectedApplication.id;
+
       await applicationApi.rateInterview(
-        selectedApplication.id,
+        applicationId,
         null, // No score needed
         interviewResult,
         interviewNotes,
@@ -150,6 +152,13 @@ const InterviewRating = () => {
 
       // Refresh applications
       getAllApplications({ interviewEligible: true });
+
+      // If passed, guide HR to schedule the final interview
+      if (interviewResult.toUpperCase() === "PASS") {
+        navigate(
+          `/hr/final-interview-scheduling?applicationId=${applicationId}`,
+        );
+      }
     } catch (error) {
       console.error("Failed to submit interview rating:", error);
       setError(error.message || "Failed to submit interview rating");

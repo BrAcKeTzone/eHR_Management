@@ -243,7 +243,7 @@ const InterviewScheduling = () => {
             onClick={() => openScheduleModal(row)}
             variant={row.initialInterviewSchedule ? "outline" : "primary"}
             size="sm"
-            disabled={!!row.initialInterviewResult}
+            disabled={!!row.initialInterviewResult || !!row.interviewResult}
           >
             {row.initialInterviewSchedule
               ? row.initialInterviewResult
@@ -370,7 +370,9 @@ const InterviewScheduling = () => {
                     }
                     size="sm"
                     className="flex-1"
-                    disabled={!!app.initialInterviewResult}
+                    disabled={
+                      !!app.initialInterviewResult || !!app.interviewResult
+                    }
                   >
                     {app.initialInterviewSchedule
                       ? app.initialInterviewResult
