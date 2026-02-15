@@ -209,7 +209,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           ),
         },
         {
-          name: "Interview Scheduling",
+          name: "Initial Interview Scheduling",
           path: "/hr/interview-scheduling",
           icon: (
             <svg
@@ -228,8 +228,46 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           ),
         },
         {
-          name: "Interview Rating",
+          name: "Initial Review Rating",
           path: "/hr/interview-rating",
+          icon: (
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.966a1 1 0 00.95.69h4.177c.969 0 1.371 1.24.588 1.81l-3.378 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.921-.755 1.688-1.54 1.118l-3.379-2.455a1 1 0 00-1.176 0L6.98 18.95c-.784.57-1.838-.197-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L3.987 9.293c-.783-.57-.381-1.81.588-1.81h4.177a1 1 0 00.95-.69l1.286-3.966z"
+              />
+            </svg>
+          ),
+        },
+        {
+          name: "Final Interview Scheduling",
+          path: "/hr/final-interview-scheduling",
+          icon: (
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          ),
+        },
+        {
+          name: "Final Interview Rating",
+          path: "/hr/final-interview-rating",
           icon: (
             <svg
               className="w-5 h-5"

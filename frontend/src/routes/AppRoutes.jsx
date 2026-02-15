@@ -170,6 +170,11 @@ const AppRoutes = () => {
         <Route path="scoring" element={<Scoring />} />
         <Route path="interview-scheduling" element={<InterviewScheduling />} />
         <Route path="interview-rating" element={<InterviewRating />} />
+        <Route
+          path="final-interview-scheduling"
+          element={<InterviewScheduling />}
+        />
+        <Route path="final-interview-rating" element={<InterviewRating />} />
         <Route path="reports" element={<Reports />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="profile" element={<ProfilePage />} />
