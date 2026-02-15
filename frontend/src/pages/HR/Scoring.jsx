@@ -38,6 +38,13 @@ const Scoring = () => {
     teachingMethod: 30,
     attributes: 10,
   };
+  const normalizeScoreInput = (rawValue, max) => {
+    if (rawValue === "") return "";
+    const num = parseFloat(rawValue);
+    if (!Number.isFinite(num)) return "";
+    const bounded = Math.min(Math.max(num, 0), max);
+    return bounded.toString();
+  };
   const hasAllScores = [
     studentLearningScore,
     knowledgeScore,
@@ -61,7 +68,7 @@ const Scoring = () => {
     const k = toNumber(knowledgeScore);
     const t = toNumber(teachingMethodScore);
     const a = toNumber(attributesScore);
-    const sum = s + k + t + a;
+    const sum = Math.min(s + k + t + a, 100);
     setTotalScore(sum);
 
     // Only set result when all fields have values
@@ -492,7 +499,14 @@ const Scoring = () => {
                 max={maxScores.studentLearning}
                 step="0.01"
                 value={studentLearningScore}
-                onChange={(e) => setStudentLearningScore(e.target.value)}
+                onChange={(e) =>
+                  setStudentLearningScore(
+                    normalizeScoreInput(
+                      e.target.value,
+                      maxScores.studentLearning,
+                    ),
+                  )
+                }
                 required
               />
               <Input
@@ -502,7 +516,11 @@ const Scoring = () => {
                 max={maxScores.knowledge}
                 step="0.01"
                 value={knowledgeScore}
-                onChange={(e) => setKnowledgeScore(e.target.value)}
+                onChange={(e) =>
+                  setKnowledgeScore(
+                    normalizeScoreInput(e.target.value, maxScores.knowledge),
+                  )
+                }
                 required
               />
               <Input
@@ -512,7 +530,14 @@ const Scoring = () => {
                 max={maxScores.teachingMethod}
                 step="0.01"
                 value={teachingMethodScore}
-                onChange={(e) => setTeachingMethodScore(e.target.value)}
+                onChange={(e) =>
+                  setTeachingMethodScore(
+                    normalizeScoreInput(
+                      e.target.value,
+                      maxScores.teachingMethod,
+                    ),
+                  )
+                }
                 required
               />
               <Input
@@ -522,7 +547,11 @@ const Scoring = () => {
                 max={maxScores.attributes}
                 step="0.01"
                 value={attributesScore}
-                onChange={(e) => setAttributesScore(e.target.value)}
+                onChange={(e) =>
+                  setAttributesScore(
+                    normalizeScoreInput(e.target.value, maxScores.attributes),
+                  )
+                }
                 required
               />
             </div>

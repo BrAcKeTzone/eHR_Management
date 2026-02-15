@@ -684,13 +684,11 @@ class ApplicationService {
       }
       updateData.interviewResult = interviewResult as any;
       updateData.interviewNotes = interviewNotes;
-      updateData.finalInterviewResult = interviewResult === "PASS";
+      updateData.finalInterviewResult = interviewResult as any;
       updateData.finalInterviewFeedback = interviewNotes;
-      updateData.finalInterviewScore = interviewScore ?? undefined;
     } else {
-      updateData.initialInterviewResult = interviewResult === "PASS";
+      updateData.initialInterviewResult = interviewResult as any;
       updateData.initialInterviewFeedback = interviewNotes;
-      updateData.initialInterviewScore = interviewScore ?? undefined;
     }
 
     if (stage === "final") {
