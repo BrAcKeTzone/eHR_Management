@@ -61,15 +61,15 @@ const FinalInterviewScheduling = () => {
       setSelectedApplication(app);
       setShowModal(true);
       setSearchParams({});
-      if (app.interviewSchedule) {
-        const dt = new Date(app.interviewSchedule);
+      if (app.finalInterviewSchedule) {
+        const dt = new Date(app.finalInterviewSchedule);
         const dateString = dt.toISOString().split("T")[0];
         setScheduleDate(dateString);
         setSelectedDate(dateString);
         getAvailableSlots(dateString)
           .then(setAvailableSlots)
           .catch(console.warn);
-        setRescheduleReason(app.interviewRescheduleReason || "");
+        setRescheduleReason(app.finalInterviewRescheduleReason || "");
         setScheduleTime(
           `${dt.getHours().toString().padStart(2, "0")}:${dt
             .getMinutes()
@@ -89,15 +89,17 @@ const FinalInterviewScheduling = () => {
             setSelectedApplication(appFromApi);
             setShowModal(true);
             setSearchParams({});
-            if (appFromApi.interviewSchedule) {
-              const dt = new Date(appFromApi.interviewSchedule);
+            if (appFromApi.finalInterviewSchedule) {
+              const dt = new Date(appFromApi.finalInterviewSchedule);
               const dateString = dt.toISOString().split("T")[0];
               setScheduleDate(dateString);
               setSelectedDate(dateString);
               getAvailableSlots(dateString)
                 .then(setAvailableSlots)
                 .catch(console.warn);
-              setRescheduleReason(appFromApi.interviewRescheduleReason || "");
+              setRescheduleReason(
+                appFromApi.finalInterviewRescheduleReason || "",
+              );
               setScheduleTime(
                 `${dt.getHours().toString().padStart(2, "0")}:${dt
                   .getMinutes()
@@ -117,15 +119,27 @@ const FinalInterviewScheduling = () => {
   }, [applications, searchParams, getApplicationById, setSearchParams]);
 
   const openScheduleModal = (app) => {
+    const initialResult = (app.initialInterviewResult || "")
+      .toString()
+      .toUpperCase();
+    if (initialResult !== "PASS") {
+      alert(
+        "Final interview can only be scheduled after a PASS initial interview result.",
+      );
+      return;
+    }
     // Prevent rescheduling if already rescheduled once
-    if (app.interviewSchedule && (app.interviewRescheduleCount || 0) >= 1) {
+    if (
+      app.finalInterviewSchedule &&
+      (app.finalInterviewRescheduleCount || 0) >= 1
+    ) {
       alert(
         "This application has already been rescheduled once and cannot be rescheduled again.",
       );
       return;
     }
     // Prevent scheduling/rescheduling if the interview has already been rated
-    if (app.interviewResult) {
+    if (app.finalInterviewResult || app.interviewResult) {
       alert(
         "This application has already been rated and cannot be scheduled or rescheduled.",
       );
@@ -134,8 +148,8 @@ const FinalInterviewScheduling = () => {
     setSelectedApplication(app);
     setShowModal(true);
     // preselect date and fetch available slots if interview already scheduled
-    if (app?.interviewSchedule) {
-      const dt = new Date(app.interviewSchedule);
+    if (app?.finalInterviewSchedule) {
+      const dt = new Date(app.finalInterviewSchedule);
       const dateString = dt.toISOString().split("T")[0];
       setScheduleDate(dateString);
       setScheduleTime(
@@ -197,27 +211,29 @@ const FinalInterviewScheduling = () => {
       ),
     },
     {
-      header: "Interview Schedule",
-      accessor: "interviewSchedule",
+      header: "Final Interview Schedule",
+      accessor: "finalInterviewSchedule",
       cell: (row) => (
         <div className="text-sm">
-          {row.interviewSchedule ? (
+          {row.finalInterviewSchedule ? (
             <div>
               <p className="font-medium text-green-600">Scheduled</p>
               <p className="text-gray-600">
-                {formatDate(row.interviewSchedule)}
+                {formatDate(row.finalInterviewSchedule)}
               </p>
-              {row.interviewTime && (
-                <p className="text-gray-600 font-medium">{row.interviewTime}</p>
+              {row.finalInterviewTime && (
+                <p className="text-gray-600 font-medium">
+                  {row.finalInterviewTime}
+                </p>
               )}
-              {row.interviewRescheduleReason && (
+              {row.finalInterviewRescheduleReason && (
                 <p className="mt-1 text-xs text-gray-500">
                   Reason:{" "}
-                  {row.interviewRescheduleReason === "APPLICANT_NO_SHOW"
+                  {row.finalInterviewRescheduleReason === "APPLICANT_NO_SHOW"
                     ? "Applicant did not appear"
-                    : row.interviewRescheduleReason === "SCHOOL"
+                    : row.finalInterviewRescheduleReason === "SCHOOL"
                       ? "Rescheduled by school"
-                      : row.interviewRescheduleReason}
+                      : row.finalInterviewRescheduleReason}
                 </p>
               )}
             </div>
@@ -234,14 +250,14 @@ const FinalInterviewScheduling = () => {
         <div className="flex space-x-2">
           <Button
             onClick={() => openScheduleModal(row)}
-            variant={row.interviewSchedule ? "outline" : "primary"}
+            variant={row.finalInterviewSchedule ? "outline" : "primary"}
             size="sm"
-            disabled={!!row.interviewResult}
+            disabled={!!row.finalInterviewResult || !!row.interviewResult}
           >
-            {row.interviewSchedule
-              ? row.interviewResult
+            {row.finalInterviewSchedule
+              ? row.finalInterviewResult || row.interviewResult
                 ? "Interviewed"
-                : (row.interviewRescheduleCount || 0) >= 1
+                : (row.finalInterviewRescheduleCount || 0) >= 1
                   ? "Rescheduled"
                   : "Reschedule"
               : "Schedule"}
@@ -252,16 +268,23 @@ const FinalInterviewScheduling = () => {
   ];
 
   // Only show applications that are interviewEligible or have a passing demo score
-  // and exclude applications that already have an interview result
+  // Require initial interview PASS and exclude applications with a final interview result
   const visibleApplications = (applications || []).filter((a) => {
     const eligible =
       a.interviewEligible ||
       (typeof a.totalScore === "number" && a.totalScore >= 75);
-    const hasInterviewResult =
-      a.interviewResult !== null &&
-      typeof a.interviewResult !== "undefined" &&
-      a.interviewResult.toString().trim() !== "";
-    return eligible && !hasInterviewResult;
+    const initialResult = (a.initialInterviewResult || "")
+      .toString()
+      .trim()
+      .toUpperCase();
+    const finalResult = (a.finalInterviewResult || "").toString().trim();
+    const fallbackResult = (a.interviewResult || "").toString().trim();
+    return (
+      eligible &&
+      initialResult === "PASS" &&
+      finalResult === "" &&
+      fallbackResult === ""
+    );
   });
 
   return (
@@ -327,27 +350,29 @@ const FinalInterviewScheduling = () => {
                     <p className="font-medium">{formatDate(app.createdAt)}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Interview Schedule:</span>
-                    {app.interviewSchedule ? (
+                    <span className="text-gray-500">
+                      Final Interview Schedule:
+                    </span>
+                    {app.finalInterviewSchedule ? (
                       <div className="mt-1">
                         <p className="font-medium text-green-600">Scheduled</p>
                         <p className="text-gray-600">
-                          {formatDate(app.interviewSchedule)}
+                          {formatDate(app.finalInterviewSchedule)}
                         </p>
-                        {app.interviewTime && (
+                        {app.finalInterviewTime && (
                           <p className="text-gray-600 font-medium">
-                            {app.interviewTime}
+                            {app.finalInterviewTime}
                           </p>
                         )}
-                        {app.interviewRescheduleReason && (
+                        {app.finalInterviewRescheduleReason && (
                           <p className="mt-1 text-xs text-gray-500">
                             Reason:{" "}
-                            {app.interviewRescheduleReason ===
+                            {app.finalInterviewRescheduleReason ===
                             "APPLICANT_NO_SHOW"
                               ? "Applicant did not appear"
-                              : app.interviewRescheduleReason === "SCHOOL"
+                              : app.finalInterviewRescheduleReason === "SCHOOL"
                                 ? "Rescheduled by school"
-                                : app.interviewRescheduleReason}
+                                : app.finalInterviewRescheduleReason}
                           </p>
                         )}
                       </div>
@@ -360,15 +385,17 @@ const FinalInterviewScheduling = () => {
                 <div className="flex space-x-2">
                   <Button
                     onClick={() => openScheduleModal(app)}
-                    variant={app.interviewSchedule ? "outline" : "primary"}
+                    variant={app.finalInterviewSchedule ? "outline" : "primary"}
                     size="sm"
                     className="flex-1"
-                    disabled={!!app.interviewResult}
+                    disabled={
+                      !!app.finalInterviewResult || !!app.interviewResult
+                    }
                   >
-                    {app.interviewSchedule
-                      ? app.interviewResult
+                    {app.finalInterviewSchedule
+                      ? app.finalInterviewResult || app.interviewResult
                         ? "Interviewed"
-                        : (app.interviewRescheduleCount || 0) >= 1
+                        : (app.finalInterviewRescheduleCount || 0) >= 1
                           ? "Rescheduled"
                           : "Reschedule"
                       : "Schedule"}
@@ -470,7 +497,7 @@ const FinalInterviewScheduling = () => {
               </div>
             </div>
 
-            {selectedApplication.interviewSchedule && (
+            {selectedApplication.finalInterviewSchedule && (
               <div className="mt-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Reschedule Reason <span className="text-red-500">*</span>
@@ -522,7 +549,7 @@ const FinalInterviewScheduling = () => {
                       }
                     }
 
-                    if (selectedApplication?.interviewSchedule) {
+                    if (selectedApplication?.finalInterviewSchedule) {
                       if (!rescheduleReason) {
                         alert(
                           "Please select a reason for rescheduling the interview.",
@@ -536,6 +563,7 @@ const FinalInterviewScheduling = () => {
                       selectedApplication.id,
                       isoString,
                       rescheduleReason || undefined,
+                      "final",
                     );
                     setShowModal(false);
                     setSelectedApplication(null);

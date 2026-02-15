@@ -279,11 +279,12 @@ export const applicationApi = {
     applicationId,
     interviewSchedule,
     rescheduleReason,
+    stage = "initial",
   ) => {
     try {
       const response = await fetchClient.put(
         `${API_BASE_URL}/applications/${applicationId}/interview`,
-        { interviewSchedule, rescheduleReason },
+        { interviewSchedule, rescheduleReason, stage },
       );
       return { application: response.data.data };
     } catch (error) {
@@ -356,6 +357,7 @@ export const applicationApi = {
     interviewScore,
     interviewResult,
     interviewNotes = "",
+    stage = "initial",
   ) => {
     try {
       const response = await fetchClient.put(
@@ -364,6 +366,7 @@ export const applicationApi = {
           interviewScore: interviewScore ? parseFloat(interviewScore) : null,
           interviewResult: interviewResult.toUpperCase(),
           interviewNotes,
+          stage,
         },
       );
       return { application: response.data.data };

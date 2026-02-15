@@ -74,7 +74,7 @@ class NotificationService {
   // Application submission confirmation to applicant
   async sendApplicationSubmissionNotification(
     application: Application,
-    applicant: User
+    applicant: User,
   ): Promise<void> {
     const subject =
       "Application Submitted Successfully - BCFI Teacher Application";
@@ -115,7 +115,7 @@ Blancia College Foundation Inc.
   // New application alert to HR
   async sendNewApplicationAlertToHR(
     application: Application,
-    applicant: User
+    applicant: User,
   ): Promise<void> {
     const hrEmails = await this.getHREmails();
 
@@ -157,7 +157,7 @@ Blancia College Foundation Inc.
   // Application approval notification
   async sendApplicationApprovalNotification(
     application: Application,
-    applicant: User
+    applicant: User,
   ): Promise<void> {
     const subject = "Application Approved - Teaching Demo Scheduling - BCFI";
     const applicantFullName = this.getApplicantFullName(applicant);
@@ -198,7 +198,7 @@ Blancia College Foundation Inc.
   // Application rejection notification
   async sendApplicationRejectionNotification(
     application: Application,
-    applicant: User
+    applicant: User,
   ): Promise<void> {
     const subject = "Application Status Update - BCFI Teacher Application";
     const applicantFullName = this.getApplicantFullName(applicant);
@@ -240,7 +240,7 @@ Blancia College Foundation Inc.
   // Teaching demo schedule notification
   async sendDemoScheduleNotification(
     application: Application,
-    applicant: User
+    applicant: User,
   ): Promise<void> {
     if (!application.demoSchedule) {
       throw new Error("Demo schedule not set");
@@ -285,17 +285,22 @@ Blancia College Foundation Inc.
   // Interview schedule notification
   async sendInterviewScheduleNotification(
     application: Application,
-    applicant: User
+    applicant: User,
+    stage: "initial" | "final" = "initial",
   ): Promise<void> {
     const appAny = application as any;
-    if (!appAny.interviewSchedule) {
+    const schedule =
+      stage === "final"
+        ? appAny.finalInterviewSchedule
+        : appAny.initialInterviewSchedule;
+    if (!schedule) {
       throw new Error("Interview schedule not set");
     }
 
-    const interviewDate = appAny.interviewSchedule.toLocaleDateString();
-    const interviewTime = appAny.interviewSchedule.toLocaleTimeString();
+    const interviewDate = schedule.toLocaleDateString();
+    const interviewTime = schedule.toLocaleTimeString();
 
-    const subject = "Interview Scheduled - BCFI Teacher Application";
+    const subject = `${stage === "final" ? "Final" : "Initial"} Interview Scheduled - BCFI Teacher Application`;
     const applicantFullName = this.getApplicantFullName(applicant);
     const programName = this.getApplicationProgram(application);
     const message = `
@@ -328,7 +333,7 @@ Blancia College Foundation Inc.
   async sendDemoRescheduleNotification(
     application: Application,
     applicant: User,
-    reason?: string
+    reason?: string,
   ): Promise<void> {
     if (!application.demoSchedule) {
       throw new Error("Demo schedule not set");
@@ -396,7 +401,7 @@ Blancia College Foundation Inc.
   async sendResultsNotification(
     application: Application,
     applicant: User,
-    scores: any[]
+    scores: any[],
   ): Promise<void> {
     if (!application.totalScore || !application.result) {
       throw new Error("Application scores not completed");

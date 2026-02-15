@@ -565,8 +565,12 @@ export const scheduleInterview = asyncHandler(
     }
 
     const { id } = req.params;
-    const { interviewSchedule, rescheduleReason } = req.body;
+    const { interviewSchedule, rescheduleReason, stage = "initial" } = req.body;
     const applicationId = parseInt(id);
+
+    if (!["initial", "final"].includes(stage)) {
+      throw new ApiError(400, "Stage must be either 'initial' or 'final'");
+    }
 
     if (!interviewSchedule) {
       throw new ApiError(400, "Interview schedule date is required");
@@ -576,6 +580,7 @@ export const scheduleInterview = asyncHandler(
       applicationId,
       new Date(interviewSchedule),
       rescheduleReason,
+      stage as "initial" | "final",
     );
 
     // Get the full application with applicant details and format it

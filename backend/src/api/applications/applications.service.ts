@@ -42,9 +42,12 @@ export interface UpdateApplicationData {
   totalScore?: number;
   result?: "PASS" | "FAIL";
   interviewEligible?: boolean;
-  interviewSchedule?: Date;
-  interviewRescheduleCount?: number;
-  interviewRescheduleReason?: string;
+  initialInterviewSchedule?: Date;
+  initialInterviewRescheduleCount?: number;
+  initialInterviewRescheduleReason?: string;
+  finalInterviewSchedule?: Date;
+  finalInterviewRescheduleCount?: number;
+  finalInterviewRescheduleReason?: string;
   interviewScore?: number;
   interviewResult?: "PASS" | "FAIL";
   interviewNotes?: string;
@@ -72,24 +75,29 @@ function formatApplicationForFrontend(app: any) {
     formattedApp.demoTime = `${hours}:${minutes} ${period}`;
   }
 
-  if (app.interviewSchedule) {
-    const interviewDate = new Date(app.interviewSchedule);
+  const appendInterviewTime = (dateVal: any, key: string) => {
+    if (!dateVal) return;
+    const interviewDate = new Date(dateVal);
     let hours = interviewDate.getHours();
     const minutes = interviewDate.getMinutes().toString().padStart(2, "0");
     const period = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
-    formattedApp.interviewTime = `${hours}:${minutes} ${period}`;
-  }
-  if ((app as any).interviewRescheduleCount !== undefined) {
-    formattedApp.interviewRescheduleCount = (
-      app as any
-    ).interviewRescheduleCount;
-  }
-  if ((app as any).interviewRescheduleReason) {
-    formattedApp.interviewRescheduleReason = (
-      app as any
-    ).interviewRescheduleReason;
-  }
+    formattedApp[key] = `${hours}:${minutes} ${period}`;
+  };
+
+  appendInterviewTime(app.initialInterviewSchedule, "initialInterviewTime");
+  appendInterviewTime(app.finalInterviewSchedule, "finalInterviewTime");
+
+  formattedApp.initialInterviewRescheduleCount =
+    (app as any).initialInterviewRescheduleCount || 0;
+  formattedApp.initialInterviewRescheduleReason = (
+    app as any
+  ).initialInterviewRescheduleReason;
+  formattedApp.finalInterviewRescheduleCount =
+    (app as any).finalInterviewRescheduleCount || 0;
+  formattedApp.finalInterviewRescheduleReason = (
+    app as any
+  ).finalInterviewRescheduleReason;
 
   return formattedApp;
 }
@@ -492,6 +500,7 @@ class ApplicationService {
     id: number,
     interviewSchedule: Date,
     rescheduleReason?: string,
+    stage: "initial" | "final" = "initial",
   ): Promise<Application> {
     const application = await prisma.application.findUnique({ where: { id } });
 
@@ -499,11 +508,11 @@ class ApplicationService {
       throw new ApiError(404, "Application not found");
     }
 
-    // Prevent scheduling/rescheduling if interview result already exists
-    if ((application as any).interviewResult) {
+    const hasFinalResult = (application as any).interviewResult;
+    if (hasFinalResult && stage === "final") {
       throw new ApiError(
         400,
-        "Cannot schedule or reschedule interview for an application that already has an interview result",
+        "Cannot schedule or reschedule final interview for an application that already has a final interview result",
       );
     }
 
@@ -517,6 +526,17 @@ class ApplicationService {
       throw new ApiError(
         400,
         "Application is not eligible for interview scheduling",
+      );
+    }
+
+    // Final interview requires a passed initial interview result
+    if (
+      stage === "final" &&
+      (application as any).initialInterviewResult !== "PASS"
+    ) {
+      throw new ApiError(
+        400,
+        "Final interview can only be scheduled after a PASS initial interview result",
       );
     }
 
@@ -546,8 +566,19 @@ class ApplicationService {
       }
     }
 
-    // Check reschedule limits - only allow 1 reschedule
-    const isReschedule = !!(application as any).interviewSchedule;
+    const currentScheduleField =
+      stage === "final" ? "finalInterviewSchedule" : "initialInterviewSchedule";
+    const rescheduleCountField =
+      stage === "final"
+        ? "finalInterviewRescheduleCount"
+        : "initialInterviewRescheduleCount";
+    const rescheduleReasonField =
+      stage === "final"
+        ? "finalInterviewRescheduleReason"
+        : "initialInterviewRescheduleReason";
+
+    // Check reschedule limits - only allow 1 reschedule per stage
+    const isReschedule = !!(application as any)[currentScheduleField];
     // If rescheduling, require a reason similar to demo schedule
     if (isReschedule) {
       if (!rescheduleReason) {
@@ -565,7 +596,7 @@ class ApplicationService {
       }
     }
     const currentRescheduleCount =
-      (application as any).interviewRescheduleCount || 0;
+      (application as any)[rescheduleCountField] || 0;
     if (isReschedule && currentRescheduleCount >= 1) {
       throw new ApiError(
         400,
@@ -573,10 +604,11 @@ class ApplicationService {
       );
     }
 
-    const updateData: any = { interviewSchedule };
+    const updateData: any = {};
+    updateData[currentScheduleField] = interviewSchedule;
     if (isReschedule) {
-      updateData.interviewRescheduleCount = currentRescheduleCount + 1;
-      updateData.interviewRescheduleReason = rescheduleReason;
+      updateData[rescheduleCountField] = currentRescheduleCount + 1;
+      updateData[rescheduleReasonField] = rescheduleReason;
     }
 
     const updatedApplication = await this.updateApplication(id, updateData);
@@ -587,7 +619,7 @@ class ApplicationService {
     });
     if (applicant) {
       notificationService
-        .sendInterviewScheduleNotification(updatedApplication, applicant)
+        .sendInterviewScheduleNotification(updatedApplication, applicant, stage)
         .catch((err: any) =>
           console.error("Failed to send interview schedule notification:", err),
         );
@@ -661,7 +693,10 @@ class ApplicationService {
       throw new ApiError(404, "Application not found");
     }
 
-    if (!application.interviewSchedule) {
+    const scheduledField =
+      stage === "final" ? "finalInterviewSchedule" : "initialInterviewSchedule";
+
+    if (!(application as any)[scheduledField]) {
       throw new ApiError(
         400,
         "Application must have a scheduled interview before rating",

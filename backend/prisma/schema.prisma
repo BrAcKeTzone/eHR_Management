@@ -101,9 +101,14 @@ model Application {
   demoRescheduleCount Int @default(0) // Number of times the demo has been rescheduled
   demoRescheduleReason String? // Optional reason for latest reschedule (applicant_no_show | school)
   interviewEligible Boolean @default(false) // Whether this application is eligible for interview scheduling
-  interviewSchedule DateTime?     // Interview date/time
-  interviewRescheduleCount Int @default(0) // Number of times the interview has been rescheduled
-  interviewRescheduleReason String?
+  // Initial interview scheduling
+  initialInterviewSchedule DateTime?
+  initialInterviewRescheduleCount Int @default(0)
+  initialInterviewRescheduleReason String?
+  // Final interview scheduling
+  finalInterviewSchedule DateTime?
+  finalInterviewRescheduleCount Int @default(0)
+  finalInterviewRescheduleReason String?
   // Demo scoring breakdown
   studentLearningActionsScore Float? // 0-30
   knowledgeOfSubjectScore Float? // 0-30

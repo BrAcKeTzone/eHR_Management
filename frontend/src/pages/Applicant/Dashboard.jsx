@@ -99,9 +99,9 @@ const ApplicantDashboard = () => {
       currentIndex = 0;
     } else if (application.status?.toLowerCase() === "completed") {
       currentIndex = stages.length - 1;
-    } else if (application.interviewSchedule) {
-      // Check if it's considered "Final" - for now we default to Initial
-      // unless we have specific criteria for Final
+    } else if (application.finalInterviewSchedule) {
+      currentIndex = stages.indexOf("Final Interview Scheduled");
+    } else if (application.initialInterviewSchedule) {
       currentIndex = stages.indexOf("Initial Interview Scheduled");
     } else if (application.demoSchedule) {
       currentIndex = stages.indexOf("Demo Scheduled");
@@ -170,19 +170,40 @@ const ApplicantDashboard = () => {
     ["rejected", "completed"].includes((status || "").toLowerCase());
 
   const getUpcomingInterview = () => {
-    if (!currentApplication?.interviewSchedule) return null;
-    const interviewDate = new Date(currentApplication.interviewSchedule);
     const now = new Date();
-    if (interviewDate > now) {
-      return {
-        date: currentApplication.interviewSchedule,
-        time: currentApplication.interviewTime || "Time not set",
-        location: currentApplication.interviewLocation,
-        duration: currentApplication.interviewDuration,
-        notes: currentApplication.interviewNotes,
-      };
+    const candidates = [];
+
+    if (currentApplication?.initialInterviewSchedule) {
+      const dt = new Date(currentApplication.initialInterviewSchedule);
+      if (dt > now) {
+        candidates.push({
+          stage: "Initial",
+          date: currentApplication.initialInterviewSchedule,
+          time: currentApplication.initialInterviewTime || "Time not set",
+          notes: currentApplication.initialInterviewFeedback,
+        });
+      }
     }
-    return null;
+
+    if (currentApplication?.finalInterviewSchedule) {
+      const dt = new Date(currentApplication.finalInterviewSchedule);
+      if (dt > now) {
+        candidates.push({
+          stage: "Final",
+          date: currentApplication.finalInterviewSchedule,
+          time: currentApplication.finalInterviewTime || "Time not set",
+          notes: currentApplication.finalInterviewFeedback,
+        });
+      }
+    }
+
+    if (!candidates.length) return null;
+
+    candidates.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+
+    return candidates[0];
   };
 
   const upcomingInterview = getUpcomingInterview();
@@ -432,9 +453,12 @@ const ApplicantDashboard = () => {
                       const demoSchedule =
                         currentApplication.demoSchedule ||
                         currentApplication.demo_schedule;
-                      const interviewSchedule =
-                        currentApplication.interviewSchedule ||
-                        currentApplication.interview_schedule;
+                      const initialInterviewSchedule =
+                        currentApplication.initialInterviewSchedule ||
+                        currentApplication.initial_interview_schedule;
+                      const finalInterviewSchedule =
+                        currentApplication.finalInterviewSchedule ||
+                        currentApplication.final_interview_schedule;
                       const timestamps = {
                         Submitted:
                           currentApplication.createdAt ||
@@ -452,12 +476,17 @@ const ApplicantDashboard = () => {
                               demoSchedule.scheduledAt
                             : demoSchedule,
                         "Initial Interview Scheduled":
-                          typeof interviewSchedule === "object"
-                            ? interviewSchedule.date ||
-                              interviewSchedule.datetime ||
-                              interviewSchedule.scheduledAt
-                            : interviewSchedule,
-                        "Final Interview Scheduled": null, // Placeholder for future use
+                          typeof initialInterviewSchedule === "object"
+                            ? initialInterviewSchedule.date ||
+                              initialInterviewSchedule.datetime ||
+                              initialInterviewSchedule.scheduledAt
+                            : initialInterviewSchedule,
+                        "Final Interview Scheduled":
+                          typeof finalInterviewSchedule === "object"
+                            ? finalInterviewSchedule.date ||
+                              finalInterviewSchedule.datetime ||
+                              finalInterviewSchedule.scheduledAt
+                            : finalInterviewSchedule,
                         Completed:
                           currentApplication.status?.toUpperCase() ===
                           "COMPLETED"
@@ -499,9 +528,12 @@ const ApplicantDashboard = () => {
                     const demoSchedule =
                       currentApplication.demoSchedule ||
                       currentApplication.demo_schedule;
-                    const interviewSchedule =
-                      currentApplication.interviewSchedule ||
-                      currentApplication.interview_schedule;
+                    const initialInterviewSchedule =
+                      currentApplication.initialInterviewSchedule ||
+                      currentApplication.initial_interview_schedule;
+                    const finalInterviewSchedule =
+                      currentApplication.finalInterviewSchedule ||
+                      currentApplication.final_interview_schedule;
                     const timestamps = {
                       Submitted:
                         currentApplication.createdAt ||
@@ -519,12 +551,17 @@ const ApplicantDashboard = () => {
                             demoSchedule.scheduledAt
                           : demoSchedule,
                       "Initial Interview Scheduled":
-                        typeof interviewSchedule === "object"
-                          ? interviewSchedule.date ||
-                            interviewSchedule.datetime ||
-                            interviewSchedule.scheduledAt
-                          : interviewSchedule,
-                      "Final Interview Scheduled": null,
+                        typeof initialInterviewSchedule === "object"
+                          ? initialInterviewSchedule.date ||
+                            initialInterviewSchedule.datetime ||
+                            initialInterviewSchedule.scheduledAt
+                          : initialInterviewSchedule,
+                      "Final Interview Scheduled":
+                        typeof finalInterviewSchedule === "object"
+                          ? finalInterviewSchedule.date ||
+                            finalInterviewSchedule.datetime ||
+                            finalInterviewSchedule.scheduledAt
+                          : finalInterviewSchedule,
                       Completed:
                         currentApplication.status?.toUpperCase() === "COMPLETED"
                           ? currentApplication.completedAt ||
@@ -627,7 +664,8 @@ const ApplicantDashboard = () => {
         {/* Demo Schedule */}
         {!isFinalized(currentApplication?.status) &&
           currentApplication?.demoSchedule &&
-          !currentApplication?.interviewSchedule && (
+          !currentApplication?.initialInterviewSchedule &&
+          !currentApplication?.finalInterviewSchedule && (
             <DashboardCard title="Upcoming Demo">
               {upcomingDemo ? (
                 <div className="space-y-4">
@@ -720,8 +758,11 @@ const ApplicantDashboard = () => {
 
         {/* Interview Schedule */}
         {!isFinalized(currentApplication?.status) &&
-          currentApplication?.interviewSchedule && (
-            <DashboardCard title="Upcoming Interview">
+          (currentApplication?.initialInterviewSchedule ||
+            currentApplication?.finalInterviewSchedule) && (
+            <DashboardCard
+              title={`Upcoming ${upcomingInterview?.stage || ""} Interview`.trim()}
+            >
               {upcomingInterview ? (
                 <div className="space-y-4">
                   <div className="text-center">
@@ -741,7 +782,7 @@ const ApplicantDashboard = () => {
                       </svg>
                     </div>
                     <h3 className="font-semibold text-gray-900">
-                      Interview Scheduled
+                      {upcomingInterview.stage || ""} Interview Scheduled
                     </h3>
                   </div>
 

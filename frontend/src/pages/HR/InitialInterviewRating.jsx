@@ -27,6 +27,11 @@ const InterviewRating = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Ensure data is loaded on first visit so the table has entries
+  useEffect(() => {
+    getAllApplications({ interviewEligible: true });
+  }, [getAllApplications]);
+
   useEffect(() => {
     const applicationId = searchParams.get("applicationId");
     if (!applicationId) return;
@@ -37,15 +42,15 @@ const InterviewRating = () => {
     if (app) {
       // Guard: ensure the application is eligible for interview rating
       const hasInterviewResult =
-        app.interviewResult !== null &&
-        typeof app.interviewResult !== "undefined" &&
-        app.interviewResult.toString().trim() !== "";
+        app.initialInterviewResult !== null &&
+        typeof app.initialInterviewResult !== "undefined" &&
+        app.initialInterviewResult.toString().trim() !== "";
       const demoResult = app.result
         ? app.result.toString().trim().toUpperCase()
         : null;
       const demoPassed = demoResult === "PASS";
 
-      if (app.interviewSchedule && demoPassed && !hasInterviewResult) {
+      if (app.initialInterviewSchedule && demoPassed && !hasInterviewResult) {
         setSelectedApplication(app);
         setShowModal(true);
       } else {
@@ -60,16 +65,16 @@ const InterviewRating = () => {
           const appFromApi = res?.application;
           if (appFromApi) {
             const hasInterviewResult =
-              appFromApi.interviewResult !== null &&
-              typeof appFromApi.interviewResult !== "undefined" &&
-              appFromApi.interviewResult.toString().trim() !== "";
+              appFromApi.initialInterviewResult !== null &&
+              typeof appFromApi.initialInterviewResult !== "undefined" &&
+              appFromApi.initialInterviewResult.toString().trim() !== "";
             const demoResult = appFromApi.result
               ? appFromApi.result.toString().trim().toUpperCase()
               : null;
             const demoPassed = demoResult === "PASS";
 
             if (
-              appFromApi.interviewSchedule &&
+              appFromApi.initialInterviewSchedule &&
               demoPassed &&
               !hasInterviewResult
             ) {
@@ -90,15 +95,15 @@ const InterviewRating = () => {
   const openRatingModal = (app) => {
     // Guard: only allow opening the rating modal when the app is eligible
     const hasInterviewResult =
-      app.interviewResult !== null &&
-      typeof app.interviewResult !== "undefined" &&
-      app.interviewResult.toString().trim() !== "";
+      app.initialInterviewResult !== null &&
+      typeof app.initialInterviewResult !== "undefined" &&
+      app.initialInterviewResult.toString().trim() !== "";
     const demoResult = app.result
       ? app.result.toString().trim().toUpperCase()
       : null;
     const demoPassed = demoResult === "PASS";
 
-    if (!(app.interviewSchedule && demoPassed && !hasInterviewResult)) {
+    if (!(app.initialInterviewSchedule && demoPassed && !hasInterviewResult)) {
       // not eligible — do nothing
       setError("This application is not eligible for interview rating.");
       return;
@@ -108,9 +113,11 @@ const InterviewRating = () => {
     setShowModal(true);
 
     // Initialize with existing data if available
-    if (app.interviewResult) {
-      setInterviewResult(app.interviewResult);
-      setInterviewNotes(app.interviewNotes || "");
+    if (app.initialInterviewResult) {
+      setInterviewResult(app.initialInterviewResult);
+      setInterviewNotes(
+        app.initialInterviewFeedback || app.interviewNotes || "",
+      );
     } else {
       setInterviewResult("");
       setInterviewNotes("");
@@ -133,6 +140,7 @@ const InterviewRating = () => {
         null, // No score needed
         interviewResult,
         interviewNotes,
+        "initial",
       );
 
       setShowModal(false);
@@ -165,18 +173,20 @@ const InterviewRating = () => {
       ),
     },
     {
-      header: "Interview Schedule",
-      accessor: "interviewSchedule",
+      header: "Initial Interview Schedule",
+      accessor: "initialInterviewSchedule",
       cell: (row) => (
         <div className="text-sm">
-          {row.interviewSchedule ? (
+          {row.initialInterviewSchedule ? (
             <div>
               <p className="font-medium text-green-600">Scheduled</p>
               <p className="text-gray-600">
-                {formatDate(row.interviewSchedule)}
+                {formatDate(row.initialInterviewSchedule)}
               </p>
-              {row.interviewTime && (
-                <p className="text-gray-600 font-medium">{row.interviewTime}</p>
+              {row.initialInterviewTime && (
+                <p className="text-gray-600 font-medium">
+                  {row.initialInterviewTime}
+                </p>
               )}
             </div>
           ) : (
@@ -187,20 +197,20 @@ const InterviewRating = () => {
     },
     {
       header: "Rating Status",
-      accessor: "interviewResult",
+      accessor: "initialInterviewResult",
       cell: (row) => (
         <div className="text-sm">
-          {row.interviewResult ? (
+          {row.initialInterviewResult ? (
             <div>
               <p className="font-medium text-green-600">Rated</p>
               <span
                 className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
-                  row.interviewResult?.toLowerCase() === "pass"
+                  row.initialInterviewResult?.toLowerCase() === "pass"
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"
                 }`}
               >
-                {row.interviewResult?.toUpperCase()}
+                {row.initialInterviewResult?.toUpperCase()}
               </span>
             </div>
           ) : (
@@ -216,11 +226,11 @@ const InterviewRating = () => {
         <div className="flex space-x-2">
           <Button
             onClick={() => openRatingModal(row)}
-            disabled={!row.interviewSchedule}
+            disabled={!row.initialInterviewSchedule}
             size="sm"
-            variant={row.interviewResult ? "outline" : "primary"}
+            variant={row.initialInterviewResult ? "outline" : "primary"}
           >
-            {row.interviewResult ? "Edit Rating" : "Rate Interview"}
+            {row.initialInterviewResult ? "Edit Rating" : "Rate Interview"}
           </Button>
         </div>
       ),
@@ -249,9 +259,9 @@ const InterviewRating = () => {
               columns={columns}
               data={(applications || []).filter((app) => {
                 const hasInterviewResult =
-                  app.interviewResult !== null &&
-                  typeof app.interviewResult !== "undefined" &&
-                  app.interviewResult.toString().trim() !== "";
+                  app.initialInterviewResult !== null &&
+                  typeof app.initialInterviewResult !== "undefined" &&
+                  app.initialInterviewResult.toString().trim() !== "";
 
                 const demoResult = app.result
                   ? app.result.toString().trim().toUpperCase()
@@ -259,11 +269,13 @@ const InterviewRating = () => {
                 const demoPassed = demoResult === "PASS";
 
                 // Show only scheduled interviews for applications that:
-                // - Have an interview scheduled
+                // - Have an initial interview scheduled
                 // - Have a demo result of PASS
-                // - Do not already have an interviewResult
+                // - Do not already have an initial interview result
                 return (
-                  app.interviewSchedule && demoPassed && !hasInterviewResult
+                  app.initialInterviewSchedule &&
+                  demoPassed &&
+                  !hasInterviewResult
                 );
               })}
             />
@@ -273,9 +285,9 @@ const InterviewRating = () => {
             {(applications || [])
               .filter((app) => {
                 const hasInterviewResult =
-                  app.interviewResult !== null &&
-                  typeof app.interviewResult !== "undefined" &&
-                  app.interviewResult.toString().trim() !== "";
+                  app.initialInterviewResult !== null &&
+                  typeof app.initialInterviewResult !== "undefined" &&
+                  app.initialInterviewResult.toString().trim() !== "";
 
                 const demoResult = app.result
                   ? app.result.toString().trim().toUpperCase()
@@ -283,7 +295,9 @@ const InterviewRating = () => {
                 const demoPassed = demoResult === "PASS";
 
                 return (
-                  app.interviewSchedule && demoPassed && !hasInterviewResult
+                  app.initialInterviewSchedule &&
+                  demoPassed &&
+                  !hasInterviewResult
                 );
               })
               .map((app, idx) => (
@@ -304,18 +318,20 @@ const InterviewRating = () => {
 
                   <div className="grid grid-cols-1 gap-3 mb-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Interview Schedule:</span>
-                      {app.interviewSchedule ? (
+                      <span className="text-gray-500">
+                        Initial Interview Schedule:
+                      </span>
+                      {app.initialInterviewSchedule ? (
                         <div className="mt-1">
                           <p className="font-medium text-green-600">
                             Scheduled
                           </p>
                           <p className="text-gray-600">
-                            {formatDate(app.interviewSchedule)}
+                            {formatDate(app.initialInterviewSchedule)}
                           </p>
-                          {app.interviewTime && (
+                          {app.initialInterviewTime && (
                             <p className="text-gray-600 font-medium">
-                              {app.interviewTime}
+                              {app.initialInterviewTime}
                             </p>
                           )}
                         </div>
@@ -325,17 +341,18 @@ const InterviewRating = () => {
                     </div>
                     <div>
                       <span className="text-gray-500">Rating Status:</span>
-                      {app.interviewResult ? (
+                      {app.initialInterviewResult ? (
                         <div className="mt-1">
                           <p className="font-medium text-green-600">Rated</p>
                           <span
                             className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
-                              app.interviewResult?.toLowerCase() === "pass"
+                              app.initialInterviewResult?.toLowerCase() ===
+                              "pass"
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {app.interviewResult?.toUpperCase()}
+                            {app.initialInterviewResult?.toUpperCase()}
                           </span>
                         </div>
                       ) : (
@@ -349,10 +366,14 @@ const InterviewRating = () => {
                       onClick={() => openRatingModal(app)}
                       size="sm"
                       className="flex-1"
-                      disabled={!app.interviewSchedule}
-                      variant={app.interviewResult ? "outline" : "primary"}
+                      disabled={!app.initialInterviewSchedule}
+                      variant={
+                        app.initialInterviewResult ? "outline" : "primary"
+                      }
                     >
-                      {app.interviewResult ? "Edit Rating" : "Rate Interview"}
+                      {app.initialInterviewResult
+                        ? "Edit Rating"
+                        : "Rate Interview"}
                     </Button>
                   </div>
                 </div>
@@ -382,15 +403,15 @@ const InterviewRating = () => {
                 <div>
                   <span className="text-gray-500">Interview Date:</span>
                   <span className="ml-2 break-words">
-                    {selectedApplication.interviewSchedule
-                      ? formatDate(selectedApplication.interviewSchedule)
+                    {selectedApplication.initialInterviewSchedule
+                      ? formatDate(selectedApplication.initialInterviewSchedule)
                       : "Not scheduled"}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-500">Time:</span>
                   <span className="ml-2">
-                    {selectedApplication.interviewTime || "Not set"}
+                    {selectedApplication.initialInterviewTime || "Not set"}
                   </span>
                 </div>
               </div>
@@ -435,7 +456,7 @@ const InterviewRating = () => {
             </div>
 
             {/* Current Rating Info */}
-            {selectedApplication.interviewResult && (
+            {selectedApplication.initialInterviewResult && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 sm:p-4">
                 <h4 className="font-medium text-yellow-900 mb-2">
                   ⚠️ Editing Existing Rating
@@ -444,7 +465,7 @@ const InterviewRating = () => {
                   <p>
                     Current Result:{" "}
                     <strong>
-                      {selectedApplication.interviewResult?.toUpperCase()}
+                      {selectedApplication.initialInterviewResult?.toUpperCase()}
                     </strong>
                   </p>
                   <p className="text-xs mt-2">
