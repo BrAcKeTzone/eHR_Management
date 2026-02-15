@@ -171,39 +171,31 @@ const ApplicantDashboard = () => {
 
   const getUpcomingInterview = () => {
     const now = new Date();
-    const candidates = [];
-
-    if (currentApplication?.initialInterviewSchedule) {
-      const dt = new Date(currentApplication.initialInterviewSchedule);
-      if (dt > now) {
-        candidates.push({
-          stage: "Initial",
-          date: currentApplication.initialInterviewSchedule,
-          time: currentApplication.initialInterviewTime || "Time not set",
-          notes: currentApplication.initialInterviewFeedback,
-        });
-      }
-    }
-
     if (currentApplication?.finalInterviewSchedule) {
       const dt = new Date(currentApplication.finalInterviewSchedule);
       if (dt > now) {
-        candidates.push({
+        return {
           stage: "Final",
           date: currentApplication.finalInterviewSchedule,
           time: currentApplication.finalInterviewTime || "Time not set",
           notes: currentApplication.finalInterviewFeedback,
-        });
+        };
       }
     }
 
-    if (!candidates.length) return null;
+    if (currentApplication?.initialInterviewSchedule) {
+      const dt = new Date(currentApplication.initialInterviewSchedule);
+      if (dt > now) {
+        return {
+          stage: "Initial",
+          date: currentApplication.initialInterviewSchedule,
+          time: currentApplication.initialInterviewTime || "Time not set",
+          notes: currentApplication.initialInterviewFeedback,
+        };
+      }
+    }
 
-    candidates.sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    );
-
-    return candidates[0];
+    return null;
   };
 
   const upcomingInterview = getUpcomingInterview();

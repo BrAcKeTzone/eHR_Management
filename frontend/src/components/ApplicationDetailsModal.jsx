@@ -370,42 +370,50 @@ const ApplicationDetailsModal = ({
           </div>
         )}
 
-        {/* Interview Schedule */}
-        {application.interviewSchedule && (
+        {/* Initial Interview Schedule */}
+        {application.initialInterviewSchedule && (
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Interview Schedule
+              Initial Interview Schedule
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg">
               <div>
                 <p className="text-sm text-blue-700">Date & Time</p>
                 <p className="font-medium text-blue-900">
-                  {formatDate(application.interviewSchedule)}
-                  {application.interviewTime &&
-                    ` at ${application.interviewTime}`}
+                  {formatDate(application.initialInterviewSchedule)}
+                  {application.initialInterviewTime &&
+                    ` at ${application.initialInterviewTime}`}
                 </p>
               </div>
-              {application.interviewLocation && (
-                <div>
-                  <p className="text-sm text-blue-700">Location</p>
-                  <p className="font-medium text-blue-900">
-                    {application.interviewLocation}
-                  </p>
+            </div>
+          </div>
+        )}
+
+        {/* Initial Interview Assessment */}
+        {(application.initialInterviewResult ||
+          application.initialInterviewFeedback) && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Initial Interview Assessment
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-green-50 p-4 rounded-lg">
+              <div>
+                <p className="text-sm text-green-700">Result</p>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
+                      application.initialInterviewResult,
+                    )}`}
+                  >
+                    {application.initialInterviewResult?.toUpperCase() || "N/A"}
+                  </span>
                 </div>
-              )}
-              {application.interviewDuration && (
-                <div>
-                  <p className="text-sm text-blue-700">Duration</p>
-                  <p className="font-medium text-blue-900">
-                    {application.interviewDuration} minutes
-                  </p>
-                </div>
-              )}
-              {application.interviewNotes && (
+              </div>
+              {application.initialInterviewFeedback && (
                 <div className="md:col-span-2">
-                  <p className="text-sm text-blue-700 mb-1">Notes</p>
+                  <p className="text-sm text-blue-700">Feedback</p>
                   <p className="text-sm text-blue-800 bg-white rounded p-2 break-words">
-                    {application.interviewNotes}
+                    {application.initialInterviewFeedback}
                   </p>
                 </div>
               )}
@@ -413,30 +421,50 @@ const ApplicationDetailsModal = ({
           </div>
         )}
 
-        {/* Interview Assessment */}
-        {(application.interviewResult || application.interviewNotes) && (
+        {/* Final Interview Schedule */}
+        {application.finalInterviewSchedule && (
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Interview Assessment
+              Final Interview Schedule
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg">
+              <div>
+                <p className="text-sm text-blue-700">Date & Time</p>
+                <p className="font-medium text-blue-900">
+                  {formatDate(application.finalInterviewSchedule)}
+                  {application.finalInterviewTime &&
+                    ` at ${application.finalInterviewTime}`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Final Interview Assessment */}
+        {(application.finalInterviewResult ||
+          application.finalInterviewFeedback) && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Final Interview Assessment
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-green-50 p-4 rounded-lg">
               <div>
-                <p className="text-sm text-green-700">Interview Result</p>
+                <p className="text-sm text-green-700">Result</p>
                 <div className="flex items-center gap-2">
                   <span
                     className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                      application.interviewResult,
+                      application.finalInterviewResult,
                     )}`}
                   >
-                    {application.interviewResult?.toUpperCase() || "N/A"}
+                    {application.finalInterviewResult?.toUpperCase() || "N/A"}
                   </span>
                 </div>
               </div>
-              {application.interviewNotes && (
+              {application.finalInterviewFeedback && (
                 <div className="md:col-span-2">
-                  <p className="text-sm text-blue-700">Notes</p>
+                  <p className="text-sm text-blue-700">Feedback</p>
                   <p className="text-sm text-blue-800 bg-white rounded p-2 break-words">
-                    {application.interviewNotes}
+                    {application.finalInterviewFeedback}
                   </p>
                 </div>
               )}
