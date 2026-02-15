@@ -56,95 +56,91 @@ const ApplicationHistoryModal = ({
 
         {applicationHistory && applicationHistory.length > 0 ? (
           <div className="space-y-3 sm:space-y-4">
-            {applicationHistory.map((app) => (
-              <div
-                key={app.id}
-                className="border border-gray-200 rounded-lg p-3 sm:p-4"
-              >
-                {/* Attempt # and Status */}
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
-                  <h4 className="font-medium text-gray-900">
-                    Attempt #{app.attemptNumber}
-                  </h4>
-                  <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full w-fit ${getStatusColor(
-                      app.status,
-                    )}`}
-                  >
-                    {app.status?.toUpperCase()}
-                  </span>
-                </div>
+            {applicationHistory.map((app) => {
+              const demoResult = app.result;
+              const initialResult = app.initialInterviewResult;
+              const finalResult = app.finalInterviewResult;
 
-                {/* Specialization */}
-                {app.specialization && (
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 mb-1">Specialization</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {app.specialization.name}
-                    </p>
+              return (
+                <div
+                  key={app.id}
+                  className="border border-gray-200 rounded-lg p-3 sm:p-4"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                    <h4 className="font-medium text-gray-900">
+                      Attempt #{app.attemptNumber}
+                    </h4>
+                    <span
+                      className={`px-3 py-1 text-sm font-medium rounded-full w-fit ${getStatusColor(
+                        app.status,
+                      )}`}
+                    >
+                      {app.status?.toUpperCase()}
+                    </span>
                   </div>
-                )}
 
-                {/* Demo and Interview Schedule/Results Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {/* Demo Schedule and Result */}
-                  <div className="space-y-3">
-                    {app.demoSchedule && (
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">
-                          Demo Schedule
-                        </p>
-                        <p className="text-sm font-medium text-gray-900 break-words">
-                          {formatDate(app.demoSchedule)}
-                        </p>
-                      </div>
-                    )}
-                    {app.result && (
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">
-                          Demo Result
-                        </p>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 mb-3">
+                    {demoResult && (
+                      <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-2">
+                        <span className="text-sm text-gray-500">
+                          Demo Result:
+                        </span>
                         <span
-                          className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                            app.result,
+                          className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                            demoResult,
                           )}`}
                         >
-                          {app.result?.toUpperCase()}
+                          {demoResult?.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+
+                    {initialResult && (
+                      <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-2">
+                        <span className="text-sm text-gray-500">
+                          Initial Interview Result:
+                        </span>
+                        <span
+                          className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                            initialResult,
+                          )}`}
+                        >
+                          {initialResult?.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+
+                    {finalResult && (
+                      <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-2">
+                        <span className="text-sm text-gray-500">
+                          Final Interview Result:
+                        </span>
+                        <span
+                          className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                            finalResult,
+                          )}`}
+                        >
+                          {finalResult?.toUpperCase()}
                         </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Interview Schedule and Result */}
-                  <div className="space-y-3">
-                    {app.interviewSchedule && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">Submitted:</p>
+                      <p className="font-medium">{formatDate(app.createdAt)}</p>
+                    </div>
+                    {app.status === "completed" && app.score && (
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">
-                          Interview Schedule
-                        </p>
-                        <p className="text-sm font-medium text-gray-900 break-words">
-                          {formatDate(app.interviewSchedule)}
-                        </p>
-                      </div>
-                    )}
-                    {app.interviewResult && (
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">
-                          Interview Result
-                        </p>
-                        <span
-                          className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getResultColor(
-                            app.interviewResult,
-                          )}`}
-                        >
-                          {app.interviewResult?.toUpperCase()}
-                        </span>
+                        <p className="text-gray-500">Final Score:</p>
+                        <p className="font-medium">{app.score.total}%</p>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-6 sm:py-8">
