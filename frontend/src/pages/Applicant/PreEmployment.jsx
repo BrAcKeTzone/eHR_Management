@@ -3,8 +3,12 @@ import Input from "../../components/Input";
 import UploadBox from "../../components/UploadBox";
 import Button from "../../components/Button";
 import { preEmploymentApi } from "../../api/preEmploymentApi";
+import { applicationApi } from "../../api/applicationApi";
 
 const PreEmployment = () => {
+  // Application eligibility state
+  const [isEligible, setIsEligible] = useState(false);
+
   // Personal Identifiers State
   const [identifiers, setIdentifiers] = useState({
     sss: "",
@@ -53,6 +57,23 @@ const PreEmployment = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch application history first to check eligibility
+        try {
+          const appsResponse = await applicationApi.getHistory();
+          const applications = appsResponse.applications || [];
+
+          // Check if any application has passed final interview
+          const hasPassed = applications.some(
+            (app) => app.finalInterviewResult === "PASS",
+          );
+
+          setIsEligible(hasPassed);
+        } catch (appError) {
+          console.error("Failed to check application eligibility", appError);
+          // Default to false if check fails
+          setIsEligible(false);
+        }
+
         const response = await preEmploymentApi.get();
         if (response && response.data) {
           const data = response.data;
@@ -287,6 +308,32 @@ const PreEmployment = () => {
         Please complete the form below and upload the necessary documents.
       </p>
 
+      {!isEligible && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-8">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                Notice: The Pre-Employment Requirements form is only available
+                to applicants who have successfully passed the final interview.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* 1. 2x2 Picture (Formal) */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
@@ -307,6 +354,7 @@ const PreEmployment = () => {
                 statusBadge={getStatusBadge("photo2x2", true)}
                 subtitle="JPG, PNG up to 5MB"
                 variant={existingFiles.photo2x2 ? "success" : "neutral"}
+                disabled={!isEligible}
               />
               {existingFiles.photo2x2 && !files.photo2x2 && (
                 <p className="mt-2 text-sm text-green-600">
@@ -361,6 +409,7 @@ const PreEmployment = () => {
               placeholder="00-0000000-0"
               value={identifiers.sss}
               onChange={handleInputChange}
+              disabled={!isEligible}
             />
             <Input
               label="PhilHealth Number"
@@ -368,6 +417,7 @@ const PreEmployment = () => {
               placeholder="00-000000000-0"
               value={identifiers.philhealth}
               onChange={handleInputChange}
+              disabled={!isEligible}
             />
             <Input
               label="TIN (Tax Identification Number)"
@@ -375,6 +425,7 @@ const PreEmployment = () => {
               placeholder="000-000-000-000"
               value={identifiers.tin}
               onChange={handleInputChange}
+              disabled={!isEligible}
             />
             <Input
               label="PAG-IBIG / HDMF Number"
@@ -382,6 +433,7 @@ const PreEmployment = () => {
               placeholder="0000-0000-0000"
               value={identifiers.pagibig}
               onChange={handleInputChange}
+              disabled={!isEligible}
             />
           </div>
         </div>
@@ -450,6 +502,7 @@ const PreEmployment = () => {
                   variant={existingFiles[doc.key] ? "success" : "neutral"}
                   accept=".pdf"
                   subtitle="PDF up to 10MB"
+                  disabled={!isEligible}
                 />
                 {existingFiles[doc.key] && (
                   <div className="mt-1 flex items-center text-sm gap-3">
@@ -494,6 +547,7 @@ const PreEmployment = () => {
             statusBadge="Optional"
             subtitle="PDF up to 10MB"
             accept=".pdf"
+            disabled={!isEligible}
           />
 
           {existingTesdaFiles.length > 0 && (
@@ -539,7 +593,7 @@ const PreEmployment = () => {
             onClick={handleClear}
             variant="outline"
             size="lg"
-            disabled={loading}
+            disabled={loading || !isEligible}
           >
             Clear Selected Files
           </Button>
@@ -547,7 +601,7 @@ const PreEmployment = () => {
             onClick={handleSubmit}
             variant="primary"
             size="lg"
-            disabled={loading}
+            disabled={loading || !isEligible}
           >
             {loading ? "Saving..." : "Submit Requirements"}
           </Button>

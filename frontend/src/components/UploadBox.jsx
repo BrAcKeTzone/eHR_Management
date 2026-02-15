@@ -11,14 +11,20 @@ const UploadBox = ({
   onRemove,
   statusBadge = "",
   variant = "neutral",
+  disabled = false,
 }) => {
   const inputRef = useRef(null);
 
   const handleClick = () => {
-    inputRef.current?.click();
+    if (!disabled) {
+      inputRef.current?.click();
+    }
   };
 
   const getVariantStyles = () => {
+    if (disabled) {
+      return "border-gray-200 bg-gray-100 cursor-not-allowed opacity-60";
+    }
     switch (variant) {
       case "success":
         return "border-green-300 bg-green-50 hover:bg-green-100";
