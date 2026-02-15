@@ -19,8 +19,10 @@ import ApplicationReview from "../pages/HR/Review";
 import ApplicationsManagement from "../pages/HR/ApplicationsManagement";
 import Scheduling from "../pages/HR/Scheduling";
 import Scoring from "../pages/HR/Scoring";
-import InterviewScheduling from "../pages/HR/InterviewScheduling";
-import InterviewRating from "../pages/HR/InterviewRating";
+import InterviewScheduling from "../pages/HR/InitialInterviewScheduling";
+import InterviewRating from "../pages/HR/InitialInterviewRating";
+import FinalInterviewScheduling from "../pages/HR/FinalInterviewScheduling";
+import FinalInterviewRating from "../pages/HR/FinalInterviewRating";
 import Reports from "../pages/HR/Reports";
 import UserManagement from "../pages/HR/UserManagement";
 
@@ -172,9 +174,12 @@ const AppRoutes = () => {
         <Route path="interview-rating" element={<InterviewRating />} />
         <Route
           path="final-interview-scheduling"
-          element={<InterviewScheduling />}
+          element={<FinalInterviewScheduling />}
         />
-        <Route path="final-interview-rating" element={<InterviewRating />} />
+        <Route
+          path="final-interview-rating"
+          element={<FinalInterviewRating />}
+        />
         <Route path="reports" element={<Reports />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="profile" element={<ProfilePage />} />

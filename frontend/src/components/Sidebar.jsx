@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { user } = useAuthStore();
+  const [openGroups, setOpenGroups] = useState({});
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -171,8 +172,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           ),
         },
         {
-          name: "Demo Scheduling",
-          path: "/hr/scheduling",
+          name: "Demo",
           icon: (
             <svg
               className="w-5 h-5"
@@ -188,67 +188,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               />
             </svg>
           ),
+          children: [
+            {
+              name: "Demo Scheduling",
+              path: "/hr/scheduling",
+            },
+            {
+              name: "Demo Scoring",
+              path: "/hr/scoring",
+            },
+          ],
         },
         {
-          name: "Demo Scoring",
-          path: "/hr/scoring",
-          icon: (
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-          ),
-        },
-        {
-          name: "Initial Interview Scheduling",
-          path: "/hr/interview-scheduling",
-          icon: (
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          ),
-        },
-        {
-          name: "Initial Review Rating",
-          path: "/hr/interview-rating",
-          icon: (
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.966a1 1 0 00.95.69h4.177c.969 0 1.371 1.24.588 1.81l-3.378 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.921-.755 1.688-1.54 1.118l-3.379-2.455a1 1 0 00-1.176 0L6.98 18.95c-.784.57-1.838-.197-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L3.987 9.293c-.783-.57-.381-1.81.588-1.81h4.177a1 1 0 00.95-.69l1.286-3.966z"
-              />
-            </svg>
-          ),
-        },
-        {
-          name: "Final Interview Scheduling",
-          path: "/hr/final-interview-scheduling",
+          name: "Initial Interview",
           icon: (
             <svg
               className="w-5 h-5"
@@ -264,10 +216,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               />
             </svg>
           ),
+          children: [
+            {
+              name: "Initial Interview Scheduling",
+              path: "/hr/interview-scheduling",
+            },
+            {
+              name: "Initial Interview Rating",
+              path: "/hr/interview-rating",
+            },
+          ],
         },
         {
-          name: "Final Interview Rating",
-          path: "/hr/final-interview-rating",
+          name: "Final Interview",
           icon: (
             <svg
               className="w-5 h-5"
@@ -279,10 +240,20 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.966a1 1 0 00.95.69h4.177c.969 0 1.371 1.24.588 1.81l-3.378 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.921-.755 1.688-1.54 1.118l-3.379-2.455a1 1 0 00-1.176 0L6.98 18.95c-.784.57-1.838-.197-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L3.987 9.293c-.783-.57-.381-1.81.588-1.81h4.177a1 1 0 00.95-.69l1.286-3.966z"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
           ),
+          children: [
+            {
+              name: "Final Interview Scheduling",
+              path: "/hr/final-interview-scheduling",
+            },
+            {
+              name: "Final Interview Rating",
+              path: "/hr/final-interview-rating",
+            },
+          ],
         },
         {
           name: "Reports",
@@ -330,6 +301,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   const navigationItems = getNavigationItems();
 
+  const toggleGroup = (name, forceOpen) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [name]: typeof forceOpen === "boolean" ? forceOpen : !prev[name],
+    }));
+  };
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -372,7 +350,77 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
           <nav className="space-y-2">
             {navigationItems.map((item) => {
-              const active = isActive(item.path);
+              const hasChildren = Array.isArray(item.children);
+              const active = item.path ? isActive(item.path) : false;
+              const childActive = hasChildren
+                ? item.children.some((child) => isActive(child.path))
+                : false;
+              const isOpen = hasChildren
+                ? (openGroups[item.name] ?? childActive)
+                : false;
+
+              if (hasChildren) {
+                return (
+                  <div key={item.name}>
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(item.name)}
+                      className={`
+                        flex w-full items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        ${
+                          childActive
+                            ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        }
+                      `}
+                    >
+                      <span className="flex items-center">
+                        <span
+                          className={`mr-3 ${
+                            childActive ? "text-blue-600" : "text-gray-400"
+                          }`}
+                        >
+                          {item.icon}
+                        </span>
+                        {item.name}
+                      </span>
+                      <span
+                        className={`transform transition-transform ${
+                          isOpen ? "rotate-90" : "rotate-0"
+                        }`}
+                        aria-hidden
+                      >
+                        ▶
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="mt-1 space-y-1 pl-9">
+                        {item.children.map((child) => {
+                          const childIsActive = isActive(child.path);
+                          return (
+                            <Link
+                              key={child.path}
+                              to={child.path}
+                              onClick={() => setIsOpen(false)}
+                              className={`
+                                flex items-center px-3 py-2 rounded-lg text-sm transition-colors
+                                ${
+                                  childIsActive
+                                    ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+                                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                }
+                              `}
+                            >
+                              {child.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={item.path}

@@ -55,7 +55,7 @@ const InterviewScheduling = () => {
     if (!applicationId) return;
 
     const app = applications?.find(
-      (a) => String(a.id) === String(applicationId)
+      (a) => String(a.id) === String(applicationId),
     );
     if (app) {
       setSelectedApplication(app);
@@ -74,7 +74,7 @@ const InterviewScheduling = () => {
           `${dt.getHours().toString().padStart(2, "0")}:${dt
             .getMinutes()
             .toString()
-            .padStart(2, "0")}`
+            .padStart(2, "0")}`,
         );
       } else {
         setScheduleDate("");
@@ -102,7 +102,7 @@ const InterviewScheduling = () => {
                 `${dt.getHours().toString().padStart(2, "0")}:${dt
                   .getMinutes()
                   .toString()
-                  .padStart(2, "0")}`
+                  .padStart(2, "0")}`,
               );
             } else {
               setScheduleDate("");
@@ -120,14 +120,14 @@ const InterviewScheduling = () => {
     // Prevent rescheduling if already rescheduled once
     if (app.interviewSchedule && (app.interviewRescheduleCount || 0) >= 1) {
       alert(
-        "This application has already been rescheduled once and cannot be rescheduled again."
+        "This application has already been rescheduled once and cannot be rescheduled again.",
       );
       return;
     }
     // Prevent scheduling/rescheduling if the interview has already been rated
     if (app.interviewResult) {
       alert(
-        "This application has already been rated and cannot be scheduled or rescheduled."
+        "This application has already been rated and cannot be scheduled or rescheduled.",
       );
       return;
     }
@@ -142,7 +142,7 @@ const InterviewScheduling = () => {
         `${dt.getHours().toString().padStart(2, "0")}:${dt
           .getMinutes()
           .toString()
-          .padStart(2, "0")}`
+          .padStart(2, "0")}`,
       );
       setSelectedDate(dateString);
       getAvailableSlots(dateString).then(setAvailableSlots).catch(console.warn);
@@ -216,8 +216,8 @@ const InterviewScheduling = () => {
                   {row.interviewRescheduleReason === "APPLICANT_NO_SHOW"
                     ? "Applicant did not appear"
                     : row.interviewRescheduleReason === "SCHOOL"
-                    ? "Rescheduled by school"
-                    : row.interviewRescheduleReason}
+                      ? "Rescheduled by school"
+                      : row.interviewRescheduleReason}
                 </p>
               )}
             </div>
@@ -242,8 +242,8 @@ const InterviewScheduling = () => {
               ? row.interviewResult
                 ? "Interviewed"
                 : (row.interviewRescheduleCount || 0) >= 1
-                ? "Rescheduled"
-                : "Reschedule"
+                  ? "Rescheduled"
+                  : "Reschedule"
               : "Schedule"}
           </Button>
         </div>
@@ -270,7 +270,7 @@ const InterviewScheduling = () => {
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-          Interview Scheduling
+          Initial Interview Scheduling
         </h1>
         <p className="text-gray-600">Schedule interviews for applicants.</p>
       </div>
@@ -348,8 +348,8 @@ const InterviewScheduling = () => {
                             "APPLICANT_NO_SHOW"
                               ? "Applicant did not appear"
                               : app.interviewRescheduleReason === "SCHOOL"
-                              ? "Rescheduled by school"
-                              : app.interviewRescheduleReason}
+                                ? "Rescheduled by school"
+                                : app.interviewRescheduleReason}
                           </p>
                         )}
                       </div>
@@ -371,8 +371,8 @@ const InterviewScheduling = () => {
                       ? app.interviewResult
                         ? "Interviewed"
                         : (app.interviewRescheduleCount || 0) >= 1
-                        ? "Rescheduled"
-                        : "Reschedule"
+                          ? "Rescheduled"
+                          : "Reschedule"
                       : "Schedule"}
                   </Button>
                 </div>
@@ -511,18 +511,18 @@ const InterviewScheduling = () => {
                     // Validate interview date not earlier than demo schedule (if demo exists)
                     if (selectedApplication?.demoSchedule) {
                       const demoDate = new Date(
-                        selectedApplication.demoSchedule
+                        selectedApplication.demoSchedule,
                       );
                       demoDate.setHours(0, 0, 0, 0);
                       const interviewDt = new Date(
-                        `${scheduleDate}T${scheduleTime}:00.000`
+                        `${scheduleDate}T${scheduleTime}:00.000`,
                       );
                       interviewDt.setHours(0, 0, 0, 0);
                       if (interviewDt.getTime() < demoDate.getTime()) {
                         alert(
                           `Interview date must be on or after the demo scheduled on ${formatDate(
-                            selectedApplication.demoSchedule
-                          )}`
+                            selectedApplication.demoSchedule,
+                          )}`,
                         );
                         return;
                       }
@@ -532,7 +532,7 @@ const InterviewScheduling = () => {
                     if (selectedApplication?.interviewSchedule) {
                       if (!rescheduleReason) {
                         alert(
-                          "Please select a reason for rescheduling the interview."
+                          "Please select a reason for rescheduling the interview.",
                         );
                         return;
                       }
@@ -542,7 +542,7 @@ const InterviewScheduling = () => {
                     await applicationApi.scheduleInterview(
                       selectedApplication.id,
                       isoString,
-                      rescheduleReason || undefined
+                      rescheduleReason || undefined,
                     );
                     setShowModal(false);
                     setSelectedApplication(null);

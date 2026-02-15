@@ -9,7 +9,7 @@ import { formatDate } from "../../utils/formatDate";
 import { useApplicationStore } from "../../store/applicationStore";
 import { applicationApi } from "../../api/applicationApi";
 
-const InterviewRating = () => {
+const FinalInterviewRating = () => {
   const navigate = useNavigate();
   const {
     applications,
@@ -32,10 +32,9 @@ const InterviewRating = () => {
     if (!applicationId) return;
 
     const app = applications?.find(
-      (a) => String(a.id) === String(applicationId)
+      (a) => String(a.id) === String(applicationId),
     );
     if (app) {
-      // Guard: ensure the application is eligible for interview rating
       const hasInterviewResult =
         app.interviewResult !== null &&
         typeof app.interviewResult !== "undefined" &&
@@ -49,7 +48,6 @@ const InterviewRating = () => {
         setSelectedApplication(app);
         setShowModal(true);
       } else {
-        // Do not open modal if not eligible; simply ignore
         setSelectedApplication(null);
       }
       setSearchParams({});
@@ -88,7 +86,6 @@ const InterviewRating = () => {
   }, [applications, searchParams, getApplicationById, setSearchParams]);
 
   const openRatingModal = (app) => {
-    // Guard: only allow opening the rating modal when the app is eligible
     const hasInterviewResult =
       app.interviewResult !== null &&
       typeof app.interviewResult !== "undefined" &&
@@ -99,7 +96,6 @@ const InterviewRating = () => {
     const demoPassed = demoResult === "PASS";
 
     if (!(app.interviewSchedule && demoPassed && !hasInterviewResult)) {
-      // not eligible — do nothing
       setError("This application is not eligible for interview rating.");
       return;
     }
@@ -107,7 +103,6 @@ const InterviewRating = () => {
     setSelectedApplication(app);
     setShowModal(true);
 
-    // Initialize with existing data if available
     if (app.interviewResult) {
       setInterviewResult(app.interviewResult);
       setInterviewNotes(app.interviewNotes || "");
@@ -130,9 +125,9 @@ const InterviewRating = () => {
 
       await applicationApi.rateInterview(
         selectedApplication.id,
-        null, // No score needed
+        null,
         interviewResult,
-        interviewNotes
+        interviewNotes,
       );
 
       setShowModal(false);
@@ -140,7 +135,6 @@ const InterviewRating = () => {
       setInterviewResult("");
       setInterviewNotes("");
 
-      // Refresh applications
       getAllApplications({ interviewEligible: true });
     } catch (error) {
       console.error("Failed to submit interview rating:", error);
@@ -231,9 +225,11 @@ const InterviewRating = () => {
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-          Interview Rating
+          Final Interview Rating
         </h1>
-        <p className="text-gray-600">Record ratings/feedback for interviews.</p>
+        <p className="text-gray-600">
+          Record ratings/feedback for final interviews.
+        </p>
       </div>
 
       {error && (
@@ -242,7 +238,7 @@ const InterviewRating = () => {
         </div>
       )}
 
-      <DashboardCard title="Interviews">
+      <DashboardCard title="Final Interviews">
         <div className="mt-4">
           <div className="hidden lg:block">
             <Table
@@ -258,10 +254,6 @@ const InterviewRating = () => {
                   : null;
                 const demoPassed = demoResult === "PASS";
 
-                // Show only scheduled interviews for applications that:
-                // - Have an interview scheduled
-                // - Have a demo result of PASS
-                // - Do not already have an interviewResult
                 return (
                   app.interviewSchedule && demoPassed && !hasInterviewResult
                 );
@@ -369,11 +361,10 @@ const InterviewRating = () => {
             setSelectedApplication(null);
             setError(null);
           }}
-          title={`Rate Interview - ${selectedApplication.applicant?.firstName} ${selectedApplication.applicant?.lastName}`}
+          title={`Rate Final Interview - ${selectedApplication.applicant?.firstName} ${selectedApplication.applicant?.lastName}`}
           size="large"
         >
           <div className="space-y-4 sm:space-y-6">
-            {/* Interview Info */}
             <div className="bg-gray-50 p-3 sm:p-4 rounded-md">
               <h4 className="font-medium text-gray-900 mb-2">
                 INTERVIEW DETAILS
@@ -396,14 +387,12 @@ const InterviewRating = () => {
               </div>
             </div>
 
-            {/* Error Display */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
                 {error}
               </div>
             )}
 
-            {/* Interview Result Dropdown */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Interview Result
@@ -420,7 +409,6 @@ const InterviewRating = () => {
               </select>
             </div>
 
-            {/* Feedback */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Feedback and Comments
@@ -434,7 +422,6 @@ const InterviewRating = () => {
               />
             </div>
 
-            {/* Current Rating Info */}
             {selectedApplication.interviewResult && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 sm:p-4">
                 <h4 className="font-medium text-yellow-900 mb-2">
@@ -454,7 +441,6 @@ const InterviewRating = () => {
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 sm:pt-6 border-t border-gray-200">
               <Button
                 onClick={() => {
@@ -477,8 +463,8 @@ const InterviewRating = () => {
                 {loading
                   ? "Saving..."
                   : selectedApplication.interviewResult
-                  ? "Update Rating"
-                  : "Submit Rating"}
+                    ? "Update Rating"
+                    : "Submit Rating"}
               </Button>
             </div>
           </div>
@@ -488,4 +474,4 @@ const InterviewRating = () => {
   );
 };
 
-export default InterviewRating;
+export default FinalInterviewRating;
