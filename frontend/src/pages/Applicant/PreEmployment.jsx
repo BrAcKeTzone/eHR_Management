@@ -241,6 +241,42 @@ const PreEmployment = () => {
     return required ? "Required" : "Optional";
   };
 
+  const getFileNameFromUrl = (url = "", fallback = "file.pdf") => {
+    try {
+      const cleanUrl = url.split("?")[0];
+      const name = cleanUrl.substring(cleanUrl.lastIndexOf("/") + 1);
+      return name || fallback;
+    } catch (err) {
+      console.error("Failed to derive filename", err);
+      return fallback;
+    }
+  };
+
+  const handleDownloadFile = async (e, url, fallbackName) => {
+    e.preventDefault();
+    if (!url) return;
+
+    const filename = getFileNameFromUrl(url, `${fallbackName || "file"}.pdf`);
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Download failed; opening in new tab", err);
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
   if (fetching)
     return <div className="p-8 text-center">Loading requirements...</div>;
 
@@ -416,8 +452,8 @@ const PreEmployment = () => {
                   subtitle="PDF up to 10MB"
                 />
                 {existingFiles[doc.key] && (
-                  <div className="mt-1 flex items-center text-sm">
-                    <span className="text-green-600 mr-2">✓ Uploaded</span>
+                  <div className="mt-1 flex items-center text-sm gap-3">
+                    <span className="text-green-600">✓ Uploaded</span>
                     <a
                       href={existingFiles[doc.key]}
                       target="_blank"
@@ -425,6 +461,15 @@ const PreEmployment = () => {
                       className="text-blue-600 hover:underline"
                     >
                       View Current
+                    </a>
+                    <a
+                      href={existingFiles[doc.key]}
+                      onClick={(e) =>
+                        handleDownloadFile(e, existingFiles[doc.key], doc.label)
+                      }
+                      className="text-blue-600 hover:underline"
+                    >
+                      Download
                     </a>
                   </div>
                 )}
@@ -459,14 +504,29 @@ const PreEmployment = () => {
               <ul className="list-disc list-inside text-sm text-blue-600">
                 {existingTesdaFiles.map((url, idx) => (
                   <li key={idx}>
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline"
-                    >
-                      Certificate {idx + 1}
-                    </a>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline"
+                      >
+                        Certificate {idx + 1}
+                      </a>
+                      <a
+                        href={url}
+                        onClick={(e) =>
+                          handleDownloadFile(
+                            e,
+                            url,
+                            `TESDA_Certificate_${idx + 1}`,
+                          )
+                        }
+                        className="text-blue-600 hover:underline"
+                      >
+                        Download
+                      </a>
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -29,6 +29,42 @@ const getResultColor = (result) => {
   }
 };
 
+const getFileNameFromUrl = (url = "", fallback = "file.pdf") => {
+  try {
+    const cleanUrl = url.split("?")[0];
+    const name = cleanUrl.substring(cleanUrl.lastIndexOf("/") + 1);
+    return name || fallback;
+  } catch (err) {
+    console.error("Failed to derive filename", err);
+    return fallback;
+  }
+};
+
+const handleDownloadFile = async (e, url, fallbackName) => {
+  e.preventDefault();
+  if (!url) return;
+
+  const filename = getFileNameFromUrl(url, fallbackName || "file.pdf");
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Network response was not ok");
+
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error("Download failed; opening in new tab", err);
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+};
+
 const ApplicationDetailsModal = ({
   isOpen,
   application,
@@ -50,7 +86,7 @@ const ApplicationDetailsModal = ({
           <h3 className="text-sm font-semibold text-gray-700 mb-3">
             Application Status
           </h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-500 mb-1">Status</p>
               <span
@@ -73,19 +109,34 @@ const ApplicationDetailsModal = ({
                 </span>
               </div>
             )}
-            {application.result?.toLowerCase() === "pass" &&
-              application.interviewResult && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Interview Result</p>
-                  <span
-                    className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
-                      application.interviewResult,
-                    )}`}
-                  >
-                    {application.interviewResult?.toUpperCase()}
-                  </span>
-                </div>
-              )}
+            {application.initialInterviewResult && (
+              <div>
+                <p className="text-sm text-gray-500 mb-1">
+                  Initial Interview Result
+                </p>
+                <span
+                  className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                    application.initialInterviewResult,
+                  )}`}
+                >
+                  {application.initialInterviewResult?.toUpperCase()}
+                </span>
+              </div>
+            )}
+            {application.finalInterviewResult && (
+              <div>
+                <p className="text-sm text-gray-500 mb-1">
+                  Final Interview Result
+                </p>
+                <span
+                  className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                    application.finalInterviewResult,
+                  )}`}
+                >
+                  {application.finalInterviewResult?.toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -102,10 +153,6 @@ const ApplicationDetailsModal = ({
             <div>
               <p className="text-sm text-gray-500">Attempt Number</p>
               <p className="mt-1 font-medium">#{application.attemptNumber}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Program</p>
-              <p className="mt-1 font-medium">{application.program || "N/A"}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Specialization</p>
@@ -260,8 +307,13 @@ const ApplicationDetailsModal = ({
                     {doc.url && (
                       <a
                         href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        onClick={(e) =>
+                          handleDownloadFile(
+                            e,
+                            doc.url,
+                            doc.fileName || doc.name || "document.pdf",
+                          )
+                        }
                         className="ml-2 text-blue-600 hover:text-blue-800"
                         title="Download"
                       >

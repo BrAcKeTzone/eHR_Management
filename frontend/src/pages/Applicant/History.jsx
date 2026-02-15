@@ -113,138 +113,151 @@ const ApplicationHistory = () => {
         </DashboardCard>
       ) : (
         <div className="space-y-6">
-          {applicationHistory.map((application) => (
-            <DashboardCard
-              key={application.id}
-              className="hover:shadow-lg transition-shadow"
-            >
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-4 mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Attempt #{application.attemptNumber}
-                    </h3>
-                    <span
-                      className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                        application.status
-                      )}`}
-                    >
-                      {application.status?.toUpperCase()}
-                    </span>
-                    {application.result && (
-                      <span className="text-sm ml-2 mr-2 text-gray-500">
-                        Demo Result:
-                      </span>
-                    )}
-                    {application.result && (
+          {applicationHistory.map((application) => {
+            const demoResult = application.result;
+            const initialResult = application.initialInterviewResult;
+            const finalResult = application.finalInterviewResult;
+
+            return (
+              <DashboardCard
+                key={application.id}
+                className="hover:shadow-lg transition-shadow"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Attempt #{application.attemptNumber}
+                      </h3>
                       <span
-                        className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
-                          application.result
+                        className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
+                          application.status,
                         )}`}
                       >
-                        {application.result?.toUpperCase()}
+                        {application.status?.toUpperCase()}
                       </span>
-                    )}
+                    </div>
 
-                    {application.result?.toUpperCase() === "PASS" &&
-                      application.interviewResult && (
-                        <>
-                          <span className="text-sm ml-2 mr-2 text-gray-500">
-                            Interview Result:
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 mb-3">
+                      {demoResult && (
+                        <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-2">
+                          <span className="text-sm text-gray-500">
+                            Demo Result:
                           </span>
                           <span
                             className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
-                              application.interviewResult
+                              demoResult,
                             )}`}
                           >
-                            {application.interviewResult?.toUpperCase()}
+                            {demoResult?.toUpperCase()}
                           </span>
-                        </>
-                      )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Submitted:</p>
-                      <p className="font-medium">
-                        {formatDate(application.createdAt)}
-                      </p>
-                    </div>
-                    {application.status === "completed" &&
-                      application.score && (
-                        <div>
-                          <p className="text-gray-500">Final Score:</p>
-                          <p className="font-medium text-lg">
-                            {application.score.total}%
-                          </p>
                         </div>
                       )}
-                  </div>
 
-                  {/* Demo Schedule Info */}
-                  {application.demoSchedule && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-gray-500 text-sm mb-1">
-                        DEMONSTRATION DETAILS:
-                      </p>
-                      <p className="text-sm">
-                        {formatDate(application.demoSchedule)}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Rejection Reason */}
-                  {application.status === "REJECTED" && application.hrNotes && (
-                    <div className="mt-3 pt-3 border-t border-red-200 bg-red-50 rounded-md p-3">
-                      <div className="flex items-start">
-                        <svg
-                          className="w-4 h-4 text-red-600 mt-0.5 mr-2 flex-shrink-0"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <div>
-                          <p className="text-xs font-semibold text-red-900 mb-0.5">
-                            Rejection Reason:
-                          </p>
-                          <p className="text-sm text-red-800">
-                            {application.hrNotes}
-                          </p>
+                      {initialResult && (
+                        <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-2">
+                          <span className="text-sm text-gray-500">
+                            Initial Interview Result:
+                          </span>
+                          <span
+                            className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                              initialResult,
+                            )}`}
+                          >
+                            {initialResult?.toUpperCase()}
+                          </span>
                         </div>
+                      )}
+
+                      {finalResult && (
+                        <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-2">
+                          <span className="text-sm text-gray-500">
+                            Final Interview Result:
+                          </span>
+                          <span
+                            className={`px-3 py-1 text-sm font-medium rounded-full ${getResultColor(
+                              finalResult,
+                            )}`}
+                          >
+                            {finalResult?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Submitted:</p>
+                        <p className="font-medium">
+                          {formatDate(application.createdAt)}
+                        </p>
                       </div>
+                      {application.status === "completed" &&
+                        application.score && (
+                          <div>
+                            <p className="text-gray-500">Final Score:</p>
+                            <p className="font-medium text-lg">
+                              {application.score.total}%
+                            </p>
+                          </div>
+                        )}
                     </div>
-                  )}
-                </div>
 
-                <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-2">
-                  <Button
-                    onClick={() => setSelectedApplication(application)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    View Details
-                  </Button>
+                    {/* Rejection Reason */}
+                    {application.status === "REJECTED" &&
+                      application.hrNotes && (
+                        <div className="mt-3 pt-3 border-t border-red-200 bg-red-50 rounded-md p-3">
+                          <div className="flex items-start">
+                            <svg
+                              className="w-4 h-4 text-red-600 mt-0.5 mr-2 flex-shrink-0"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <div>
+                              <p className="text-xs font-semibold text-red-900 mb-0.5">
+                                Rejection Reason:
+                              </p>
+                              <p className="text-sm text-red-800">
+                                {application.hrNotes}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                  </div>
 
-                  {application.status === "completed" && application.score && (
+                  <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-2">
                     <Button
-                      onClick={() =>
-                        (window.location.href = `/applicant/application/${application.id}/results`)
-                      }
+                      onClick={() => setSelectedApplication(application)}
                       variant="outline"
                       size="sm"
                     >
-                      View Scores
+                      View Details
                     </Button>
-                  )}
+
+                    {application.status === "completed" &&
+                      application.score && (
+                        <Button
+                          onClick={() =>
+                            (window.location.href = `/applicant/application/${application.id}/results`)
+                          }
+                          variant="outline"
+                          size="sm"
+                        >
+                          View Scores
+                        </Button>
+                      )}
+                  </div>
                 </div>
-              </div>
-            </DashboardCard>
-          ))}
+              </DashboardCard>
+            );
+          })}
         </div>
       )}
 
