@@ -159,9 +159,7 @@ const SignupForm = () => {
     }
 
     if (!formData.civilStatus) errors.civilStatus = "Civil status is required";
-    if (!formData.houseNo) errors.houseNo = "House No. is required";
-    if (!formData.street) errors.street = "Street is required";
-    if (!formData.barangay) errors.barangay = "Barangay is required";
+    // House No, Street, Barangay are now optional
     if (!formData.city) errors.city = "City/Municipality is required";
     if (!formData.province) errors.province = "Province is required";
     if (!formData.zipCode) errors.zipCode = "Zip Code is required";
@@ -439,25 +437,22 @@ const SignupForm = () => {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
-                label="House No."
+                label="House No. (Optional)"
                 name="houseNo"
                 value={formData.houseNo}
                 onChange={handleChange}
-                required
               />
               <Input
-                label="Street"
+                label="Street (Optional)"
                 name="street"
                 value={formData.street}
                 onChange={handleChange}
-                required
               />
               <Input
-                label="Barangay"
+                label="Barangay (Optional)"
                 name="barangay"
                 value={formData.barangay}
                 onChange={handleChange}
-                required
               />
               <Input
                 label="City/Municipality"
@@ -481,14 +476,11 @@ const SignupForm = () => {
                 required
               />
             </div>
-            {(validationErrors.houseNo ||
-              validationErrors.street ||
-              validationErrors.barangay ||
-              validationErrors.city ||
+            {(validationErrors.city ||
               validationErrors.province ||
               validationErrors.zipCode) && (
               <p className="mt-1 text-sm text-red-600">
-                Please complete your address.
+                Please complete the required address fields.
               </p>
             )}
           </div>
