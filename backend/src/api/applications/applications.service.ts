@@ -742,8 +742,18 @@ class ApplicationService {
 
     const updatedApplication = await this.updateApplication(id, updateData);
 
-    // Note: Interview result notification can be added when notification service is extended
-    // For now, the interview rating is saved successfully
+    if (stage === "final" && interviewResult === "PASS") {
+      const applicant = await prisma.user.findUnique({
+        where: { id: updatedApplication.applicantId },
+      });
+
+      if (applicant) {
+        await notificationService.sendFinalInterviewPassedNotification(
+          updatedApplication,
+          applicant,
+        );
+      }
+    }
 
     return updatedApplication;
   }

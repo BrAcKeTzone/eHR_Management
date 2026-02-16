@@ -57,7 +57,10 @@ class NotificationService {
   }
 
   // Send email and save to database
-  private async sendAndSaveNotification(data: NotificationData): Promise<void> {
+  private async sendAndSaveNotification(
+    data: NotificationData,
+    notificationMessage?: string,
+  ): Promise<void> {
     try {
       await sendEmail({
         email: data.email,
@@ -65,7 +68,10 @@ class NotificationService {
         message: data.message,
       });
 
-      await this.saveNotification(data);
+      await this.saveNotification({
+        ...data,
+        message: notificationMessage || data.message,
+      });
     } catch (error) {
       console.error("Failed to send notification:", error);
       throw error;
@@ -462,6 +468,47 @@ Blancia College Foundation Inc.
       type: "result",
       applicationId: application.id,
     });
+  }
+
+  async sendFinalInterviewPassedNotification(
+    application: Application,
+    applicant: User,
+  ): Promise<void> {
+    const subject = `Congratulations! Passed Final Interview - BCFI Teacher Application`;
+    const applicantFullName = this.getApplicantFullName(applicant);
+    const programName = this.getApplicationProgram(application);
+
+    const message = `
+Dear ${applicantFullName},
+
+Congratulations! We are pleased to inform you that you have successfully passed all stages of the application process for the ${programName} position:
+
+✅ Demo Teaching - Passed
+✅ Initial Interview - Passed
+✅ Final Interview - Passed
+
+This is a significant achievement, and we are excited about the possibility of you joining our team.
+
+Next Steps:
+Please log in to your applicant portal and go to the "Pre-Employment" page to submit the requirements. You are required to submit the necessary pre-employment requirements to finalize your hiring process.
+
+If you have any questions or need assistance, please do not hesitate to contact our HR department.
+
+Best regards,
+BCFI HR Team
+Blancia College Foundation Inc.
+    `;
+
+    await this.sendAndSaveNotification(
+      {
+        email: applicant.email,
+        subject,
+        message,
+        type: "result",
+        applicationId: application.id,
+      },
+      `Congratulations! You have passed the final interview for ${programName}. Please proceed to the Pre-Employment page to submit your requirements.`,
+    );
   }
 
   // Helper method to get HR email addresses

@@ -284,6 +284,15 @@ export const useAuthStore = create(
             firstName: personalData.firstName,
             lastName: personalData.lastName,
             phone: personalData.phone,
+            civilStatus: personalData.civilStatus,
+            houseNo: personalData.houseNo,
+            street: personalData.street,
+            barangay: personalData.barangay,
+            city: personalData.city,
+            province: personalData.province,
+            zipCode: personalData.zipCode,
+            education: personalData.education,
+            references: personalData.references,
           };
 
           // Call backend API

@@ -74,7 +74,7 @@ export const sendOtp = async (email: string): Promise<{ message: string }> => {
     console.error(error);
     throw new ApiError(
       500,
-      "There was an error sending the email. Please try again later."
+      "There was an error sending the email. Please try again later.",
     );
   }
 
@@ -82,7 +82,7 @@ export const sendOtp = async (email: string): Promise<{ message: string }> => {
 };
 
 export const sendOtpForReset = async (
-  email: string
+  email: string,
 ): Promise<{ message: string }> => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -124,7 +124,7 @@ export const sendOtpForReset = async (
     console.error(error);
     throw new ApiError(
       500,
-      "There was an error sending the email. Please try again later."
+      "There was an error sending the email. Please try again later.",
     );
   }
 
@@ -133,7 +133,7 @@ export const sendOtpForReset = async (
 
 export const sendOtpForChange = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<{ message: string }> => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -180,7 +180,7 @@ export const sendOtpForChange = async (
     console.error(error);
     throw new ApiError(
       500,
-      "There was an error sending the email. Please try again later."
+      "There was an error sending the email. Please try again later.",
     );
   }
 
@@ -189,7 +189,7 @@ export const sendOtpForChange = async (
 
 export const verifyOtp = async (
   email: string,
-  otp: string
+  otp: string,
 ): Promise<{ message: string; verified: boolean }> => {
   const otpRecord = await prisma.otp.findFirst({
     where: {
@@ -221,10 +221,19 @@ interface RegisterData {
   lastName: string;
   phone?: string;
   role?: "APPLICANT" | "HR";
+  civilStatus?: string;
+  houseNo?: string;
+  street?: string;
+  barangay?: string;
+  city?: string;
+  province?: string;
+  zipCode?: string;
+  education?: any[];
+  references?: any[];
 }
 
 export const register = async (
-  userData: RegisterData
+  userData: RegisterData,
 ): Promise<{ user: User; token: string; message: string }> => {
   const {
     email,
@@ -233,6 +242,15 @@ export const register = async (
     lastName,
     phone,
     role = "APPLICANT",
+    civilStatus,
+    houseNo,
+    street,
+    barangay,
+    city,
+    province,
+    zipCode,
+    education,
+    references,
   } = userData;
 
   // Check if OTP has been verified for this email
@@ -249,7 +267,7 @@ export const register = async (
   if (!otpRecord) {
     throw new ApiError(
       400,
-      "Email not verified. Please verify your email with OTP first."
+      "Email not verified. Please verify your email with OTP first.",
     );
   }
 
@@ -259,7 +277,7 @@ export const register = async (
 
   if (userCount === 0) {
     console.log(
-      `First user registration detected. Assigning HR role to: ${email}`
+      `First user registration detected. Assigning HR role to: ${email}`,
     );
   }
 
@@ -275,6 +293,15 @@ export const register = async (
         lastName,
         phone,
         role: assignedRole,
+        civilStatus,
+        houseNo,
+        street,
+        barangay,
+        city,
+        province,
+        zipCode,
+        education: education ? JSON.stringify(education) : undefined,
+        references: references ? JSON.stringify(references) : undefined,
       },
     });
 
@@ -304,7 +331,7 @@ export const register = async (
 export const login = async (
   email: string,
   password: string,
-  role: "APPLICANT" | "HR" | string = "APPLICANT"
+  role: "APPLICANT" | "HR" | string = "APPLICANT",
 ): Promise<{ message: string; requiresOtp: boolean }> => {
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -364,7 +391,7 @@ export const login = async (
     console.error(error);
     throw new ApiError(
       500,
-      "There was an error sending the email. Please try again later."
+      "There was an error sending the email. Please try again later.",
     );
   }
 
@@ -377,7 +404,7 @@ export const login = async (
 export const verifyLoginOtp = async (
   email: string,
   otp: string,
-  role: "APPLICANT" | "HR" | string = "APPLICANT"
+  role: "APPLICANT" | "HR" | string = "APPLICANT",
 ): Promise<{ user: User; token: string }> => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -437,7 +464,7 @@ export const verifyLoginOtp = async (
 // Function to verify OTP specifically for password reset
 export const verifyOtpForReset = async (
   email: string,
-  otp: string
+  otp: string,
 ): Promise<{ message: string; verified: boolean }> => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -473,7 +500,7 @@ export const verifyOtpForReset = async (
 // Function to verify OTP specifically for password change
 export const verifyOtpForChange = async (
   email: string,
-  otp: string
+  otp: string,
 ): Promise<{ message: string; verified: boolean }> => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -509,7 +536,7 @@ export const verifyOtpForChange = async (
 export const resetPassword = async (
   email: string,
   otp: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<{ message: string }> => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -531,7 +558,7 @@ export const resetPassword = async (
   if (!otpRecord) {
     throw new ApiError(
       400,
-      "OTP not verified or expired. Please verify OTP first."
+      "OTP not verified or expired. Please verify OTP first.",
     );
   }
 
@@ -551,7 +578,7 @@ export const changePassword = async (
   email: string,
   oldPassword: string,
   otp: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<{ message: string }> => {
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -574,7 +601,7 @@ export const changePassword = async (
   if (!otpRecord) {
     throw new ApiError(
       400,
-      "OTP not verified or expired. Please verify OTP first."
+      "OTP not verified or expired. Please verify OTP first.",
     );
   }
 

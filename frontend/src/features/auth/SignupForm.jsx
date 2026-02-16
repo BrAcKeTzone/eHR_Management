@@ -32,6 +32,19 @@ const SignupForm = () => {
     phone: "",
     password: "",
     confirmPassword: "",
+    civilStatus: "Single",
+    houseNo: "",
+    street: "",
+    barangay: "",
+    city: "",
+    province: "",
+    zipCode: "",
+    education: [{ school: "", course: "", yearGraduated: "" }],
+    references: [
+      { name: "", contactNo: "", relationship: "" },
+      { name: "", contactNo: "", relationship: "" },
+      { name: "", contactNo: "", relationship: "" },
+    ],
   });
 
   const [validationErrors, setValidationErrors] = useState({});
@@ -58,6 +71,35 @@ const SignupForm = () => {
         [name]: "",
       }));
     }
+  };
+
+  const handleEducationChange = (index, field, value) => {
+    const updated = [...formData.education];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData((prev) => ({ ...prev, education: updated }));
+  };
+
+  const addEducation = () => {
+    setFormData((prev) => ({
+      ...prev,
+      education: [
+        ...prev.education,
+        { school: "", course: "", yearGraduated: "" },
+      ],
+    }));
+  };
+
+  const removeEducation = (index) => {
+    if (formData.education.length > 1) {
+      const updated = formData.education.filter((_, i) => i !== index);
+      setFormData((prev) => ({ ...prev, education: updated }));
+    }
+  };
+
+  const handleReferenceChange = (index, field, value) => {
+    const updated = [...formData.references];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData((prev) => ({ ...prev, references: updated }));
   };
 
   const validateEmail = async () => {
@@ -116,6 +158,30 @@ const SignupForm = () => {
       errors.confirmPassword = "Passwords do not match";
     }
 
+    if (!formData.civilStatus) errors.civilStatus = "Civil status is required";
+    if (!formData.houseNo) errors.houseNo = "House No. is required";
+    if (!formData.street) errors.street = "Street is required";
+    if (!formData.barangay) errors.barangay = "Barangay is required";
+    if (!formData.city) errors.city = "City/Municipality is required";
+    if (!formData.province) errors.province = "Province is required";
+    if (!formData.zipCode) errors.zipCode = "Zip Code is required";
+
+    if (
+      formData.education.some(
+        (edu) => !edu.school || !edu.course || !edu.yearGraduated,
+      )
+    ) {
+      errors.education = "Please fill in all education fields";
+    }
+
+    if (
+      formData.references.some(
+        (ref) => !ref.name || !ref.contactNo || !ref.relationship,
+      )
+    ) {
+      errors.references = "Please fill in all reference fields";
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -154,6 +220,15 @@ const SignupForm = () => {
         lastName: formData.lastName,
         phone: formData.phone,
         password: formData.password,
+        civilStatus: formData.civilStatus,
+        houseNo: formData.houseNo,
+        street: formData.street,
+        barangay: formData.barangay,
+        city: formData.city,
+        province: formData.province,
+        zipCode: formData.zipCode,
+        education: formData.education,
+        references: formData.references,
       });
     } catch (err) {
       console.error("Registration failed:", err);
@@ -170,6 +245,19 @@ const SignupForm = () => {
       phone: "",
       password: "",
       confirmPassword: "",
+      civilStatus: "Single",
+      houseNo: "",
+      street: "",
+      barangay: "",
+      city: "",
+      province: "",
+      zipCode: "",
+      education: [{ school: "", course: "", yearGraduated: "" }],
+      references: [
+        { name: "", contactNo: "", relationship: "" },
+        { name: "", contactNo: "", relationship: "" },
+        { name: "", contactNo: "", relationship: "" },
+      ],
     });
     setValidationErrors({});
     setAgreedToPrivacyPolicy(false);
@@ -260,82 +348,306 @@ const SignupForm = () => {
           Step 3 of 3: Complete your profile
         </h3>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Input
-                label="First Name"
-                name="firstName"
-                type="text"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-                placeholder="John"
-              />
-              {validationErrors.firstName && (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.firstName}
-                </p>
-              )}
-            </div>
+        <div className="space-y-6">
+          {/* Personal Information */}
+          <div>
+            <h4 className="text-md font-semibold text-gray-700 mb-2">
+              Personal Information
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Input
+                  label="First Name"
+                  name="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                  placeholder="John"
+                />
+                {validationErrors.firstName && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {validationErrors.firstName}
+                  </p>
+                )}
+              </div>
 
-            <div>
-              <Input
-                label="Last Name"
-                name="lastName"
-                type="text"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-                placeholder="Doe"
-              />
-              {validationErrors.lastName && (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.lastName}
-                </p>
-              )}
-            </div>
+              <div>
+                <Input
+                  label="Last Name"
+                  name="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  placeholder="Doe"
+                />
+                {validationErrors.lastName && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {validationErrors.lastName}
+                  </p>
+                )}
+              </div>
 
-            <div className="col-span-2">
-              <Input
-                label="Phone Number"
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                placeholder="09123456789"
-              />
-              {validationErrors.phone && (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.phone}
-                </p>
-              )}
+              <div className="md:col-span-2">
+                <Input
+                  label="Phone Number"
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
+                  placeholder="09123456789"
+                />
+                {validationErrors.phone && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {validationErrors.phone}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Civil Status <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="civilStatus"
+                  value={formData.civilStatus}
+                  onChange={handleChange}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 px-3 border"
+                  required
+                >
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Widowed">Widowed</option>
+                  <option value="Separated">Separated</option>
+                  <option value="Divorced">Divorced</option>
+                </select>
+                {validationErrors.civilStatus && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {validationErrors.civilStatus}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
+          {/* Residential Address */}
           <div>
-            <PasswordInput
-              label="Password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Minimum 6 characters"
-              error={validationErrors.password}
-            />
+            <h4 className="text-md font-semibold text-gray-700 mb-2">
+              Residential Address
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="House No."
+                name="houseNo"
+                value={formData.houseNo}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                label="Street"
+                name="street"
+                value={formData.street}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                label="Barangay"
+                name="barangay"
+                value={formData.barangay}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                label="City/Municipality"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                label="Province"
+                name="province"
+                value={formData.province}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                label="Zip Code"
+                name="zipCode"
+                value={formData.zipCode}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            {(validationErrors.houseNo ||
+              validationErrors.street ||
+              validationErrors.barangay ||
+              validationErrors.city ||
+              validationErrors.province ||
+              validationErrors.zipCode) && (
+              <p className="mt-1 text-sm text-red-600">
+                Please complete your address.
+              </p>
+            )}
           </div>
 
+          {/* Educational Background */}
           <div>
-            <PasswordInput
-              label="Confirm Password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              placeholder="Re-enter your password"
-              error={validationErrors.confirmPassword}
-            />
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-md font-semibold text-gray-700">
+                Educational Background
+              </h4>
+              <button
+                type="button"
+                onClick={addEducation}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                + Add Education
+              </button>
+            </div>
+            {formData.education.map((edu, index) => (
+              <div
+                key={index}
+                className="bg-gray-50 p-3 rounded mb-3 relative border border-gray-200"
+              >
+                {formData.education.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeEducation(index)}
+                    className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xs font-medium"
+                  >
+                    Remove
+                  </button>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+                  <Input
+                    label="School"
+                    value={edu.school}
+                    onChange={(e) =>
+                      handleEducationChange(index, "school", e.target.value)
+                    }
+                    required
+                    placeholder="School Name"
+                  />
+                  <Input
+                    label="Course/Strand"
+                    value={edu.course}
+                    onChange={(e) =>
+                      handleEducationChange(index, "course", e.target.value)
+                    }
+                    required
+                    placeholder="BSIT"
+                  />
+                  <Input
+                    label="Year Graduated"
+                    value={edu.yearGraduated}
+                    onChange={(e) =>
+                      handleEducationChange(
+                        index,
+                        "yearGraduated",
+                        e.target.value,
+                      )
+                    }
+                    required
+                    placeholder="2020"
+                  />
+                </div>
+              </div>
+            ))}
+            {validationErrors.education && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.education}
+              </p>
+            )}
+          </div>
+
+          {/* References */}
+          <div>
+            <h4 className="text-md font-semibold text-gray-700 mb-2">
+              Character References (3)
+            </h4>
+            {formData.references.map((ref, index) => (
+              <div
+                key={index}
+                className="bg-gray-50 p-3 rounded mb-3 border border-gray-200"
+              >
+                <p className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">
+                  Reference #{index + 1}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Input
+                    label="Name"
+                    value={ref.name}
+                    onChange={(e) =>
+                      handleReferenceChange(index, "name", e.target.value)
+                    }
+                    required
+                    placeholder="Full Name"
+                  />
+                  <Input
+                    label="Contact No."
+                    value={ref.contactNo}
+                    onChange={(e) =>
+                      handleReferenceChange(index, "contactNo", e.target.value)
+                    }
+                    required
+                    placeholder="09xxxxxxxxx"
+                  />
+                  <Input
+                    label="Relationship"
+                    value={ref.relationship}
+                    onChange={(e) =>
+                      handleReferenceChange(
+                        index,
+                        "relationship",
+                        e.target.value,
+                      )
+                    }
+                    required
+                    placeholder="Colleague"
+                  />
+                </div>
+              </div>
+            ))}
+            {validationErrors.references && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.references}
+              </p>
+            )}
+          </div>
+
+          {/* Account Security */}
+          <div>
+            <h4 className="text-md font-semibold text-gray-700 mb-2">
+              Account Security
+            </h4>
+            <div className="space-y-4">
+              <div>
+                <PasswordInput
+                  label="Password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  placeholder="Minimum 6 characters"
+                  error={validationErrors.password}
+                />
+              </div>
+
+              <div>
+                <PasswordInput
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  placeholder="Re-enter your password"
+                  error={validationErrors.confirmPassword}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Privacy Policy Checkbox */}

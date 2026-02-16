@@ -48,6 +48,20 @@ model User {
   profilePicture  String?  // URL to profile picture
   profilePicturePublicId String? // Cloudinary public ID for deletion
 
+  // Personal Information
+  civilStatus     String?
+  houseNo         String?
+  street          String?
+  barangay        String?
+  city            String?
+  province        String?
+  zipCode         String?
+  
+  // JSON array of objects: { school, course, yearGraduated }
+  education       String? @db.LongText 
+  // JSON array of objects: { name, contactNo, relationship }
+  references      String? @db.LongText 
+
   // Applicant relations
   applications Application[]
   preEmployment PreEmploymentRequirement?

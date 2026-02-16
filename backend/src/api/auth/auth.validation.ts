@@ -41,6 +41,31 @@ export const register = Joi.object().keys({
   lastName: Joi.string().required(),
   phone: Joi.string().optional(),
   role: Joi.string().valid("APPLICANT", "HR", "ADMIN").optional(),
+  civilStatus: Joi.string().optional(),
+  houseNo: Joi.string().optional(),
+  street: Joi.string().optional(),
+  barangay: Joi.string().optional(),
+  city: Joi.string().optional(),
+  province: Joi.string().optional(),
+  zipCode: Joi.string().optional(),
+  education: Joi.array()
+    .items(
+      Joi.object({
+        school: Joi.string().required(),
+        course: Joi.string().required(),
+        yearGraduated: Joi.string().required(),
+      }),
+    )
+    .optional(),
+  references: Joi.array()
+    .items(
+      Joi.object({
+        name: Joi.string().required(),
+        contactNo: Joi.string().required(),
+        relationship: Joi.string().required(),
+      }),
+    )
+    .optional(),
 });
 
 export const login = Joi.object().keys({
