@@ -55,6 +55,7 @@ export interface UpdateApplicationData {
 
 export interface ApplicationWithApplicant extends Application {
   applicant: Pick<User, "id" | "firstName" | "lastName" | "email" | "phone">;
+  specialization: any; // Will be Specialization or null
 }
 
 // Helper function to format application for frontend
@@ -287,9 +288,43 @@ class ApplicationService {
       }),
     };
 
+    // For finalInterviewResult filter, get the latest application per applicant
+    let applicationIds: number[] | undefined;
+    if (finalInterviewResult) {
+      // Get the LATEST application ID for EACH applicant with finalInterviewResult = PASS
+      const allAppsWithResult = await prisma.application.findMany({
+        where: { finalInterviewResult },
+        select: {
+          id: true,
+          applicantId: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Group by applicantId and take the first (latest) one for each
+      const latestPerApplicant = new Map<number, number>();
+      allAppsWithResult.forEach((app) => {
+        if (!latestPerApplicant.has(app.applicantId)) {
+          latestPerApplicant.set(app.applicantId, app.id);
+        }
+      });
+      applicationIds = Array.from(latestPerApplicant.values());
+
+      console.log(
+        "Latest applications per applicant with finalInterviewResult = PASS:",
+        applicationIds,
+      );
+    }
+
+    const finalWhere: Prisma.ApplicationWhereInput = {
+      ...where,
+      ...(applicationIds && { id: { in: applicationIds } }),
+    };
+
     const [applications, total] = await Promise.all([
       prisma.application.findMany({
-        where,
+        where: finalWhere,
         include: {
           applicant: {
             select: {
@@ -306,7 +341,7 @@ class ApplicationService {
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.application.count({ where }),
+      prisma.application.count({ where: finalWhere }),
     ]);
 
     // Format applications for frontend

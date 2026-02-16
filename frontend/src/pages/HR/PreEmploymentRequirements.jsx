@@ -51,13 +51,19 @@ const PreEmploymentRequirements = () => {
   const fetchApplications = async () => {
     setLoading(true);
     try {
-      // Assuming applicationApi has a generic getAll or similar method exposed directly or via store
-      // Since existing code might separate it, I'll use the API direct call pattern if possible
-      // Checking applicationApi.js context earlier, we might need to add `getAll` there if not exists,
-      // but typically there is one for HR. Let's assume `applicationStore` uses `applicationApi.getAll`.
-      // I'll call applicationApi directly here for simplicity as per instructions "similar to UserManagement".
-
       const response = await applicationApi.getAll(filters);
+      console.log("=== fetchApplications ===");
+      console.log("Response:", response);
+      console.log("Applications array:", response.applications);
+      if (response.applications && response.applications.length > 0) {
+        console.log("First app:", response.applications[0]);
+        console.log("First app keys:", Object.keys(response.applications[0]));
+        console.log("First app applicant:", response.applications[0].applicant);
+        console.log(
+          "First app specialization:",
+          response.applications[0].specialization,
+        );
+      }
       setApplications(response.applications);
       setTotalPages(Math.ceil(response.total / filters.limit));
       setTotalCount(response.total);
@@ -131,28 +137,36 @@ const PreEmploymentRequirements = () => {
   const columns = [
     {
       header: "Applicant",
-      accessor: (row) => `${row.applicant.firstName} ${row.applicant.lastName}`,
+      accessor: (row) =>
+        `${row.applicant?.firstName || ""} ${row.applicant?.lastName || ""}`,
       cell: (row) => (
-        <div>
-          <p className="font-medium text-gray-900">
-            {row.applicant.firstName} {row.applicant.lastName}
-          </p>
-          <p className="text-xs text-gray-500">{row.applicant.email}</p>
-        </div>
+        <p className="font-medium text-gray-900">
+          {row.applicant?.firstName} {row.applicant?.lastName}
+        </p>
+      ),
+    },
+    {
+      header: "Email",
+      accessor: (row) => row.applicant?.email || "N/A",
+      cell: (row) => (
+        <p className="text-sm text-gray-700">{row.applicant?.email || "N/A"}</p>
+      ),
+    },
+    {
+      header: "Phone",
+      accessor: (row) => row.applicant?.phone || "N/A",
+      cell: (row) => (
+        <p className="text-sm text-gray-700">{row.applicant?.phone || "N/A"}</p>
       ),
     },
     {
       header: "Specialization",
       accessor: (row) => row.specialization?.name || row.program || "N/A",
-    },
-    {
-      header: "Phone",
-      accessor: (row) => row.applicant.phone || "N/A",
-    },
-    {
-      header: "Result",
-      accessor: "finalInterviewResult",
-      cell: (row) => <StatusBadge status={row.finalInterviewResult} />,
+      cell: (row) => (
+        <p className="text-sm text-gray-700">
+          {row.specialization?.name || row.program || "N/A"}
+        </p>
+      ),
     },
     {
       header: "Actions",

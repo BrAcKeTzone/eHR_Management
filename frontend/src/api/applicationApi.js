@@ -155,6 +155,15 @@ export const applicationApi = {
         params: filters, // axios automatically converts to query params
       });
 
+      console.log("=== applicationApi.getAll Response ===");
+      console.log("Response data:", response.data);
+      if (
+        response.data.data.applications &&
+        response.data.data.applications.length > 0
+      ) {
+        console.log("First application:", response.data.data.applications[0]);
+      }
+
       return {
         applications: response.data.data.applications,
         total: response.data.data.total,

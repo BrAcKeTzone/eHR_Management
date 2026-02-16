@@ -229,6 +229,20 @@ export const getAllApplications = asyncHandler(
       );
     }
 
+    // Debug logging
+    console.log("=== getAllApplications Response ===");
+    if (result.applications && result.applications.length > 0) {
+      console.log(
+        "First app object keys:",
+        Object.keys(result.applications[0]),
+      );
+      console.log("Applicant data:", result.applications[0].applicant);
+      console.log(
+        "Specialization data:",
+        result.applications[0].specialization,
+      );
+    }
+
     res.json(
       new ApiResponse(200, result, "Applications retrieved successfully"),
     );
