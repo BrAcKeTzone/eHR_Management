@@ -54,7 +54,24 @@ export interface UpdateApplicationData {
 }
 
 export interface ApplicationWithApplicant extends Application {
-  applicant: Pick<User, "id" | "firstName" | "lastName" | "email" | "phone">;
+  applicant: Pick<
+    User,
+    | "id"
+    | "firstName"
+    | "lastName"
+    | "email"
+    | "phone"
+    | "profilePicture"
+    | "civilStatus"
+    | "houseNo"
+    | "street"
+    | "barangay"
+    | "city"
+    | "province"
+    | "zipCode"
+    | "education"
+    | "references"
+  >;
   specialization: any; // Will be Specialization or null
 }
 
@@ -198,6 +215,16 @@ class ApplicationService {
             lastName: true,
             email: true,
             phone: true,
+            profilePicture: true,
+            civilStatus: true,
+            houseNo: true,
+            street: true,
+            barangay: true,
+            city: true,
+            province: true,
+            zipCode: true,
+            education: true,
+            references: true,
           },
         },
       },
@@ -226,6 +253,15 @@ class ApplicationService {
             email: true,
             phone: true,
             profilePicture: true,
+            civilStatus: true,
+            houseNo: true,
+            street: true,
+            barangay: true,
+            city: true,
+            province: true,
+            zipCode: true,
+            education: true,
+            references: true,
           },
         },
       },
@@ -333,6 +369,16 @@ class ApplicationService {
               lastName: true,
               email: true,
               phone: true,
+              profilePicture: true,
+              civilStatus: true,
+              houseNo: true,
+              street: true,
+              barangay: true,
+              city: true,
+              province: true,
+              zipCode: true,
+              education: true,
+              references: true,
             },
           },
           specialization: true,

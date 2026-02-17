@@ -328,15 +328,70 @@ const ApplicationDetailsModal = ({
         </div>
 
         {/* Educational Background */}
-        {(application.education || application.educationalBackground) && (
+        {(application.education ||
+          application.educationalBackground ||
+          application.applicant?.education) && (
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
               Educational Background
             </h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                {application.education || application.educationalBackground}
-              </p>
+            <div className="space-y-3">
+              {/* Complex JSON education from user profile */}
+              {application.applicant?.education &&
+                (() => {
+                  let eduList = [];
+                  try {
+                    eduList = Array.isArray(application.applicant.education)
+                      ? application.applicant.education
+                      : JSON.parse(application.applicant.education);
+                  } catch (e) {
+                    return null;
+                  }
+
+                  if (Array.isArray(eduList) && eduList.length > 0) {
+                    return eduList.map((edu, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <p className="text-sm text-gray-500">School</p>
+                            <p className="mt-1 font-medium">
+                              {edu.school || "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Course/Strand
+                            </p>
+                            <p className="mt-1 font-medium">
+                              {edu.course || "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Year Graduated
+                            </p>
+                            <p className="mt-1 font-medium">
+                              {edu.yearGraduated || "N/A"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ));
+                  }
+                  return null;
+                })()}
+
+              {/* Legacy text-based education from application form */}
+              {(application.education || application.educationalBackground) && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                    {application.education || application.educationalBackground}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
