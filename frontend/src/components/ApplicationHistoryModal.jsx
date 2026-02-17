@@ -67,9 +67,17 @@ const ApplicationHistoryModal = ({
                   className="border border-gray-200 rounded-lg p-3 sm:p-4"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                    <h4 className="font-medium text-gray-900">
-                      Attempt #{app.attemptNumber}
-                    </h4>
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        Attempt #{app.attemptNumber}
+                      </h4>
+                      <p className="text-xs text-blue-600 font-medium uppercase tracking-wide">
+                        {app.specialization?.name ||
+                          app.subjectSpecialization ||
+                          app.subject_specialization ||
+                          "N/A"}
+                      </p>
+                    </div>
                     <span
                       className={`px-3 py-1 text-sm font-medium rounded-full w-fit ${getStatusColor(
                         app.status,
