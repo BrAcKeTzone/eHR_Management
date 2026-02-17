@@ -158,6 +158,9 @@ const ProfilePage = () => {
         email: profileData.email,
         phone: profileData.phone,
         civilStatus: profileData.civilStatus,
+        houseNo: profileData.houseNo,
+        street: profileData.street,
+        barangay: profileData.barangay,
         city: profileData.city,
         province: profileData.province,
         zipCode: profileData.zipCode,
@@ -169,12 +172,6 @@ const ProfilePage = () => {
           ? JSON.stringify(profileData.references)
           : profileData.references,
       };
-
-      // Only add optional address fields if they have values
-      if (profileData.houseNo.trim()) submitData.houseNo = profileData.houseNo;
-      if (profileData.street.trim()) submitData.street = profileData.street;
-      if (profileData.barangay.trim())
-        submitData.barangay = profileData.barangay;
 
       await updateProfile(submitData);
       setIsEditing(false);
@@ -354,6 +351,52 @@ const ProfilePage = () => {
     } finally {
       setUploadingPicture(false);
     }
+  };
+
+  const handleEducationChange = (index, field, value) => {
+    const updated = [...profileData.education];
+    updated[index] = { ...updated[index], [field]: value };
+    setProfileData((prev) => ({ ...prev, education: updated }));
+  };
+
+  const addEducation = () => {
+    setProfileData((prev) => ({
+      ...prev,
+      education: [
+        ...prev.education,
+        { school: "", course: "", yearGraduated: "" },
+      ],
+    }));
+  };
+
+  const removeEducation = (index) => {
+    setProfileData((prev) => ({
+      ...prev,
+      education: prev.education.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleReferenceChange = (index, field, value) => {
+    const updated = [...profileData.references];
+    updated[index] = { ...updated[index], [field]: value };
+    setProfileData((prev) => ({ ...prev, references: updated }));
+  };
+
+  const addReference = () => {
+    setProfileData((prev) => ({
+      ...prev,
+      references: [
+        ...prev.references,
+        { name: "", contactNo: "", relationship: "" },
+      ],
+    }));
+  };
+
+  const removeReference = (index) => {
+    setProfileData((prev) => ({
+      ...prev,
+      references: prev.references.filter((_, i) => i !== index),
+    }));
   };
 
   return (
@@ -548,78 +591,174 @@ const ProfilePage = () => {
               </div>
 
               {/* Educational Background */}
-              {profileData.education && profileData.education.length > 0 && (
+              {profileData.education && (
                 <div className="col-span-full">
-                  <h4 className="text-md font-semibold text-gray-700 mb-4">
-                    Educational Background
-                  </h4>
-                  <div className="space-y-3">
-                    {profileData.education.map((edu, index) => (
-                      <div
-                        key={index}
-                        className="bg-gray-50 p-4 rounded-md border border-gray-200"
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-md font-semibold text-gray-700">
+                      Educational Background
+                    </h4>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={addEducation}
+                        className="text-sm text-blue-600 hover:text-blue-800"
                       >
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <p className="text-sm text-gray-500">School</p>
-                            <p className="mt-1 font-medium">{edu.school}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">
-                              Course/Strand
-                            </p>
-                            <p className="mt-1 font-medium">{edu.course}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">
-                              Year Graduated
-                            </p>
-                            <p className="mt-1 font-medium">
-                              {edu.yearGraduated}
-                            </p>
+                        + Add Education
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {profileData.education.length > 0 ? (
+                      profileData.education.map((edu, index) => (
+                        <div
+                          key={index}
+                          className="bg-gray-50 p-4 rounded-md border border-gray-200 relative"
+                        >
+                          {isEditing && profileData.education.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeEducation(index)}
+                              className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xs font-medium"
+                            >
+                              Remove
+                            </button>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <Input
+                              label="School"
+                              value={edu.school}
+                              onChange={(e) =>
+                                handleEducationChange(
+                                  index,
+                                  "school",
+                                  e.target.value,
+                                )
+                              }
+                              disabled={!isEditing}
+                              placeholder="School Name"
+                            />
+                            <Input
+                              label="Course/Strand"
+                              value={edu.course}
+                              onChange={(e) =>
+                                handleEducationChange(
+                                  index,
+                                  "course",
+                                  e.target.value,
+                                )
+                              }
+                              disabled={!isEditing}
+                              placeholder="Course"
+                            />
+                            <Input
+                              label="Year Graduated"
+                              value={edu.yearGraduated}
+                              onChange={(e) =>
+                                handleEducationChange(
+                                  index,
+                                  "yearGraduated",
+                                  e.target.value,
+                                )
+                              }
+                              disabled={!isEditing}
+                              placeholder="2020"
+                            />
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No education records yet
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* References */}
-              {profileData.references && profileData.references.length > 0 && (
+              {profileData.references && (
                 <div className="col-span-full">
-                  <h4 className="text-md font-semibold text-gray-700 mb-4">
-                    Character References
-                  </h4>
-                  <div className="space-y-3">
-                    {profileData.references.map((ref, index) => (
-                      <div
-                        key={index}
-                        className="bg-gray-50 p-4 rounded-md border border-gray-200"
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-md font-semibold text-gray-700">
+                      Character References
+                    </h4>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={addReference}
+                        className="text-sm text-blue-600 hover:text-blue-800"
                       >
-                        <p className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">
-                          Reference #{index + 1}
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <p className="text-sm text-gray-500">Name</p>
-                            <p className="mt-1 font-medium">{ref.name}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Contact No.</p>
-                            <p className="mt-1 font-medium">{ref.contactNo}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">
-                              Relationship
-                            </p>
-                            <p className="mt-1 font-medium">
-                              {ref.relationship}
-                            </p>
+                        + Add Reference
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {profileData.references.length > 0 ? (
+                      profileData.references.map((ref, index) => (
+                        <div
+                          key={index}
+                          className="bg-gray-50 p-4 rounded-md border border-gray-200 relative"
+                        >
+                          <p className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">
+                            Reference #{index + 1}
+                          </p>
+                          {isEditing && (
+                            <button
+                              type="button"
+                              onClick={() => removeReference(index)}
+                              className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xs font-medium"
+                            >
+                              Remove
+                            </button>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+                            <Input
+                              label="Name"
+                              value={ref.name}
+                              onChange={(e) =>
+                                handleReferenceChange(
+                                  index,
+                                  "name",
+                                  e.target.value,
+                                )
+                              }
+                              disabled={!isEditing}
+                              placeholder="Full Name"
+                            />
+                            <Input
+                              label="Contact No."
+                              value={ref.contactNo}
+                              onChange={(e) =>
+                                handleReferenceChange(
+                                  index,
+                                  "contactNo",
+                                  e.target.value,
+                                )
+                              }
+                              disabled={!isEditing}
+                              placeholder="09xxxxxxxxx"
+                            />
+                            <Input
+                              label="Relationship"
+                              value={ref.relationship}
+                              onChange={(e) =>
+                                handleReferenceChange(
+                                  index,
+                                  "relationship",
+                                  e.target.value,
+                                )
+                              }
+                              disabled={!isEditing}
+                              placeholder="Colleague"
+                            />
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No references added yet
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

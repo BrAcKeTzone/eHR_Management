@@ -511,12 +511,7 @@ export const useAuthStore = create(
           const { userApi } = await import("../api/userApi");
 
           // Call the backend API to update the current user
-          const response = await userApi.updateCurrentUser({
-            firstName: profileData.firstName,
-            lastName: profileData.lastName,
-            email: profileData.email,
-            phone: profileData.phone,
-          });
+          const response = await userApi.updateCurrentUser(profileData);
 
           // Update the local user state with the response from backend
           const updatedUser = response.data;

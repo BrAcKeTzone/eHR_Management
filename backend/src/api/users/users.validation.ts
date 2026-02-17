@@ -5,9 +5,17 @@ export const createUser = Joi.object().keys({
   password: Joi.string().required().min(8),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
-  phoneNumber: Joi.string().optional().allow(""),
-  phone: Joi.string().optional().allow(""),
+  phone: Joi.string().optional().allow("", null),
   role: Joi.string().valid("APPLICANT", "HR").optional(),
+  civilStatus: Joi.string().optional().allow("", null),
+  houseNo: Joi.string().optional().allow("", null),
+  street: Joi.string().optional().allow("", null),
+  barangay: Joi.string().optional().allow("", null),
+  city: Joi.string().optional().allow("", null),
+  province: Joi.string().optional().allow("", null),
+  zipCode: Joi.string().optional().allow("", null),
+  education: Joi.string().optional().allow("", null),
+  references: Joi.string().optional().allow("", null),
 });
 
 export const updateUser = Joi.object().keys({
@@ -18,6 +26,15 @@ export const updateUser = Joi.object().keys({
   phone: Joi.string().optional().allow("", null),
   phoneNumber: Joi.string().optional().allow("", null),
   role: Joi.string().valid("APPLICANT", "HR").optional(),
+  civilStatus: Joi.string().optional().allow("", null),
+  houseNo: Joi.string().optional().allow("", null),
+  street: Joi.string().optional().allow("", null),
+  barangay: Joi.string().optional().allow("", null),
+  city: Joi.string().optional().allow("", null),
+  province: Joi.string().optional().allow("", null),
+  zipCode: Joi.string().optional().allow("", null),
+  education: Joi.string().optional().allow("", null),
+  references: Joi.string().optional().allow("", null),
 });
 
 export const updateUserPassword = Joi.object().keys({
