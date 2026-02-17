@@ -213,21 +213,26 @@ const SignupForm = () => {
     if (!validatePersonalDetails()) return;
 
     try {
-      await completeRegistration({
+      const registrationData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
         password: formData.password,
         civilStatus: formData.civilStatus,
-        houseNo: formData.houseNo,
-        street: formData.street,
-        barangay: formData.barangay,
         city: formData.city,
         province: formData.province,
         zipCode: formData.zipCode,
         education: formData.education,
         references: formData.references,
-      });
+      };
+
+      // Only add optional fields if they have values
+      if (formData.houseNo.trim()) registrationData.houseNo = formData.houseNo;
+      if (formData.street.trim()) registrationData.street = formData.street;
+      if (formData.barangay.trim())
+        registrationData.barangay = formData.barangay;
+
+      await completeRegistration(registrationData);
     } catch (err) {
       console.error("Registration failed:", err);
     }

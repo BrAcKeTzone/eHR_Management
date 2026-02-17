@@ -145,6 +145,42 @@ const ApplicationDetailsModal = ({
           <h3 className="text-sm font-semibold text-gray-700 mb-3">
             Applicant Information
           </h3>
+          {/* Profile Picture */}
+          <div className="mb-4 flex justify-center">
+            {application.applicant?.profilePicture ? (
+              <div className="flex flex-col items-center">
+                <img
+                  src={application.applicant.profilePicture}
+                  alt={`${application.applicant?.firstName} ${application.applicant?.lastName}`}
+                  className="w-32 h-32 rounded-full object-cover border-4 border-gray-300 shadow-md"
+                />
+                <p className="mt-2 text-sm font-semibold text-gray-700 text-center">
+                  {application.applicant?.firstName}{" "}
+                  {application.applicant?.lastName}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300 shadow-md">
+                  <svg
+                    className="w-16 h-16 text-gray-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <p className="mt-2 text-sm font-semibold text-gray-700 text-center">
+                  {application.applicant?.firstName}{" "}
+                  {application.applicant?.lastName}
+                </p>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-500">Application ID</p>
@@ -184,6 +220,93 @@ const ApplicationDetailsModal = ({
             </div>
           </div>
         </div>
+
+        {/* Personal Information */}
+        {(application.applicant?.civilStatus ||
+          application.applicant?.houseNo ||
+          application.applicant?.street ||
+          application.applicant?.barangay ||
+          application.applicant?.city ||
+          application.applicant?.province ||
+          application.applicant?.zipCode) && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Personal Information
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {application.applicant?.civilStatus && (
+                <div>
+                  <p className="text-sm text-gray-500">Civil Status</p>
+                  <p className="mt-1 font-medium">
+                    {application.applicant.civilStatus}
+                  </p>
+                </div>
+              )}
+            </div>
+            {(application.applicant?.houseNo ||
+              application.applicant?.street ||
+              application.applicant?.barangay ||
+              application.applicant?.city ||
+              application.applicant?.province ||
+              application.applicant?.zipCode) && (
+              <div className="mt-4">
+                <p className="text-sm font-semibold text-gray-700 mb-3">
+                  Address
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {application.applicant?.houseNo && (
+                    <div>
+                      <p className="text-sm text-gray-500">House No.</p>
+                      <p className="mt-1 font-medium">
+                        {application.applicant.houseNo}
+                      </p>
+                    </div>
+                  )}
+                  {application.applicant?.street && (
+                    <div>
+                      <p className="text-sm text-gray-500">Street</p>
+                      <p className="mt-1 font-medium">
+                        {application.applicant.street}
+                      </p>
+                    </div>
+                  )}
+                  {application.applicant?.barangay && (
+                    <div>
+                      <p className="text-sm text-gray-500">Barangay</p>
+                      <p className="mt-1 font-medium">
+                        {application.applicant.barangay}
+                      </p>
+                    </div>
+                  )}
+                  {application.applicant?.city && (
+                    <div>
+                      <p className="text-sm text-gray-500">City</p>
+                      <p className="mt-1 font-medium">
+                        {application.applicant.city}
+                      </p>
+                    </div>
+                  )}
+                  {application.applicant?.province && (
+                    <div>
+                      <p className="text-sm text-gray-500">Province</p>
+                      <p className="mt-1 font-medium">
+                        {application.applicant.province}
+                      </p>
+                    </div>
+                  )}
+                  {application.applicant?.zipCode && (
+                    <div>
+                      <p className="text-sm text-gray-500">Zip Code</p>
+                      <p className="mt-1 font-medium">
+                        {application.applicant.zipCode}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Timeline */}
         <div>
@@ -242,6 +365,68 @@ const ApplicationDetailsModal = ({
               <p className="text-sm text-gray-800 whitespace-pre-wrap">
                 {application.motivation}
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* References */}
+        {application.applicant?.references && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              References
+            </h3>
+            <div className="space-y-3">
+              {(() => {
+                let refs = [];
+                try {
+                  refs = Array.isArray(application.applicant.references)
+                    ? application.applicant.references
+                    : JSON.parse(application.applicant.references);
+                } catch (e) {
+                  console.error("Failed to parse references", e);
+                  return (
+                    <p className="text-sm text-gray-500">
+                      Unable to parse references
+                    </p>
+                  );
+                }
+
+                if (!Array.isArray(refs) || refs.length === 0) {
+                  return (
+                    <p className="text-sm text-gray-500">
+                      No references provided.
+                    </p>
+                  );
+                }
+
+                return refs.map((ref, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {ref.name && (
+                        <div>
+                          <p className="text-sm text-gray-500">Name</p>
+                          <p className="mt-1 font-medium">{ref.name}</p>
+                        </div>
+                      )}
+                      {ref.relationship && (
+                        <div>
+                          <p className="text-sm text-gray-500">Relationship</p>
+                          <p className="mt-1 font-medium">{ref.relationship}</p>
+                        </div>
+                      )}
+                      {ref.contactNo && (
+                        <div>
+                          <p className="text-sm text-gray-500">Contact No.</p>
+                          <p className="mt-1 font-medium">{ref.contactNo}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         )}

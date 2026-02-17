@@ -14,6 +14,15 @@ interface CreateUserData {
   lastName: string;
   phone?: string;
   role?: UserRole;
+  civilStatus?: string;
+  houseNo?: string;
+  street?: string;
+  barangay?: string;
+  city?: string;
+  province?: string;
+  zipCode?: string;
+  education?: string;
+  references?: string;
 }
 
 interface UpdateUserData {
@@ -22,6 +31,15 @@ interface UpdateUserData {
   lastName?: string;
   phone?: string;
   role?: UserRole;
+  civilStatus?: string;
+  houseNo?: string;
+  street?: string;
+  barangay?: string;
+  city?: string;
+  province?: string;
+  zipCode?: string;
+  education?: string;
+  references?: string;
 }
 
 interface GetUsersOptions {
@@ -173,6 +191,15 @@ export const getUserById = async (
       role: true,
       profilePicture: true,
       profilePicturePublicId: true,
+      civilStatus: true,
+      houseNo: true,
+      street: true,
+      barangay: true,
+      city: true,
+      province: true,
+      zipCode: true,
+      education: true,
+      references: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -196,6 +223,15 @@ export const createUser = async (
     lastName,
     phone,
     role = UserRole.APPLICANT,
+    civilStatus,
+    houseNo,
+    street,
+    barangay,
+    city,
+    province,
+    zipCode,
+    education,
+    references,
   } = userData;
 
   // Check if user already exists
@@ -219,6 +255,15 @@ export const createUser = async (
       lastName,
       phone: phone || null,
       role,
+      civilStatus: civilStatus || null,
+      houseNo: houseNo || null,
+      street: street || null,
+      barangay: barangay || null,
+      city: city || null,
+      province: province || null,
+      zipCode: zipCode || null,
+      education: education || null,
+      references: references || null,
     },
     select: {
       id: true,
@@ -227,6 +272,15 @@ export const createUser = async (
       lastName: true,
       phone: true,
       role: true,
+      civilStatus: true,
+      houseNo: true,
+      street: true,
+      barangay: true,
+      city: true,
+      province: true,
+      zipCode: true,
+      education: true,
+      references: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -242,7 +296,22 @@ export const updateUser = async (
   requestingUserId?: number,
   requestingUserRole?: UserRole,
 ): Promise<Omit<User, "password">> => {
-  const { email, firstName, lastName, phone, role } = userData;
+  const {
+    email,
+    firstName,
+    lastName,
+    phone,
+    role,
+    civilStatus,
+    houseNo,
+    street,
+    barangay,
+    city,
+    province,
+    zipCode,
+    education,
+    references,
+  } = userData;
 
   // Check if user exists
   const existingUser = await prisma.user.findUnique({
@@ -292,6 +361,15 @@ export const updateUser = async (
     updateData.lastName = lastName;
   if (phone !== undefined) updateData.phone = phone || null;
   if (role && role !== existingUser.role) updateData.role = role;
+  if (civilStatus !== undefined) updateData.civilStatus = civilStatus || null;
+  if (houseNo !== undefined) updateData.houseNo = houseNo || null;
+  if (street !== undefined) updateData.street = street || null;
+  if (barangay !== undefined) updateData.barangay = barangay || null;
+  if (city !== undefined) updateData.city = city || null;
+  if (province !== undefined) updateData.province = province || null;
+  if (zipCode !== undefined) updateData.zipCode = zipCode || null;
+  if (education !== undefined) updateData.education = education || null;
+  if (references !== undefined) updateData.references = references || null;
 
   // Only update if there are changes
   if (Object.keys(updateData).length === 0) {
@@ -311,6 +389,15 @@ export const updateUser = async (
       lastName: true,
       phone: true,
       role: true,
+      civilStatus: true,
+      houseNo: true,
+      street: true,
+      barangay: true,
+      city: true,
+      province: true,
+      zipCode: true,
+      education: true,
+      references: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -586,6 +673,15 @@ export const updateProfilePicture = async (
       role: true,
       profilePicture: true,
       profilePicturePublicId: true,
+      civilStatus: true,
+      houseNo: true,
+      street: true,
+      barangay: true,
+      city: true,
+      province: true,
+      zipCode: true,
+      education: true,
+      references: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -632,6 +728,15 @@ export const deleteProfilePicture = async (
       role: true,
       profilePicture: true,
       profilePicturePublicId: true,
+      civilStatus: true,
+      houseNo: true,
+      street: true,
+      barangay: true,
+      city: true,
+      province: true,
+      zipCode: true,
+      education: true,
+      references: true,
       createdAt: true,
       updatedAt: true,
     },

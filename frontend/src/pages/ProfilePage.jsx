@@ -31,6 +31,15 @@ const ProfilePage = () => {
     lastName: "",
     email: "",
     phone: "",
+    civilStatus: "",
+    houseNo: "",
+    street: "",
+    barangay: "",
+    city: "",
+    province: "",
+    zipCode: "",
+    education: [],
+    references: [],
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -64,11 +73,45 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (user) {
+      let education = [];
+      let references = [];
+
+      if (user.education) {
+        try {
+          education = Array.isArray(user.education)
+            ? user.education
+            : JSON.parse(user.education);
+        } catch (e) {
+          console.error("Failed to parse education:", e);
+          education = [];
+        }
+      }
+
+      if (user.references) {
+        try {
+          references = Array.isArray(user.references)
+            ? user.references
+            : JSON.parse(user.references);
+        } catch (e) {
+          console.error("Failed to parse references:", e);
+          references = [];
+        }
+      }
+
       setProfileData({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         email: user.email || "",
         phone: user.phone || "",
+        civilStatus: user.civilStatus || "",
+        houseNo: user.houseNo || "",
+        street: user.street || "",
+        barangay: user.barangay || "",
+        city: user.city || "",
+        province: user.province || "",
+        zipCode: user.zipCode || "",
+        education: education,
+        references: references,
       });
     }
   }, [user]);
@@ -109,7 +152,31 @@ const ProfilePage = () => {
     }
 
     try {
-      await updateProfile(profileData);
+      const submitData = {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        phone: profileData.phone,
+        civilStatus: profileData.civilStatus,
+        city: profileData.city,
+        province: profileData.province,
+        zipCode: profileData.zipCode,
+        // Stringify arrays if they're not already strings
+        education: Array.isArray(profileData.education)
+          ? JSON.stringify(profileData.education)
+          : profileData.education,
+        references: Array.isArray(profileData.references)
+          ? JSON.stringify(profileData.references)
+          : profileData.references,
+      };
+
+      // Only add optional address fields if they have values
+      if (profileData.houseNo.trim()) submitData.houseNo = profileData.houseNo;
+      if (profileData.street.trim()) submitData.street = profileData.street;
+      if (profileData.barangay.trim())
+        submitData.barangay = profileData.barangay;
+
+      await updateProfile(submitData);
       setIsEditing(false);
       setProfileSuccess("Profile updated successfully!");
       setTimeout(() => setProfileSuccess(""), 3000);
@@ -161,7 +228,7 @@ const ProfilePage = () => {
       await changePasswordWithOtp(
         passwordData.currentPassword,
         passwordData.newPassword,
-        passwordData.otp
+        passwordData.otp,
       );
       setPasswordSuccess("Password changed successfully!");
       setTimeout(() => {
@@ -185,11 +252,43 @@ const ProfilePage = () => {
     setIsEditing(false);
     // Reset profile data to original values
     if (user) {
+      let education = [];
+      let references = [];
+
+      if (user.education) {
+        try {
+          education = Array.isArray(user.education)
+            ? user.education
+            : JSON.parse(user.education);
+        } catch (e) {
+          education = [];
+        }
+      }
+
+      if (user.references) {
+        try {
+          references = Array.isArray(user.references)
+            ? user.references
+            : JSON.parse(user.references);
+        } catch (e) {
+          references = [];
+        }
+      }
+
       setProfileData({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         email: user.email || "",
         phone: user.phone || "",
+        civilStatus: user.civilStatus || "",
+        houseNo: user.houseNo || "",
+        street: user.street || "",
+        barangay: user.barangay || "",
+        city: user.city || "",
+        province: user.province || "",
+        zipCode: user.zipCode || "",
+        education: education,
+        references: references,
       });
     }
   };
@@ -341,6 +440,189 @@ const ProfilePage = () => {
                 disabled={!isEditing}
                 placeholder="Enter your phone number"
               />
+
+              {/* Civil Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Civil Status
+                </label>
+                <select
+                  value={profileData.civilStatus}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      civilStatus: e.target.value,
+                    })
+                  }
+                  disabled={!isEditing}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 px-3 border disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">Select civil status</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Widowed">Widowed</option>
+                  <option value="Separated">Separated</option>
+                  <option value="Divorced">Divorced</option>
+                </select>
+              </div>
+
+              {/* Residential Address */}
+              <div className="col-span-full">
+                <h4 className="text-md font-semibold text-gray-700 mb-4">
+                  Residential Address
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="House No. (Optional)"
+                    value={profileData.houseNo}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        houseNo: e.target.value,
+                      })
+                    }
+                    disabled={!isEditing}
+                    placeholder="House number"
+                  />
+                  <Input
+                    label="Street (Optional)"
+                    value={profileData.street}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        street: e.target.value,
+                      })
+                    }
+                    disabled={!isEditing}
+                    placeholder="Street name"
+                  />
+                  <Input
+                    label="Barangay (Optional)"
+                    value={profileData.barangay}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        barangay: e.target.value,
+                      })
+                    }
+                    disabled={!isEditing}
+                    placeholder="Barangay"
+                  />
+                  <Input
+                    label="City/Municipality"
+                    value={profileData.city}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        city: e.target.value,
+                      })
+                    }
+                    disabled={!isEditing}
+                    placeholder="City"
+                  />
+                  <Input
+                    label="Province"
+                    value={profileData.province}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        province: e.target.value,
+                      })
+                    }
+                    disabled={!isEditing}
+                    placeholder="Province"
+                  />
+                  <Input
+                    label="Zip Code"
+                    value={profileData.zipCode}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        zipCode: e.target.value,
+                      })
+                    }
+                    disabled={!isEditing}
+                    placeholder="Zip code"
+                  />
+                </div>
+              </div>
+
+              {/* Educational Background */}
+              {profileData.education && profileData.education.length > 0 && (
+                <div className="col-span-full">
+                  <h4 className="text-md font-semibold text-gray-700 mb-4">
+                    Educational Background
+                  </h4>
+                  <div className="space-y-3">
+                    {profileData.education.map((edu, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-50 p-4 rounded-md border border-gray-200"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <p className="text-sm text-gray-500">School</p>
+                            <p className="mt-1 font-medium">{edu.school}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Course/Strand
+                            </p>
+                            <p className="mt-1 font-medium">{edu.course}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Year Graduated
+                            </p>
+                            <p className="mt-1 font-medium">
+                              {edu.yearGraduated}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* References */}
+              {profileData.references && profileData.references.length > 0 && (
+                <div className="col-span-full">
+                  <h4 className="text-md font-semibold text-gray-700 mb-4">
+                    Character References
+                  </h4>
+                  <div className="space-y-3">
+                    {profileData.references.map((ref, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-50 p-4 rounded-md border border-gray-200"
+                      >
+                        <p className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">
+                          Reference #{index + 1}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <p className="text-sm text-gray-500">Name</p>
+                            <p className="mt-1 font-medium">{ref.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Contact No.</p>
+                            <p className="mt-1 font-medium">{ref.contactNo}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Relationship
+                            </p>
+                            <p className="mt-1 font-medium">
+                              {ref.relationship}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
