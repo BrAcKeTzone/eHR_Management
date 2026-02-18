@@ -34,23 +34,36 @@ fetchClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
     // Handle 401 Unauthorized - but not for login/auth endpoints
     if (error.response?.status === 401) {
       const isAuthEndpoint = error.config?.url?.includes("/auth/");
 
       // Only redirect on 401 for non-auth endpoints (protected routes)
       if (!isAuthEndpoint) {
-        // Clear the token
+        // Clear the token from localStorage
         localStorage.removeItem("authToken");
+        
+        // Try to update auth store to unauthenticated state
+        try {
+          // Use dynamic import to avoid circular dependency issues
+          const { useAuthStore } = await import("../store/authStore");
+          const store = useAuthStore.getState();
+          // Call logout if available
+          if (store.logout) {
+            await store.logout();
+          }
+        } catch (e) {
+          // Fallback if store is not available - just clear the token
+          console.error("Failed to clear auth store", e);
+        }
 
-        // Prevent redirect loop by checking current location
+        // Prevent redirect loop by checking current location and avoiding auth pages
         const currentPath = window.location.pathname;
-        if (
-          currentPath !== "/signin" &&
-          currentPath !== "/signup" &&
-          currentPath !== "/forgot-password"
-        ) {
+        const isPublicAuthPage = /^\/(signin|signup|forgot-password)($|\/)/.test(currentPath);
+        
+        // Only use hard redirect if not already on a public page
+        if (!isPublicAuthPage) {
           // Use a small delay to prevent race conditions with React routing
           setTimeout(() => {
             window.location.href = "/signin";

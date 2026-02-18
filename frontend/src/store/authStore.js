@@ -10,6 +10,7 @@ export const useAuthStore = create(
       user: null,
       token: null,
       isAuthenticated: false,
+      isInitialized: false,
       loading: false,
       error: null,
 
@@ -706,6 +707,7 @@ export const useAuthStore = create(
               isAuthenticated: true,
               loading: false,
               error: null,
+              isInitialized: true,
             });
 
             return { user };
@@ -741,6 +743,7 @@ export const useAuthStore = create(
                 isAuthenticated: true,
                 loading: false,
                 error: null,
+                isInitialized: true,
               });
 
               return { user: userWithoutPassword };
@@ -755,6 +758,7 @@ export const useAuthStore = create(
             isAuthenticated: false,
             loading: false,
             error: null,
+            isInitialized: true,
           });
           localStorage.removeItem("authToken");
           throw error;
@@ -767,6 +771,10 @@ export const useAuthStore = create(
 
       // Initialize auth state from localStorage
       initializeAuth: () => {
+        const { isInitialized } = get();
+        // Prevent multiple initialization attempts
+        if (isInitialized) return;
+
         const token = localStorage.getItem("authToken");
         if (token) {
           set({ token });
@@ -775,7 +783,23 @@ export const useAuthStore = create(
             .catch(() => {
               // Token is invalid, clear it
               localStorage.removeItem("authToken");
+              set({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+                loading: false,
+                isInitialized: true,
+              });
             });
+        } else {
+          // No token found, explicitly set isAuthenticated to false
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            loading: false,
+            isInitialized: true,
+          });
         }
       },
 
@@ -796,6 +820,7 @@ export const useAuthStore = create(
         user: state.user,
         token: state.token,
         isAuthenticated: state.isAuthenticated,
+        isInitialized: state.isInitialized,
       }),
     },
   ),
