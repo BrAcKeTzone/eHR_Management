@@ -43,7 +43,7 @@ fetchClient.interceptors.response.use(
       if (!isAuthEndpoint) {
         // Clear the token from localStorage
         localStorage.removeItem("authToken");
-        
+
         // Try to update auth store to unauthenticated state
         try {
           // Use dynamic import to avoid circular dependency issues
@@ -60,8 +60,9 @@ fetchClient.interceptors.response.use(
 
         // Prevent redirect loop by checking current location and avoiding auth pages
         const currentPath = window.location.pathname;
-        const isPublicAuthPage = /^\/(signin|signup|forgot-password)($|\/)/.test(currentPath);
-        
+        const isPublicAuthPage =
+          /^\/(signin|signup|forgot-password)($|\/)/.test(currentPath);
+
         // Only use hard redirect if not already on a public page
         if (!isPublicAuthPage) {
           // Use a small delay to prevent race conditions with React routing
