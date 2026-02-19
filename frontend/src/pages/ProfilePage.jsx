@@ -151,6 +151,22 @@ const ProfilePage = () => {
       return;
     }
 
+    // Validate education years
+    const currentYear = new Date().getFullYear();
+    const invalidYear = profileData.education?.find(
+      (edu) => parseInt(edu.yearGraduated) >= currentYear,
+    );
+    if (invalidYear) {
+      clearError();
+      const errorMsg = `Year graduated cannot be ${currentYear} or later. Please enter a valid past graduation year.`;
+      // Manually trigger error display
+      const errorEvent = new Event("error");
+      errorEvent.message = errorMsg;
+      console.error(errorMsg);
+      alert(errorMsg);
+      return;
+    }
+
     try {
       const submitData = {
         firstName: profileData.firstName,
@@ -663,6 +679,13 @@ const ProfilePage = () => {
                               disabled={!isEditing}
                               placeholder="2020"
                             />
+                            {edu.yearGraduated &&
+                              parseInt(edu.yearGraduated) >=
+                                new Date().getFullYear() && (
+                                <p className="text-xs text-red-600 mt-1">
+                                  Year must be before {new Date().getFullYear()}
+                                </p>
+                              )}
                           </div>
                         </div>
                       ))

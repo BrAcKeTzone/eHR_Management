@@ -170,6 +170,15 @@ const SignupForm = () => {
       )
     ) {
       errors.education = "Please fill in all education fields";
+    } else {
+      // Validate that year graduated is not current year or in the future
+      const currentYear = new Date().getFullYear();
+      const invalidYearIndex = formData.education.findIndex(
+        (edu) => parseInt(edu.yearGraduated) >= currentYear,
+      );
+      if (invalidYearIndex !== -1) {
+        errors.education = `Year graduated cannot be ${currentYear} or later. Please enter a valid past graduation year.`;
+      }
     }
 
     if (
@@ -550,6 +559,12 @@ const SignupForm = () => {
                     required
                     placeholder="2020"
                   />
+                  {edu.yearGraduated &&
+                    parseInt(edu.yearGraduated) >= new Date().getFullYear() && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Year must be before {new Date().getFullYear()}
+                      </p>
+                    )}
                 </div>
               </div>
             ))}
