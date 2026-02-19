@@ -9,6 +9,7 @@ import uploadsRouter from "./uploads.route";
 import specializationRouter from "../api/specializations/specializations.route";
 import preEmploymentRouter from "../api/pre-employment/pre-employment.routes";
 import notificationRouter from "../api/notifications/notifications.route";
+import testRouter from "./test.route";
 
 router.use("/auth", authRouter);
 router.use("/users", userRouter);
@@ -18,5 +19,6 @@ router.use("/uploads", uploadsRouter);
 router.use("/specializations", specializationRouter);
 router.use("/pre-employment", preEmploymentRouter);
 router.use("/notifications", notificationRouter);
+router.use("/test", testRouter);
 
 export default router;

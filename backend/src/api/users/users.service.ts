@@ -158,6 +158,17 @@ export const getAllUsers = async (
         lastName: true,
         phone: true,
         role: true,
+        profilePicture: true,
+        profilePicturePublicId: true,
+        civilStatus: true,
+        houseNo: true,
+        street: true,
+        barangay: true,
+        city: true,
+        province: true,
+        zipCode: true,
+        education: true,
+        references: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -272,6 +283,8 @@ export const createUser = async (
       lastName: true,
       phone: true,
       role: true,
+      profilePicture: true,
+      profilePicturePublicId: true,
       civilStatus: true,
       houseNo: true,
       street: true,
@@ -389,6 +402,8 @@ export const updateUser = async (
       lastName: true,
       phone: true,
       role: true,
+      profilePicture: true,
+      profilePicturePublicId: true,
       civilStatus: true,
       houseNo: true,
       street: true,
@@ -650,7 +665,7 @@ export const updateProfilePicture = async (
   // Delete old profile picture from Cloudinary if exists
   if (user.profilePicturePublicId) {
     try {
-      const cloudinary = (await import("../../../configs/cloudinary")).default;
+      const cloudinary = (await import("../../configs/cloudinary")).default;
       await cloudinary.uploader.destroy(user.profilePicturePublicId);
     } catch (error) {
       console.error("Error deleting old profile picture:", error);
@@ -705,7 +720,7 @@ export const deleteProfilePicture = async (
   // Delete profile picture from Cloudinary if exists
   if (user.profilePicturePublicId) {
     try {
-      const cloudinary = (await import("../../../configs/cloudinary")).default;
+      const cloudinary = (await import("../../configs/cloudinary")).default;
       await cloudinary.uploader.destroy(user.profilePicturePublicId);
     } catch (error) {
       console.error("Error deleting profile picture:", error);

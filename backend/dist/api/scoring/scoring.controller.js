@@ -32,11 +32,7 @@ exports.getRubricById = (0, asyncHandler_1.default)(async (req, res) => {
         throw new ApiError_1.default(403, "Only HR and Admin can view rubrics");
     }
     const { id } = req.params;
-    const rubric = await scoring_service_1.default.getRubricById(parseInt(id));
-    if (!rubric) {
-        throw new ApiError_1.default(404, "Rubric not found");
-    }
-    res.json(new ApiResponse_1.default(200, rubric, "Rubric retrieved successfully"));
+    await scoring_service_1.default.getRubricById(parseInt(id));
 });
 exports.updateRubric = (0, asyncHandler_1.default)(async (req, res) => {
     if (!["HR", "ADMIN"].includes(req.user.role)) {

@@ -178,7 +178,7 @@ const verifyOtp = async (email, otp) => {
 };
 exports.verifyOtp = verifyOtp;
 const register = async (userData) => {
-    const { email, password, firstName, lastName, phone, role = "APPLICANT", } = userData;
+    const { email, password, firstName, lastName, phone, role = "APPLICANT", civilStatus, houseNo, street, barangay, city, province, zipCode, education, references, } = userData;
     // Check if OTP has been verified for this email
     const otpRecord = await prisma_1.default.otp.findFirst({
         where: {
@@ -209,6 +209,15 @@ const register = async (userData) => {
                 lastName,
                 phone,
                 role: assignedRole,
+                civilStatus,
+                houseNo,
+                street,
+                barangay,
+                city,
+                province,
+                zipCode,
+                education: education ? JSON.stringify(education) : undefined,
+                references: references ? JSON.stringify(references) : undefined,
             },
         });
         // Delete the OTP after successful registration

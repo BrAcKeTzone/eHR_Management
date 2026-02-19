@@ -1,0 +1,200 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
+}
+
+// ENUMS
+enum UserRole {
+  APPLICANT
+  HR
+  ADMIN
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACKNOWLEDGED
+  FOR_EVALUATION
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum ApplicationResult {
+  PASS
+  FAIL
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+}
+
+// AUTHENTICATION & USER MANAGEMENT
+model User {
+  id                     Int      @id @default(autoincrement())
+  email                  String   @unique
+  password               String
+  firstName              String
+  lastName               String
+  phone                  String?
+  role                   UserRole @default(APPLICANT)
+  profilePicture         String? // URL to profile picture
+  profilePicturePublicId String? // Cloudinary public ID for deletion
+
+  // Personal Information
+  civilStatus String?
+  houseNo     String?
+  street      String?
+  barangay    String?
+  city        String?
+  province    String?
+  zipCode     String?
+
+  // JSON array of objects: { school, course, yearGraduated }
+  education  String? @db.LongText
+  // JSON array of objects: { name, contactNo, relationship }
+  references String? @db.LongText
+
+  // Applicant relations
+  applications  Application[]
+  preEmployment PreEmploymentRequirement?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// PRE-EMPLOYMENT REQUIREMENTS
+model PreEmploymentRequirement {
+  id Int @id @default(autoincrement())
+
+  // Government IDs
+  sss        String?
+  philhealth String?
+  tin        String?
+  pagibig    String?
+
+  // Documents (URLs or Paths)
+  photo2x2         String?
+  coe              String? // Certificate of Employment
+  marriageContract String?
+  prcLicense       String?
+  civilService     String?
+  mastersUnits     String?
+  car              String? // Complete Academic Requirements
+  tor              String? // Transcript of Records
+  otherCert        String? // Other single certificate
+
+  // Multiple Documents
+  tesdaCerts String? @db.LongText // JSON array of file paths/URLs
+
+  // Relations
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// TEACHER APPLICATION SYSTEM
+model Application {
+  id                               Int                @id @default(autoincrement())
+  attemptNumber                    Int                @default(1)
+  status                           ApplicationStatus  @default(PENDING)
+  documents                        String?            @db.LongText // JSON string of uploaded file paths (supports up to 4GB)
+  demoSchedule                     DateTime? // Teaching demo date/time
+  demoLocation                     String? // Demo location/room
+  demoDuration                     Int? // Duration in minutes
+  demoNotes                        String?            @db.Text // Instructions/notes for applicant
+  demoRescheduleCount              Int                @default(0) // Number of times the demo has been rescheduled
+  demoRescheduleReason             String? // Optional reason for latest reschedule (applicant_no_show | school)
+  interviewEligible                Boolean            @default(false) // Whether this application is eligible for interview scheduling
+  // Initial interview scheduling
+  initialInterviewSchedule         DateTime?
+  initialInterviewRescheduleCount  Int                @default(0)
+  initialInterviewRescheduleReason String?
+  // Final interview scheduling
+  finalInterviewSchedule           DateTime?
+  finalInterviewRescheduleCount    Int                @default(0)
+  finalInterviewRescheduleReason   String?
+  // Demo scoring breakdown
+  studentLearningActionsScore      Float? // 0-30
+  knowledgeOfSubjectScore          Float? // 0-30
+  teachingMethodScore              Float? // 0-30
+  instructorAttributesScore        Float? // 0-10
+  demoFeedback                     String?            @db.Text // Feedback provided during demo scoring
+  initialInterviewResult           ApplicationResult?
+  initialInterviewFeedback         String?            @db.Text
+  finalInterviewResult             ApplicationResult?
+  finalInterviewFeedback           String?            @db.Text
+  interviewScore                   Float? // Interview score (0-100)
+  interviewResult                  ApplicationResult? // Interview result (PASS/FAIL)
+  interviewNotes                   String?            @db.Text // Interview feedback/notes
+  totalScore                       Float? // Total score entered by HR (0-100)
+  result                           ApplicationResult?
+  hrNotes                          String?            @db.Text // HR comments during review
+
+  applicant   User @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  applicantId Int
+
+  specialization   Specialization? @relation(fields: [specializationId], references: [id])
+  specializationId Int?
+
+  // Additional application fields
+  program               String?
+  subjectSpecialization String?
+  educationalBackground String? @db.Text
+  teachingExperience    String? @db.Text
+  motivation            String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicantId, attemptNumber])
+  @@index([specializationId])
+}
+
+// EMAIL NOTIFICATIONS LOG
+model Notification {
+  id      Int                @id @default(autoincrement())
+  email   String
+  subject String
+  message String             @db.Text
+  type    String // "submission", "approval", "rejection", "schedule", "result", "hr_alert"
+  status  NotificationStatus @default(UNREAD)
+  sentAt  DateTime           @default(now())
+
+  applicationId Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([status])
+}
+
+// OTP
+model Otp {
+  id        Int      @id @default(autoincrement())
+  email     String
+  otp       String
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// CONFIGURATIONS
+model Specialization {
+  applications Application[]
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}

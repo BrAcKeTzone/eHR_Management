@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePreEmploymentHandler = exports.upsertPreEmploymentHandler = exports.getPreEmploymentHandler = void 0;
+exports.getPreEmploymentByUserIdHandler = exports.deletePreEmploymentHandler = exports.upsertPreEmploymentHandler = exports.getPreEmploymentHandler = void 0;
 const pre_employment_service_1 = require("./pre-employment.service");
 const ApiResponse_1 = __importDefault(require("../../utils/ApiResponse"));
 const asyncHandler_1 = __importDefault(require("../../utils/asyncHandler"));
@@ -130,5 +130,44 @@ exports.deletePreEmploymentHandler = (0, asyncHandler_1.default)(async (req, res
     res
         .status(200)
         .json(new ApiResponse_1.default(200, null, "Pre-employment records cleared successfully"));
+});
+exports.getPreEmploymentByUserIdHandler = (0, asyncHandler_1.default)(async (req, res, next) => {
+    const userId = parseInt(req.params.userId || "0");
+    const requirements = await (0, pre_employment_service_1.getPreEmployment)(userId);
+    if (requirements) {
+        // Helper function to append .pdf to Cloudinary URLs if missing
+        const appendPdfExtension = (url) => {
+            if (!url || typeof url !== "string")
+                return url;
+            // Only append for documents, and only if not already there
+            if (url.includes("cloudinary.com") &&
+                !url.toLowerCase().endsWith(".pdf") &&
+                !url.toLowerCase().endsWith(".png") &&
+                !url.toLowerCase().endsWith(".jpg") &&
+                !url.toLowerCase().endsWith(".jpeg")) {
+                return `${url}.pdf`;
+            }
+            return url;
+        };
+        // Apply to document fields
+        const docFields = [
+            "coe",
+            "marriageContract",
+            "prcLicense",
+            "civilService",
+            "mastersUnits",
+            "car",
+            "tor",
+            "otherCert",
+        ];
+        docFields.forEach((field) => {
+            if (requirements[field]) {
+                requirements[field] = appendPdfExtension(requirements[field]);
+            }
+        });
+    }
+    res
+        .status(200)
+        .json(new ApiResponse_1.default(200, requirements || {}, "Pre-employment requirements fetched successfully"));
 });
 //# sourceMappingURL=pre-employment.controller.js.map

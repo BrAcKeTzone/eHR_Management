@@ -50,13 +50,7 @@ export const getRubricById = asyncHandler(
     }
 
     const { id } = req.params;
-    const rubric = await scoringService.getRubricById(parseInt(id));
-
-    if (!rubric) {
-      throw new ApiError(404, "Rubric not found");
-    }
-
-    res.json(new ApiResponse(200, rubric, "Rubric retrieved successfully"));
+    await scoringService.getRubricById(parseInt(id));
   }
 );
 

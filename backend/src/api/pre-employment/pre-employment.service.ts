@@ -9,7 +9,7 @@ export const getPreEmployment = async (userId: number) => {
 
 export const upsertPreEmployment = async (
   userId: number,
-  data: Prisma.PreEmploymentRequirementCreateInput,
+  data: Prisma.PreEmploymentRequirementUncheckedCreateInput,
 ) => {
   return await prisma.preEmploymentRequirement.upsert({
     where: { userId },

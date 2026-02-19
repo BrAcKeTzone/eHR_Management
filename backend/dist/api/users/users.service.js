@@ -123,6 +123,17 @@ const getAllUsers = async (options = {}) => {
                 lastName: true,
                 phone: true,
                 role: true,
+                profilePicture: true,
+                profilePicturePublicId: true,
+                civilStatus: true,
+                houseNo: true,
+                street: true,
+                barangay: true,
+                city: true,
+                province: true,
+                zipCode: true,
+                education: true,
+                references: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -155,6 +166,15 @@ const getUserById = async (userId) => {
             role: true,
             profilePicture: true,
             profilePicturePublicId: true,
+            civilStatus: true,
+            houseNo: true,
+            street: true,
+            barangay: true,
+            city: true,
+            province: true,
+            zipCode: true,
+            education: true,
+            references: true,
             createdAt: true,
             updatedAt: true,
         },
@@ -167,7 +187,7 @@ const getUserById = async (userId) => {
 exports.getUserById = getUserById;
 // Create new user
 const createUser = async (userData) => {
-    const { email, password, firstName, lastName, phone, role = client_1.UserRole.APPLICANT, } = userData;
+    const { email, password, firstName, lastName, phone, role = client_1.UserRole.APPLICANT, civilStatus, houseNo, street, barangay, city, province, zipCode, education, references, } = userData;
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
         where: { email },
@@ -186,6 +206,15 @@ const createUser = async (userData) => {
             lastName,
             phone: phone || null,
             role,
+            civilStatus: civilStatus || null,
+            houseNo: houseNo || null,
+            street: street || null,
+            barangay: barangay || null,
+            city: city || null,
+            province: province || null,
+            zipCode: zipCode || null,
+            education: education || null,
+            references: references || null,
         },
         select: {
             id: true,
@@ -194,6 +223,17 @@ const createUser = async (userData) => {
             lastName: true,
             phone: true,
             role: true,
+            profilePicture: true,
+            profilePicturePublicId: true,
+            civilStatus: true,
+            houseNo: true,
+            street: true,
+            barangay: true,
+            city: true,
+            province: true,
+            zipCode: true,
+            education: true,
+            references: true,
             createdAt: true,
             updatedAt: true,
         },
@@ -203,7 +243,7 @@ const createUser = async (userData) => {
 exports.createUser = createUser;
 // Update user
 const updateUser = async (userId, userData, requestingUserId, requestingUserRole) => {
-    const { email, firstName, lastName, phone, role } = userData;
+    const { email, firstName, lastName, phone, role, civilStatus, houseNo, street, barangay, city, province, zipCode, education, references, } = userData;
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
         where: { id: userId },
@@ -245,6 +285,24 @@ const updateUser = async (userId, userData, requestingUserId, requestingUserRole
         updateData.phone = phone || null;
     if (role && role !== existingUser.role)
         updateData.role = role;
+    if (civilStatus !== undefined)
+        updateData.civilStatus = civilStatus || null;
+    if (houseNo !== undefined)
+        updateData.houseNo = houseNo || null;
+    if (street !== undefined)
+        updateData.street = street || null;
+    if (barangay !== undefined)
+        updateData.barangay = barangay || null;
+    if (city !== undefined)
+        updateData.city = city || null;
+    if (province !== undefined)
+        updateData.province = province || null;
+    if (zipCode !== undefined)
+        updateData.zipCode = zipCode || null;
+    if (education !== undefined)
+        updateData.education = education || null;
+    if (references !== undefined)
+        updateData.references = references || null;
     // Only update if there are changes
     if (Object.keys(updateData).length === 0) {
         // Return existing user if no changes
@@ -262,6 +320,17 @@ const updateUser = async (userId, userData, requestingUserId, requestingUserRole
             lastName: true,
             phone: true,
             role: true,
+            profilePicture: true,
+            profilePicturePublicId: true,
+            civilStatus: true,
+            houseNo: true,
+            street: true,
+            barangay: true,
+            city: true,
+            province: true,
+            zipCode: true,
+            education: true,
+            references: true,
             createdAt: true,
             updatedAt: true,
         },
@@ -456,7 +525,7 @@ const updateProfilePicture = async (userId, file) => {
     // Delete old profile picture from Cloudinary if exists
     if (user.profilePicturePublicId) {
         try {
-            const cloudinary = (await Promise.resolve().then(() => __importStar(require("../../../configs/cloudinary")))).default;
+            const cloudinary = (await Promise.resolve().then(() => __importStar(require("../../configs/cloudinary")))).default;
             await cloudinary.uploader.destroy(user.profilePicturePublicId);
         }
         catch (error) {
@@ -479,6 +548,15 @@ const updateProfilePicture = async (userId, file) => {
             role: true,
             profilePicture: true,
             profilePicturePublicId: true,
+            civilStatus: true,
+            houseNo: true,
+            street: true,
+            barangay: true,
+            city: true,
+            province: true,
+            zipCode: true,
+            education: true,
+            references: true,
             createdAt: true,
             updatedAt: true,
         },
@@ -497,7 +575,7 @@ const deleteProfilePicture = async (userId) => {
     // Delete profile picture from Cloudinary if exists
     if (user.profilePicturePublicId) {
         try {
-            const cloudinary = (await Promise.resolve().then(() => __importStar(require("../../../configs/cloudinary")))).default;
+            const cloudinary = (await Promise.resolve().then(() => __importStar(require("../../configs/cloudinary")))).default;
             await cloudinary.uploader.destroy(user.profilePicturePublicId);
         }
         catch (error) {
@@ -520,6 +598,15 @@ const deleteProfilePicture = async (userId) => {
             role: true,
             profilePicture: true,
             profilePicturePublicId: true,
+            civilStatus: true,
+            houseNo: true,
+            street: true,
+            barangay: true,
+            city: true,
+            province: true,
+            zipCode: true,
+            education: true,
+            references: true,
             createdAt: true,
             updatedAt: true,
         },
