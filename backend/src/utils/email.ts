@@ -1,4 +1,4 @@
-import nodemailer, { TransportOptions, Transporter } from "nodemailer";
+import { Resend } from "resend";
 
 interface EmailOptions {
   email: string;
@@ -6,54 +6,48 @@ interface EmailOptions {
   message: string;
 }
 
-interface EmailConfig {
-  host: string;
-  port: number;
-  secure: boolean;
-  auth: {
-    user: string;
-    pass: string;
-  };
-  tls?: {
-    rejectUnauthorized: boolean;
-  };
-  connectionTimeout?: number;
-  socketTimeout?: number;
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Validate API key on startup
+if (!process.env.RESEND_API_KEY) {
+  console.warn("RESEND_API_KEY is not set in environment variables");
 }
 
-const createTransporter = (): Transporter => {
-  const port = parseInt(process.env.EMAIL_PORT || "587", 10);
-  const secure = port === 465; // Use secure connection for port 465, TLS for 587
+// Get from email - use FROM_EMAIL env var or fallback to noreply@resend.dev
+const getFromEmail = (): string => {
+  const fromEmail = process.env.FROM_EMAIL || "noreply@resend.dev";
 
-  const config: EmailConfig = {
-    host: process.env.EMAIL_HOST,
-    port,
-    secure,
-    auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-    tls: {
-      rejectUnauthorized: false, // Allow self-signed certificates (needed for Railway)
-    },
-    connectionTimeout: 10000, // 10 seconds
-    socketTimeout: 10000, // 10 seconds
-  };
+  if (!process.env.FROM_EMAIL) {
+    console.warn(
+      "FROM_EMAIL not configured. Using default noreply@resend.dev. " +
+        "To send to other recipients, set FROM_EMAIL to your verified domain email (e.g., FROM_EMAIL=hello@yourdomain.com) " +
+        "or your Resend account email for testing.",
+    );
+  }
 
-  return nodemailer.createTransport(config as TransportOptions);
+  return fromEmail;
 };
 
 const sendEmail = async (options: EmailOptions): Promise<void> => {
-  const transporter = createTransporter();
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error(
+      "RESEND_API_KEY is not configured in environment variables",
+    );
+  }
 
-  const mailOptions = {
-    from: `BCFI HR Application System <${process.env.EMAIL_USERNAME}>`,
+  const result = await resend.emails.send({
+    from: getFromEmail(),
     to: options.email,
     subject: options.subject,
     text: options.message,
-  };
+  });
 
-  await transporter.sendMail(mailOptions);
+  if (result.error) {
+    throw new Error(
+      `Resend API error: ${result.error.message || "Unknown error"}`,
+    );
+  }
 };
 
 // Retry logic with exponential backoff
@@ -67,6 +61,7 @@ const sendEmailWithRetry = async (
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       await sendEmail(options);
+      console.log(`Email sent successfully to ${options.email}`);
       return; // Success, exit immediately
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
