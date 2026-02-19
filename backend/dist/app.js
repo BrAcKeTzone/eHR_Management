@@ -12,8 +12,15 @@ const ApiError_1 = __importDefault(require("./utils/ApiError"));
 const app = (0, express_1.default)();
 // Middleware
 app.use((0, cors_1.default)());
-app.use(body_parser_1.default.json());
-app.use(body_parser_1.default.urlencoded({ extended: true }));
+// Increase limits for file uploads with metadata
+app.use(body_parser_1.default.json({ limit: "50mb" }));
+app.use(body_parser_1.default.urlencoded({ extended: true, limit: "50mb" }));
+// Set request timeout to 5 minutes for file uploads
+app.use((req, res, next) => {
+    req.setTimeout(300000); // 5 minutes
+    res.setTimeout(300000); // 5 minutes
+    next();
+});
 // Routes
 app.use("/api", index_1.default);
 // Error handling middleware

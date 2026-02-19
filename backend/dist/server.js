@@ -8,7 +8,10 @@ const app_1 = __importDefault(require("./app"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const PORT = process.env.PORT || 3000;
-app_1.default.listen(PORT, () => {
+const server = app_1.default.listen(PORT, () => {
     console.log(`BCFI HR Application System running on http://localhost:${PORT}`);
 });
+// Set server timeout for long-running operations like file uploads
+server.setTimeout(300000); // 5 minutes
+server.keepAliveTimeout = 305000; // Slightly longer than request timeout
 //# sourceMappingURL=server.js.map

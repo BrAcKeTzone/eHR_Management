@@ -200,7 +200,7 @@ const upload = (0, multer_1.default)({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
+        fileSize: 50 * 1024 * 1024, // 50MB limit
     },
 });
 // Middleware for multiple file uploads (up to 10 files)
@@ -219,7 +219,7 @@ const applicationUpload = (0, multer_1.default)({
     storage: storage,
     fileFilter: applicationFileFilter,
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
+        fileSize: 50 * 1024 * 1024, // 50MB
     },
 });
 exports.uploadApplicationDocuments = applicationUpload.array("documents", 10);
