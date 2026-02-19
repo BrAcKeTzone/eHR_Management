@@ -41,7 +41,7 @@ const client_1 = require("@prisma/client");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const ApiError_1 = __importDefault(require("../../utils/ApiError"));
 const otp_generator_1 = __importDefault(require("otp-generator"));
-const email_1 = __importDefault(require("../../utils/email"));
+const email_1 = require("../../utils/email");
 const client_2 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 // Get all users with pagination and filtering
@@ -439,7 +439,7 @@ const sendOtpForHrDeletion = async (hrEmail) => {
     }
     try {
         // Send OTP via email
-        await (0, email_1.default)({
+        await (0, email_1.sendEmailWithRetry)({
             email: hrEmail,
             subject: "OTP for HR User Deletion Confirmation",
             message: `Your OTP for deleting an HR user is: ${otp}. It will expire in 10 minutes. Do not share this OTP with anyone.`,

@@ -4,7 +4,7 @@ import {
   ApplicationStatus,
   ApplicationResult,
 } from "@prisma/client";
-import sendEmail from "../../utils/email";
+import sendEmail, { sendEmailWithRetry } from "../../utils/email";
 import prisma from "../../configs/prisma";
 
 export interface NotificationData {
@@ -62,7 +62,7 @@ class NotificationService {
     notificationMessage?: string,
   ): Promise<void> {
     try {
-      await sendEmail({
+      await sendEmailWithRetry({
         email: data.email,
         subject: data.subject,
         message: data.message,

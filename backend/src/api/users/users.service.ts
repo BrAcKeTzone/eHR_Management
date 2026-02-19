@@ -2,7 +2,7 @@ import { PrismaClient, User, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import ApiError from "../../utils/ApiError";
 import otpGenerator from "otp-generator";
-import sendEmail from "../../utils/email";
+import sendEmail, { sendEmailWithRetry } from "../../utils/email";
 import { Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -553,7 +553,7 @@ export const sendOtpForHrDeletion = async (
 
   try {
     // Send OTP via email
-    await sendEmail({
+    await sendEmailWithRetry({
       email: hrEmail,
       subject: "OTP for HR User Deletion Confirmation",
       message: `Your OTP for deleting an HR user is: ${otp}. It will expire in 10 minutes. Do not share this OTP with anyone.`,

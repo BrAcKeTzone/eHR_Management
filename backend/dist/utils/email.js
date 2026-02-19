@@ -3,15 +3,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendEmailWithRetry = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const createTransporter = () => {
+    const port = parseInt(process.env.EMAIL_PORT || "587", 10);
+    const secure = port === 465; // Use secure connection for port 465, TLS for 587
     const config = {
         host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT, 10),
+        port,
+        secure,
         auth: {
             user: process.env.EMAIL_USERNAME,
             pass: process.env.EMAIL_PASSWORD,
         },
+        tls: {
+            rejectUnauthorized: false, // Allow self-signed certificates (needed for Railway)
+        },
+        connectionTimeout: 10000, // 10 seconds
+        socketTimeout: 10000, // 10 seconds
     };
     return nodemailer_1.default.createTransport(config);
 };
@@ -25,5 +34,29 @@ const sendEmail = async (options) => {
     };
     await transporter.sendMail(mailOptions);
 };
+// Retry logic with exponential backoff
+const sendEmailWithRetry = async (options, maxRetries = 3, initialDelayMs = 1000) => {
+    let lastError = null;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            await sendEmail(options);
+            return; // Success, exit immediately
+        }
+        catch (error) {
+            lastError = error instanceof Error ? error : new Error(String(error));
+            console.warn(`Email send attempt ${attempt + 1}/${maxRetries} failed:`, lastError.message);
+            // Don't retry if it's the last attempt
+            if (attempt < maxRetries - 1) {
+                // Exponential backoff: delay = initialDelayMs * 2^attempt
+                const delayMs = initialDelayMs * Math.pow(2, attempt);
+                console.log(`Retrying in ${delayMs}ms...`);
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
+            }
+        }
+    }
+    // All retries exhausted
+    throw lastError || new Error("Failed to send email after multiple attempts");
+};
+exports.sendEmailWithRetry = sendEmailWithRetry;
 exports.default = sendEmail;
 //# sourceMappingURL=email.js.map

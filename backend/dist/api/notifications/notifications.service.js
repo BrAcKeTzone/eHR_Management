@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const email_1 = __importDefault(require("../../utils/email"));
+const email_1 = require("../../utils/email");
 const prisma_1 = __importDefault(require("../../configs/prisma"));
 class NotificationService {
     // Helper to return applicant's full name
@@ -39,7 +39,7 @@ class NotificationService {
     // Send email and save to database
     async sendAndSaveNotification(data, notificationMessage) {
         try {
-            await (0, email_1.default)({
+            await (0, email_1.sendEmailWithRetry)({
                 email: data.email,
                 subject: data.subject,
                 message: data.message,

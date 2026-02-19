@@ -9,7 +9,7 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const otp_generator_1 = __importDefault(require("otp-generator"));
 const ApiError_1 = __importDefault(require("../../utils/ApiError"));
-const email_1 = __importDefault(require("../../utils/email"));
+const email_1 = require("../../utils/email");
 const client_1 = require("@prisma/client");
 const errors_1 = require("../../utils/errors");
 const generateToken = (userId) => {
@@ -53,7 +53,7 @@ const sendOtp = async (email) => {
         throw error;
     }
     try {
-        await (0, email_1.default)({
+        await (0, email_1.sendEmailWithRetry)({
             email,
             subject: "Your OTP for BCFI Teacher Application",
             message: `Your OTP is: ${otp}. It will expire in 10 minutes.`,
@@ -96,7 +96,7 @@ const sendOtpForReset = async (email) => {
         throw error;
     }
     try {
-        await (0, email_1.default)({
+        await (0, email_1.sendEmailWithRetry)({
             email,
             subject: "Your OTP for BCFI Password Reset",
             message: `Your OTP for password reset is: ${otp}. It will expire in 10 minutes.`,
@@ -143,7 +143,7 @@ const sendOtpForChange = async (email, password) => {
         throw error;
     }
     try {
-        await (0, email_1.default)({
+        await (0, email_1.sendEmailWithRetry)({
             email,
             subject: "Your OTP for BCFI Password Change",
             message: `Your OTP for password change is: ${otp}. It will expire in 10 minutes.`,
@@ -287,7 +287,7 @@ const login = async (email, password, role = "APPLICANT") => {
         throw error;
     }
     try {
-        await (0, email_1.default)({
+        await (0, email_1.sendEmailWithRetry)({
             email,
             subject: "Your OTP for BCFI Login Verification",
             message: `Your OTP for login is: ${otp}. It will expire in 10 minutes.`,

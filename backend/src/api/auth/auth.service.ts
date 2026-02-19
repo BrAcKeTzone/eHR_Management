@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
 import otpGenerator from "otp-generator";
 import ApiError from "../../utils/ApiError";
-import sendEmail from "../../utils/email";
+import sendEmail, { sendEmailWithRetry } from "../../utils/email";
 import { Prisma, User } from "@prisma/client";
 import { AuthenticationError } from "../../utils/errors";
 
@@ -65,7 +65,7 @@ export const sendOtp = async (email: string): Promise<{ message: string }> => {
   }
 
   try {
-    await sendEmail({
+    await sendEmailWithRetry({
       email,
       subject: "Your OTP for BCFI Teacher Application",
       message: `Your OTP is: ${otp}. It will expire in 10 minutes.`,
@@ -115,7 +115,7 @@ export const sendOtpForReset = async (
   }
 
   try {
-    await sendEmail({
+    await sendEmailWithRetry({
       email,
       subject: "Your OTP for BCFI Password Reset",
       message: `Your OTP for password reset is: ${otp}. It will expire in 10 minutes.`,
@@ -171,7 +171,7 @@ export const sendOtpForChange = async (
   }
 
   try {
-    await sendEmail({
+    await sendEmailWithRetry({
       email,
       subject: "Your OTP for BCFI Password Change",
       message: `Your OTP for password change is: ${otp}. It will expire in 10 minutes.`,
@@ -382,7 +382,7 @@ export const login = async (
   }
 
   try {
-    await sendEmail({
+    await sendEmailWithRetry({
       email,
       subject: "Your OTP for BCFI Login Verification",
       message: `Your OTP for login is: ${otp}. It will expire in 10 minutes.`,
