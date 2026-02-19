@@ -1,7 +1,4 @@
-import {
-  Application,
-  ApplicationStatus,
-} from "@prisma/client";
+import { Application, ApplicationStatus } from "@prisma/client";
 import prisma from "../../configs/prisma";
 import ApiError from "../../utils/ApiError";
 
@@ -110,7 +107,9 @@ class ScoringService {
     );
   }
 
-  async completeApplicationScoring(applicationId: number): Promise<Application> {
+  async completeApplicationScoring(
+    applicationId: number,
+  ): Promise<Application> {
     throw new ApiError(
       410,
       "Scoring functionality has been removed. Use application scoring fields instead.",

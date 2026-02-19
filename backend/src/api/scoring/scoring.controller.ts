@@ -25,7 +25,7 @@ export const createRubric = asyncHandler(
     res
       .status(201)
       .json(new ApiResponse(201, rubric, "Rubric created successfully"));
-  }
+  },
 );
 
 export const getAllRubrics = asyncHandler(
@@ -36,11 +36,11 @@ export const getAllRubrics = asyncHandler(
 
     const { includeInactive } = req.query;
     const rubrics = await scoringService.getAllRubrics(
-      includeInactive === "true"
+      includeInactive === "true",
     );
 
     res.json(new ApiResponse(200, rubrics, "Rubrics retrieved successfully"));
-  }
+  },
 );
 
 export const getRubricById = asyncHandler(
@@ -51,7 +51,7 @@ export const getRubricById = asyncHandler(
 
     const { id } = req.params;
     await scoringService.getRubricById(parseInt(id));
-  }
+  },
 );
 
 export const updateRubric = asyncHandler(
@@ -64,7 +64,7 @@ export const updateRubric = asyncHandler(
     const rubric = await scoringService.updateRubric(parseInt(id), req.body);
 
     res.json(new ApiResponse(200, rubric, "Rubric updated successfully"));
-  }
+  },
 );
 
 export const deleteRubric = asyncHandler(
@@ -77,7 +77,7 @@ export const deleteRubric = asyncHandler(
     await scoringService.deleteRubric(parseInt(id));
 
     res.json(new ApiResponse(200, null, "Rubric deleted successfully"));
-  }
+  },
 );
 
 // Score Management
@@ -92,7 +92,7 @@ export const createScore = asyncHandler(
     res
       .status(201)
       .json(new ApiResponse(201, score, "Score created successfully"));
-  }
+  },
 );
 
 export const getScoresByApplication = asyncHandler(
@@ -111,7 +111,7 @@ export const getScoresByApplication = asyncHandler(
       if (!application || application.applicantId !== req.user!.id) {
         throw new ApiError(
           403,
-          "You can only view scores for your own applications"
+          "You can only view scores for your own applications",
         );
       }
     }
@@ -119,7 +119,7 @@ export const getScoresByApplication = asyncHandler(
     const scores = await scoringService.getScoresByApplication(appId);
 
     res.json(new ApiResponse(200, scores, "Scores retrieved successfully"));
-  }
+  },
 );
 
 export const updateScore = asyncHandler(
@@ -135,11 +135,11 @@ export const updateScore = asyncHandler(
       parseInt(applicationId),
       parseInt(rubricId),
       scoreValue,
-      comments
+      comments,
     );
 
     res.json(new ApiResponse(200, score, "Score updated successfully"));
-  }
+  },
 );
 
 export const deleteScore = asyncHandler(
@@ -152,11 +152,11 @@ export const deleteScore = asyncHandler(
 
     await scoringService.deleteScore(
       parseInt(applicationId),
-      parseInt(rubricId)
+      parseInt(rubricId),
     );
 
     res.json(new ApiResponse(200, null, "Score deleted successfully"));
-  }
+  },
 );
 
 // Score Calculation and Completion
@@ -168,13 +168,13 @@ export const calculateApplicationScore = asyncHandler(
 
     const { applicationId } = req.params;
     const calculation = await scoringService.calculateApplicationScore(
-      parseInt(applicationId)
+      parseInt(applicationId),
     );
 
     res.json(
-      new ApiResponse(200, calculation, "Score calculated successfully")
+      new ApiResponse(200, calculation, "Score calculated successfully"),
     );
-  }
+  },
 );
 
 export const completeApplicationScoring = asyncHandler(
@@ -185,17 +185,17 @@ export const completeApplicationScoring = asyncHandler(
 
     const { applicationId } = req.params;
     const application = await scoringService.completeApplicationScoring(
-      parseInt(applicationId)
+      parseInt(applicationId),
     );
 
     res.json(
       new ApiResponse(
         200,
         application,
-        "Application scoring saved successfully"
-      )
+        "Application scoring saved successfully",
+      ),
     );
-  }
+  },
 );
 
 export const getApplicationScoresSummary = asyncHandler(
@@ -214,7 +214,7 @@ export const getApplicationScoresSummary = asyncHandler(
       if (!application || application.applicantId !== req.user!.id) {
         throw new ApiError(
           403,
-          "You can only view your own application summary"
+          "You can only view your own application summary",
         );
       }
     }
@@ -225,8 +225,8 @@ export const getApplicationScoresSummary = asyncHandler(
       new ApiResponse(
         200,
         summary,
-        "Application scores summary retrieved successfully"
-      )
+        "Application scores summary retrieved successfully",
+      ),
     );
-  }
+  },
 );
