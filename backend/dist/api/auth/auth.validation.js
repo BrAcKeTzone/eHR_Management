@@ -39,6 +39,27 @@ exports.register = joi_1.default.object().keys({
     lastName: joi_1.default.string().required(),
     phone: joi_1.default.string().optional(),
     role: joi_1.default.string().valid("APPLICANT", "HR", "ADMIN").optional(),
+    civilStatus: joi_1.default.string().optional(),
+    houseNo: joi_1.default.string().optional(),
+    street: joi_1.default.string().optional(),
+    barangay: joi_1.default.string().optional(),
+    city: joi_1.default.string().optional(),
+    province: joi_1.default.string().optional(),
+    zipCode: joi_1.default.string().optional(),
+    education: joi_1.default.array()
+        .items(joi_1.default.object({
+        school: joi_1.default.string().required(),
+        course: joi_1.default.string().required(),
+        yearGraduated: joi_1.default.string().required(),
+    }))
+        .optional(),
+    references: joi_1.default.array()
+        .items(joi_1.default.object({
+        name: joi_1.default.string().required(),
+        contactNo: joi_1.default.string().required(),
+        relationship: joi_1.default.string().required(),
+    }))
+        .optional(),
 });
 exports.login = joi_1.default.object().keys({
     email: joi_1.default.string().email().required(),

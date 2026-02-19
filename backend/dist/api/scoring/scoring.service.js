@@ -206,6 +206,9 @@ class ScoringService {
         const application = await prisma_1.default.application.update({
             where: { id: applicationId },
             data: updateData,
+            include: {
+                specialization: true,
+            },
         });
         // Get applicant details for notification
         const applicant = await prisma_1.default.user.findUnique({

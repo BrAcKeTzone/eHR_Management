@@ -14,7 +14,12 @@ export const upsertPreEmployment = async (
   return await prisma.preEmploymentRequirement.upsert({
     where: { userId },
     update: data,
-    create: { ...data, userId },
+    create: {
+      ...Object.fromEntries(
+        Object.entries(data as any).filter(([key]) => key !== "user"),
+      ),
+      userId,
+    },
   });
 };
 

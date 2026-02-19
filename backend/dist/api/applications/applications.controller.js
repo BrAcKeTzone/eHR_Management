@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadDocument = exports.scheduleInterview = exports.getApplicationDocuments = exports.rateInterview = exports.completeApplication = exports.deleteApplication = exports.updateApplication = exports.scheduleDemo = exports.rejectApplication = exports.approveApplication = exports.getApplicationById = exports.getAllApplications = exports.getMyActiveApplication = exports.getMyApplications = exports.createApplication = void 0;
-const client_1 = require("@prisma/client");
 const applications_service_1 = __importDefault(require("./applications.service"));
 const ApiResponse_1 = __importDefault(require("../../utils/ApiResponse"));
 const ApiError_1 = __importDefault(require("../../utils/ApiError"));
@@ -126,7 +125,7 @@ exports.getAllApplications = (0, asyncHandler_1.default)(async (req, res) => {
     if (!["HR", "ADMIN"].includes(req.user.role)) {
         throw new ApiError_1.default(403, "Only HR and Admin can view all applications");
     }
-    const { status, result: resultFilter, interviewEligible, search, page, limit, } = req.query;
+    const { status, result: resultFilter, finalInterviewResult, interviewEligible, search, page, limit, } = req.query;
     // Convert status and result to uppercase to match enums
     const normalizedStatus = status
         ? status.toUpperCase()
@@ -134,9 +133,15 @@ exports.getAllApplications = (0, asyncHandler_1.default)(async (req, res) => {
     const normalizedResult = resultFilter
         ? resultFilter.toUpperCase()
         : undefined;
+    const normalizedFinalInterviewResult = finalInterviewResult
+        ? finalInterviewResult.toUpperCase()
+        : undefined;
     const filters = {
         ...(normalizedStatus && { status: normalizedStatus }),
         ...(normalizedResult && { result: normalizedResult }),
+        ...(normalizedFinalInterviewResult && {
+            finalInterviewResult: normalizedFinalInterviewResult,
+        }),
         ...(typeof interviewEligible !== "undefined" && {
             interviewEligible: interviewEligible === "true",
         }),
@@ -148,6 +153,13 @@ exports.getAllApplications = (0, asyncHandler_1.default)(async (req, res) => {
     // Process documents for all applications
     if (result.applications) {
         result.applications = result.applications.map((app) => processApplicationDocuments(app));
+    }
+    // Debug logging
+    console.log("=== getAllApplications Response ===");
+    if (result.applications && result.applications.length > 0) {
+        console.log("First app object keys:", Object.keys(result.applications[0]));
+        console.log("Applicant data:", result.applications[0].applicant);
+        console.log("Specialization data:", result.applications[0].specialization);
     }
     res.json(new ApiResponse_1.default(200, result, "Applications retrieved successfully"));
 });
@@ -235,32 +247,41 @@ exports.completeApplication = (0, asyncHandler_1.default)(async (req, res) => {
         throw new ApiError_1.default(403, "Only HR and Admin can complete applications");
     }
     const { id } = req.params;
-    const { totalScore, result, hrNotes } = req.body;
+    const { totalScore, // deprecated; kept for backward compatibility
+    result: resultFromBody, // deprecated; computed server-side
+    hrNotes, feedback, studentLearningActionsScore, knowledgeOfSubjectScore, teachingMethodScore, instructorAttributesScore, } = req.body;
     const applicationId = parseInt(id);
-    if (totalScore === undefined || totalScore === null) {
-        throw new ApiError_1.default(400, "Total score is required");
-    }
-    if (!result || !["PASS", "FAIL"].includes(result.toUpperCase())) {
-        throw new ApiError_1.default(400, "Valid result (PASS or FAIL) is required");
-    }
-    // Update application with score, result, and optional notes
-    const updateData = {
-        totalScore: parseFloat(totalScore),
-        result: result.toUpperCase(),
+    const asNumber = (value) => {
+        const num = parseFloat(value);
+        return Number.isFinite(num) ? num : NaN;
     };
-    if (hrNotes) {
-        updateData.hrNotes = hrNotes;
+    const studentLearning = asNumber(studentLearningActionsScore);
+    const knowledge = asNumber(knowledgeOfSubjectScore);
+    const teaching = asNumber(teachingMethodScore);
+    const attributes = asNumber(instructorAttributesScore);
+    if ([studentLearning, knowledge, teaching, attributes].some((v) => isNaN(v))) {
+        throw new ApiError_1.default(400, "All scoring categories are required and must be numbers");
     }
-    // mark the application as interviewEligible if score is >= 75
-    const numericScore = parseFloat(totalScore);
-    if (!isNaN(numericScore)) {
-        updateData.interviewEligible = numericScore >= 75;
+    const validators = [
+        { value: studentLearning, max: 30, label: "Student Learning Actions" },
+        { value: knowledge, max: 30, label: "Knowledge of the Subject Matter" },
+        { value: teaching, max: 30, label: "Teaching Method" },
+        {
+            value: attributes,
+            max: 10,
+            label: "Instructor's Personal & Professional Attributes",
+        },
+    ];
+    const invalid = validators.find(({ value, max }) => value < 0 || value > max);
+    if (invalid) {
+        throw new ApiError_1.default(400, `${invalid.label} must be between 0 and ${invalid.max}`);
     }
-    // If demo result is FAIL, mark the application as REJECTED. If PASS, keep the application in its current status (e.g., APPROVED), so it can be scheduled for interview.
-    if ((result || "").toUpperCase() === "FAIL") {
-        updateData.status = client_1.ApplicationStatus.REJECTED;
-    }
-    const application = await applications_service_1.default.updateApplication(applicationId, updateData);
+    const application = await applications_service_1.default.completeApplication(applicationId, {
+        studentLearningActionsScore: studentLearning,
+        knowledgeOfSubjectScore: knowledge,
+        teachingMethodScore: teaching,
+        instructorAttributesScore: attributes,
+    }, hrNotes, feedback);
     res.json(new ApiResponse_1.default(200, application, "Application scoring saved successfully"));
 });
 exports.rateInterview = (0, asyncHandler_1.default)(async (req, res) => {
@@ -268,13 +289,13 @@ exports.rateInterview = (0, asyncHandler_1.default)(async (req, res) => {
         throw new ApiError_1.default(403, "Only HR and Admin can rate interviews");
     }
     const { id } = req.params;
-    const { interviewScore, interviewResult, interviewNotes } = req.body;
+    const { interviewScore, interviewResult, interviewNotes, stage } = req.body;
     const applicationId = parseInt(id);
     if (!interviewResult ||
         !["PASS", "FAIL"].includes(interviewResult.toUpperCase())) {
         throw new ApiError_1.default(400, "Valid result (PASS or FAIL) is required");
     }
-    const application = await applications_service_1.default.rateInterview(applicationId, interviewScore ? parseFloat(interviewScore) : null, interviewResult.toUpperCase(), interviewNotes);
+    const application = await applications_service_1.default.rateInterview(applicationId, interviewScore ? parseFloat(interviewScore) : null, interviewResult.toUpperCase(), interviewNotes, stage === "final" ? "final" : "initial");
     // Get the full application with applicant details and format it
     const formattedApplication = await applications_service_1.default.getApplicationById(applicationId);
     res.json(new ApiResponse_1.default(200, formattedApplication, "Interview rated successfully"));
@@ -310,12 +331,15 @@ exports.scheduleInterview = (0, asyncHandler_1.default)(async (req, res) => {
         throw new ApiError_1.default(403, "Only HR and Admin can schedule interviews");
     }
     const { id } = req.params;
-    const { interviewSchedule, rescheduleReason } = req.body;
+    const { interviewSchedule, rescheduleReason, stage = "initial" } = req.body;
     const applicationId = parseInt(id);
+    if (!["initial", "final"].includes(stage)) {
+        throw new ApiError_1.default(400, "Stage must be either 'initial' or 'final'");
+    }
     if (!interviewSchedule) {
         throw new ApiError_1.default(400, "Interview schedule date is required");
     }
-    const application = await applications_service_1.default.scheduleInterview(applicationId, new Date(interviewSchedule), rescheduleReason);
+    const application = await applications_service_1.default.scheduleInterview(applicationId, new Date(interviewSchedule), rescheduleReason, stage);
     // Get the full application with applicant details and format it
     const formattedApplication = await applications_service_1.default.getApplicationById(applicationId);
     res.json(new ApiResponse_1.default(200, formattedApplication, "Interview scheduled successfully"));

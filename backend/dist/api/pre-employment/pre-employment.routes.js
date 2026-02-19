@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const pre_employment_controller_1 = require("./pre-employment.controller");
 const auth_middleware_1 = __importDefault(require("../../middlewares/auth.middleware"));
+const rbac_middleware_1 = require("../../middlewares/rbac.middleware");
 const upload_middleware_1 = __importDefault(require("../../middlewares/upload.middleware"));
 const router = (0, express_1.Router)();
 router.use(auth_middleware_1.default);
@@ -22,6 +23,7 @@ const uploadFields = upload_middleware_1.default.fields([
     { name: "tesdaFiles", maxCount: 10 },
 ]);
 router.get("/", pre_employment_controller_1.getPreEmploymentHandler);
+router.get("/:userId", rbac_middleware_1.requireHR, pre_employment_controller_1.getPreEmploymentByUserIdHandler);
 const setUploadFolder = (req, res, next) => {
     req.uploadFolder = "hr-applications/pre-employment";
     next();

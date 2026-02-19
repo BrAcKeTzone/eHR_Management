@@ -145,6 +145,8 @@ model Application {
   
   specialization Specialization? @relation(fields: [specializationId], references: [id])
   specializationId Int?
+  
+  scores      Score[]
 
   // Additional application fields
   program               String?
@@ -187,6 +189,37 @@ model Otp {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+// SCORING & RUBRICS
+model Rubric {
+  id          Int      @id @default(autoincrement())
+  criteria    String
+  description String?  @db.Text
+  maxScore    Float    @default(10)
+  weight      Float    @default(1.0)
+  isActive    Boolean  @default(true)
+  scores      Score[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Score {
+  id              Int      @id @default(autoincrement())
+  applicationId   Int
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  rubricId        Int
+  rubric          Rubric   @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  scoreValue      Float
+  comments        String?  @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([applicationId, rubricId])
+  @@index([applicationId])
+  @@index([rubricId])
 }
 
 // CONFIGURATIONS

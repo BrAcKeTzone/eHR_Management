@@ -21,20 +21,24 @@ function formatApplicationForFrontend(app) {
         hours = hours % 12 || 12; // Convert 0 to 12 for midnight, 13-23 to 1-11
         formattedApp.demoTime = `${hours}:${minutes} ${period}`;
     }
-    if (app.interviewSchedule) {
-        const interviewDate = new Date(app.interviewSchedule);
+    const appendInterviewTime = (dateVal, key) => {
+        if (!dateVal)
+            return;
+        const interviewDate = new Date(dateVal);
         let hours = interviewDate.getHours();
         const minutes = interviewDate.getMinutes().toString().padStart(2, "0");
         const period = hours >= 12 ? "PM" : "AM";
         hours = hours % 12 || 12;
-        formattedApp.interviewTime = `${hours}:${minutes} ${period}`;
-    }
-    if (app.interviewRescheduleCount !== undefined) {
-        formattedApp.interviewRescheduleCount = app.interviewRescheduleCount;
-    }
-    if (app.interviewRescheduleReason) {
-        formattedApp.interviewRescheduleReason = app.interviewRescheduleReason;
-    }
+        formattedApp[key] = `${hours}:${minutes} ${period}`;
+    };
+    appendInterviewTime(app.initialInterviewSchedule, "initialInterviewTime");
+    appendInterviewTime(app.finalInterviewSchedule, "finalInterviewTime");
+    formattedApp.initialInterviewRescheduleCount =
+        app.initialInterviewRescheduleCount || 0;
+    formattedApp.initialInterviewRescheduleReason = app.initialInterviewRescheduleReason;
+    formattedApp.finalInterviewRescheduleCount =
+        app.finalInterviewRescheduleCount || 0;
+    formattedApp.finalInterviewRescheduleReason = app.finalInterviewRescheduleReason;
     return formattedApp;
 }
 class ApplicationService {
@@ -112,6 +116,16 @@ class ApplicationService {
                         lastName: true,
                         email: true,
                         phone: true,
+                        profilePicture: true,
+                        civilStatus: true,
+                        houseNo: true,
+                        street: true,
+                        barangay: true,
+                        city: true,
+                        province: true,
+                        zipCode: true,
+                        education: true,
+                        references: true,
                     },
                 },
             },
@@ -134,6 +148,15 @@ class ApplicationService {
                         email: true,
                         phone: true,
                         profilePicture: true,
+                        civilStatus: true,
+                        houseNo: true,
+                        street: true,
+                        barangay: true,
+                        city: true,
+                        province: true,
+                        zipCode: true,
+                        education: true,
+                        references: true,
                     },
                 },
             },
@@ -154,10 +177,11 @@ class ApplicationService {
         return application ? formatApplicationForFrontend(application) : null;
     }
     async getAllApplications(filters) {
-        const { status, result, interviewEligible, search, page = 1, limit = 10, } = filters || {};
+        const { status, result, finalInterviewResult, interviewEligible, search, page = 1, limit = 10, } = filters || {};
         const where = {
             ...(status && { status }),
             ...(result && { result }),
+            ...(finalInterviewResult && { finalInterviewResult }),
             ...(typeof interviewEligible === "boolean" && { interviewEligible }),
             ...(search && {
                 applicant: {
@@ -169,9 +193,36 @@ class ApplicationService {
                 },
             }),
         };
+        // For finalInterviewResult filter, get the latest application per applicant
+        let applicationIds;
+        if (finalInterviewResult) {
+            // Get the LATEST application ID for EACH applicant with finalInterviewResult = PASS
+            const allAppsWithResult = await prisma_1.default.application.findMany({
+                where: { finalInterviewResult },
+                select: {
+                    id: true,
+                    applicantId: true,
+                    createdAt: true,
+                },
+                orderBy: { createdAt: "desc" },
+            });
+            // Group by applicantId and take the first (latest) one for each
+            const latestPerApplicant = new Map();
+            allAppsWithResult.forEach((app) => {
+                if (!latestPerApplicant.has(app.applicantId)) {
+                    latestPerApplicant.set(app.applicantId, app.id);
+                }
+            });
+            applicationIds = Array.from(latestPerApplicant.values());
+            console.log("Latest applications per applicant with finalInterviewResult = PASS:", applicationIds);
+        }
+        const finalWhere = {
+            ...where,
+            ...(applicationIds && { id: { in: applicationIds } }),
+        };
         const [applications, total] = await Promise.all([
             prisma_1.default.application.findMany({
-                where,
+                where: finalWhere,
                 include: {
                     applicant: {
                         select: {
@@ -180,6 +231,16 @@ class ApplicationService {
                             lastName: true,
                             email: true,
                             phone: true,
+                            profilePicture: true,
+                            civilStatus: true,
+                            houseNo: true,
+                            street: true,
+                            barangay: true,
+                            city: true,
+                            province: true,
+                            zipCode: true,
+                            education: true,
+                            references: true,
                         },
                     },
                     specialization: true,
@@ -188,7 +249,7 @@ class ApplicationService {
                 skip: (page - 1) * limit,
                 take: limit,
             }),
-            prisma_1.default.application.count({ where }),
+            prisma_1.default.application.count({ where: finalWhere }),
         ]);
         // Format applications for frontend
         const formattedApplications = applications.map(formatApplicationForFrontend);
@@ -204,6 +265,9 @@ class ApplicationService {
             data: {
                 ...data,
                 updatedAt: new Date(),
+            },
+            include: {
+                specialization: true,
             },
         });
     }
@@ -311,14 +375,14 @@ class ApplicationService {
         }
         return updatedApplication;
     }
-    async scheduleInterview(id, interviewSchedule, rescheduleReason) {
+    async scheduleInterview(id, interviewSchedule, rescheduleReason, stage = "initial") {
         const application = await prisma_1.default.application.findUnique({ where: { id } });
         if (!application) {
             throw new ApiError_1.default(404, "Application not found");
         }
-        // Prevent scheduling/rescheduling if interview result already exists
-        if (application.interviewResult) {
-            throw new ApiError_1.default(400, "Cannot schedule or reschedule interview for an application that already has an interview result");
+        const hasFinalResult = application.interviewResult;
+        if (hasFinalResult && stage === "final") {
+            throw new ApiError_1.default(400, "Cannot schedule or reschedule final interview for an application that already has a final interview result");
         }
         // Require application to be interviewEligible or have passing score
         const appAny = application;
@@ -327,6 +391,11 @@ class ApplicationService {
                 application.totalScore >= 75);
         if (!eligible) {
             throw new ApiError_1.default(400, "Application is not eligible for interview scheduling");
+        }
+        // Final interview requires a passed initial interview result
+        if (stage === "final" &&
+            application.initialInterviewResult !== "PASS") {
+            throw new ApiError_1.default(400, "Final interview can only be scheduled after a PASS initial interview result");
         }
         const interviewDate = new Date(interviewSchedule);
         const today = new Date();
@@ -345,8 +414,15 @@ class ApplicationService {
                 throw new ApiError_1.default(400, "Interview date must be on or after the demo schedule date");
             }
         }
-        // Check reschedule limits - only allow 1 reschedule
-        const isReschedule = !!application.interviewSchedule;
+        const currentScheduleField = stage === "final" ? "finalInterviewSchedule" : "initialInterviewSchedule";
+        const rescheduleCountField = stage === "final"
+            ? "finalInterviewRescheduleCount"
+            : "initialInterviewRescheduleCount";
+        const rescheduleReasonField = stage === "final"
+            ? "finalInterviewRescheduleReason"
+            : "initialInterviewRescheduleReason";
+        // Check reschedule limits - only allow 1 reschedule per stage
+        const isReschedule = !!application[currentScheduleField];
         // If rescheduling, require a reason similar to demo schedule
         if (isReschedule) {
             if (!rescheduleReason) {
@@ -357,14 +433,15 @@ class ApplicationService {
                 throw new ApiError_1.default(400, `Invalid reschedule reason. Allowed: ${allowedReasons.join(", ")}`);
             }
         }
-        const currentRescheduleCount = application.interviewRescheduleCount || 0;
+        const currentRescheduleCount = application[rescheduleCountField] || 0;
         if (isReschedule && currentRescheduleCount >= 1) {
             throw new ApiError_1.default(400, "This application has already been rescheduled once and cannot be rescheduled again.");
         }
-        const updateData = { interviewSchedule };
+        const updateData = {};
+        updateData[currentScheduleField] = interviewSchedule;
         if (isReschedule) {
-            updateData.interviewRescheduleCount = currentRescheduleCount + 1;
-            updateData.interviewRescheduleReason = rescheduleReason;
+            updateData[rescheduleCountField] = currentRescheduleCount + 1;
+            updateData[rescheduleReasonField] = rescheduleReason;
         }
         const updatedApplication = await this.updateApplication(id, updateData);
         // Notify applicant about interview schedule
@@ -373,32 +450,47 @@ class ApplicationService {
         });
         if (applicant) {
             notifications_service_1.default
-                .sendInterviewScheduleNotification(updatedApplication, applicant)
+                .sendInterviewScheduleNotification(updatedApplication, applicant, stage)
                 .catch((err) => console.error("Failed to send interview schedule notification:", err));
         }
         return updatedApplication;
     }
-    async completeApplication(id, totalScore, result) {
-        // When a score is submitted and result is PASS with a score >= 75,
-        // mark the application as interviewEligible so it can appear in the Interview Scheduling queue.
-        const interviewEligible = totalScore >= 75;
+    async completeApplication(id, scores, hrNotes, demoFeedback) {
+        const { studentLearningActionsScore, knowledgeOfSubjectScore, teachingMethodScore, instructorAttributesScore, } = scores;
+        const totalScore = studentLearningActionsScore +
+            knowledgeOfSubjectScore +
+            teachingMethodScore +
+            instructorAttributesScore;
+        // Pass when total score >= 75
+        const result = totalScore >= 75 ? "PASS" : "FAIL";
         const updateData = {
+            studentLearningActionsScore,
+            knowledgeOfSubjectScore,
+            teachingMethodScore,
+            instructorAttributesScore,
             totalScore,
-            result: result,
-            interviewEligible,
+            result,
+            interviewEligible: totalScore >= 75,
         };
+        if (hrNotes) {
+            updateData.hrNotes = hrNotes;
+        }
+        if (demoFeedback) {
+            updateData.demoFeedback = demoFeedback;
+        }
         // If demo failed, mark the application as REJECTED
-        if ((result || "").toUpperCase() === "FAIL") {
+        if (result === "FAIL") {
             updateData.status = client_1.ApplicationStatus.REJECTED;
         }
         return await this.updateApplication(id, updateData);
     }
-    async rateInterview(id, interviewScore, interviewResult, interviewNotes) {
+    async rateInterview(id, interviewScore, interviewResult, interviewNotes, stage = "initial") {
         const application = await prisma_1.default.application.findUnique({ where: { id } });
         if (!application) {
             throw new ApiError_1.default(404, "Application not found");
         }
-        if (!application.interviewSchedule) {
+        const scheduledField = stage === "final" ? "finalInterviewSchedule" : "initialInterviewSchedule";
+        if (!application[scheduledField]) {
             throw new ApiError_1.default(400, "Application must have a scheduled interview before rating");
         }
         // Validate score range if provided
@@ -406,24 +498,37 @@ class ApplicationService {
             (interviewScore < 0 || interviewScore > 100)) {
             throw new ApiError_1.default(400, "Interview score must be between 0 and 100");
         }
-        const updateData = {
-            ...(interviewScore !== null && { interviewScore }),
-            interviewResult: interviewResult,
-            interviewNotes,
-        };
-        // If interview is PASS, mark status as COMPLETED; if FAIL, mark as REJECTED
-        if (interviewResult &&
-            ["PASS", "FAIL"].includes(interviewResult.toUpperCase())) {
-            if (interviewResult.toUpperCase() === "PASS") {
+        const updateData = {};
+        if (stage === "final") {
+            if (interviewScore !== null) {
+                updateData.interviewScore = interviewScore;
+            }
+            updateData.interviewResult = interviewResult;
+            updateData.interviewNotes = interviewNotes;
+            updateData.finalInterviewResult = interviewResult;
+            updateData.finalInterviewFeedback = interviewNotes;
+        }
+        else {
+            updateData.initialInterviewResult = interviewResult;
+            updateData.initialInterviewFeedback = interviewNotes;
+        }
+        if (stage === "final") {
+            if (interviewResult === "PASS") {
                 updateData.status = client_1.ApplicationStatus.COMPLETED;
             }
-            else if (interviewResult.toUpperCase() === "FAIL") {
+            else {
                 updateData.status = client_1.ApplicationStatus.REJECTED;
             }
         }
         const updatedApplication = await this.updateApplication(id, updateData);
-        // Note: Interview result notification can be added when notification service is extended
-        // For now, the interview rating is saved successfully
+        if (stage === "final" && interviewResult === "PASS") {
+            const applicant = await prisma_1.default.user.findUnique({
+                where: { id: updatedApplication.applicantId },
+            });
+            if (applicant) {
+                await notifications_service_1.default.sendFinalInterviewPassedNotification(updatedApplication, applicant);
+            }
+        }
         return updatedApplication;
     }
     async deleteApplication(id) {
