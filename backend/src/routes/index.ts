@@ -1,6 +1,7 @@
 import express from "express";
 const router = express.Router();
 
+import healthRouter from "./health.route";
 import authRouter from "../api/auth/auth.route";
 import userRouter from "../api/users/users.route";
 import applicationRouter from "../api/applications/applications.route";
@@ -10,6 +11,7 @@ import specializationRouter from "../api/specializations/specializations.route";
 import preEmploymentRouter from "../api/pre-employment/pre-employment.routes";
 import notificationRouter from "../api/notifications/notifications.route";
 
+router.use("/health", healthRouter);
 router.use("/auth", authRouter);
 router.use("/users", userRouter);
 router.use("/applications", applicationRouter);
